@@ -97,10 +97,7 @@
         lista.innerHTML = "<p>Carregando itens do estoque...</p>";
 
         try {
-          const query = await db.collection("estoque")
-            .where("uid", "in", [currentUser.email, currentUser.email.trim()])
-            .get();
-
+          const query = await db.collection("estoque").get();
           lista.innerHTML = "";
           if (query.empty) {
             lista.innerHTML = "<p>Nenhum item encontrado.</p>";
