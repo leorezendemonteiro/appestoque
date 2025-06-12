@@ -4,48 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Controle de Estoque</title>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
-    import jsPDF from "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
-      authDomain: "appestoquecozinha.firebaseapp.com",
-      projectId: "appestoquecozinha",
-      storageBucket: "appestoquecozinha.firebasestorage.app",
-      messagingSenderId: "705934517110",
-      appId: "1:705934517110:web:b4d5b79059feb7e6485057"
-    };
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth();
-    const db = getFirestore();
-    let currentUser = null;
-    let listaFinal = [];
-    let listaProducao = [];
-
-    const login = async () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        currentUser = userCredential.user;
-        document.getElementById("login-section").style.display = "none";
-        document.getElementById("app-section").style.display = "block";
-        loadItems();
-        loadProducao();
-      } catch (error) {
-        console.error("Erro ao fazer login:", error);
-        alert("Erro ao fazer login: " + error.code + " - " + error.message);
-      }
-    };
-
-    window.login = login;
-
-    // (continua igual a versão anterior)
-  </script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
     input, button { padding: 10px; margin: 5px 0; width: 100%; }
@@ -63,7 +28,35 @@
   </div>
 
   <div id="app-section" style="display:none">
-    <!-- restante do app permanece igual -->
+    <p>Login realizado com sucesso!</p>
   </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
+      authDomain: "appestoquecozinha.firebaseapp.com",
+      projectId: "appestoquecozinha",
+      storageBucket: "appestoquecozinha.firebasestorage.app",
+      messagingSenderId: "705934517110",
+      appId: "1:705934517110:web:b4d5b79059feb7e6485057"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        document.getElementById("login-section").style.display = "none";
+        document.getElementById("app-section").style.display = "block";
+      } catch (error) {
+        document.getElementById("login-error").innerText = "Erro ao fazer login: " + error.message;
+        console.error("Erro:", error);
+      }
+    }
+  </script>
 </body>
 </html>
