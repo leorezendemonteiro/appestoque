@@ -1,13 +1,15 @@
-<!-- substitua TODO o conteúdo do seu index.html por este -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Controle de Estoque</title>
+
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore-compat.js"></script>
+
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
     input, button { padding: 10px; margin: 5px 0; width: 100%; }
@@ -69,6 +71,7 @@
       window.login = async function () {
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
+
         try {
           const userCredential = await auth.signInWithEmailAndPassword(email, password);
           currentUser = userCredential.user;
@@ -78,6 +81,7 @@
           carregarProducao();
         } catch (error) {
           document.getElementById("login-error").innerText = "Erro ao fazer login: " + error.message;
+          console.error("Erro:", error);
         }
       }
 
@@ -91,17 +95,18 @@
       async function carregarEstoque() {
         const lista = document.getElementById("estoque-list");
         lista.innerHTML = "<p>Carregando itens do estoque...</p>";
+
         try {
           const query = await db.collection("estoque").where("uid", "==", currentUser.email).get();
           lista.innerHTML = "";
           if (query.empty) {
             lista.innerHTML = "<p>Nenhum item encontrado.</p>";
-          } else {
-            query.forEach(doc => {
-              const data = doc.data();
-              lista.innerHTML += `<div class='card'><b>${data.item}</b><br>${data.quantidade} ${data.unidade}</div>`;
-            });
           }
+
+          query.forEach(doc => {
+            const data = doc.data();
+            lista.innerHTML += `<div class='card'><b>${data.item}</b><br>${data.atual || data.quantidade} ${data.unidade}</div>`;
+          });
         } catch (error) {
           lista.innerHTML = "<p>Erro ao carregar estoque.</p>";
           console.error(error);
@@ -111,17 +116,18 @@
       async function carregarProducao() {
         const lista = document.getElementById("producao-list");
         lista.innerHTML = "<p>Carregando produção...</p>";
+
         try {
           const query = await db.collection("producao").where("uid", "==", currentUser.email).get();
           lista.innerHTML = "";
           if (query.empty) {
             lista.innerHTML = "<p>Nenhum item produzido encontrado.</p>";
-          } else {
-            query.forEach(doc => {
-              const data = doc.data();
-              lista.innerHTML += `<div class='card'><b>${data.item}</b><br>${data.quantidade} ${data.unidade}</div>`;
-            });
           }
+
+          query.forEach(doc => {
+            const data = doc.data();
+            lista.innerHTML += `<div class='card'><b>${data.item}</b><br>${data.quantidade} ${data.unidade}</div>`;
+          });
         } catch (error) {
           lista.innerHTML = "<p>Erro ao carregar produção.</p>";
           console.error(error);
@@ -132,6 +138,7 @@
         const item = document.getElementById("item-producao").value;
         const unidade = document.getElementById("unidade-producao").value;
         const quantidade = parseFloat(document.getElementById("quantidade-producao").value);
+
         if (!item || !unidade || isNaN(quantidade)) {
           alert("Preencha todos os campos.");
           return;
@@ -145,6 +152,7 @@
             quantidade,
             criadoEm: new Date()
           });
+
           alert("Item de produção salvo com sucesso!");
           document.getElementById("item-producao").value = "";
           document.getElementById("unidade-producao").value = "";
