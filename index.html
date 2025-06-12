@@ -82,7 +82,7 @@
         }
 
         await db.collection("estoque").add({
-          uid: currentUser.uid,
+          uid: currentUser.email,
           item,
           unidade,
           quantidade
@@ -97,7 +97,7 @@
       async function carregarEstoque() {
         const lista = document.getElementById("estoque-list");
         lista.innerHTML = "";
-        const query = await db.collection("estoque").where("uid", "==", currentUser.uid).get();
+        const query = await db.collection("estoque").where("uid", "==", currentUser.email).get();
         query.forEach(doc => {
           const data = doc.data();
           lista.innerHTML += `<div class='card'><b>${data.item}</b><br>${data.quantidade} ${data.unidade}</div>`;
