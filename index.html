@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controle de Estoque</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+    import jsPDF from "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
+      authDomain: "appestoquecozinha.firebaseapp.com",
+      projectId: "appestoquecozinha",
+      storageBucket: "appestoquecozinha.firebasestorage.app",
+      messagingSenderId: "705934517110",
+      appId: "1:705934517110:web:b4d5b79059feb7e6485057"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore();
+    let currentUser = null;
+    let listaFinal = [];
+    let listaProducao = [];
+
+    const login = () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          currentUser = userCredential.user;
+          document.getElementById("login-section").style.display = "none";
+          document.getElementById("app-section").style.display = "block";
+          loadItems();
+          loadProducao();
+        })
+        .catch(error => alert("Erro no login: " + error.message));
+    };
+
+    window.login = login;
+
+    const addItem = async () => {
+      const item = document.getElementById("item").value;
+      const atual = parseFloat(document.getElementById("atual").value);
+      const minima = parseFloat(document.getElementById("minima").value);
+      const ideal = parseFloat(document.getElementById("ideal").value);
+      const fornecedor = document.getElementById("fornecedor").value;
+      const unidade = document.getElementById("unidade").value;
+
+      await addDoc(collection(db, "estoque"), {
+        uid: currentUser.uid,
+        item, atual, minima, ideal, fornecedor, unidade
+      });
+
+      document.getElementById("item").value = "";
+      document.getElementById("atual").value = "";
+      document.getElementById("minima").value = "";
+      document.getElementById("ideal").value = "";
+      document.getElementById("fornecedor").value = "";
+      document.getElementById("unidade").value = "";
+      loadItems();
+    };
+
+    window.addItem = addItem;
+
+    const loadItems = async () => {
+      const estoqueList = document.getElementById("estoque-list");
+      estoqueList.innerHTML = "";
+      const q = query(collection(db, "estoque"), where("uid", "==", currentUser.uid));
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        estoqueList.innerHTML += `<div class='card'><b>${data.item}</b><br>Atual: ${data.atual} ${data.unidade} | Mínima: ${data.minima} | Ideal: ${data.ideal}<br>Fornecedor: ${data.fornecedor}</div>`;
+      });
+    };
+
+    const addProducao = async () => {
+      const item = document.getElementById("prod-item").value;
+      const unidade = document.getElementById("prod-unidade").value;
+      const atual = parseFloat(document.getElementById("prod-atual").value);
+
+      await addDoc(collection(db, "producao"), {
+        uid: currentUser.uid,
+        item, unidade, atual
+      });
+
+      document.getElementById("prod-item").value = "";
+      document.getElementById("prod-unidade").value = "";
+      document.getElementById("prod-atual").value = "";
+      loadProducao();
+    };
+
+    window.addProducao = addProducao;
+
+    const loadProducao = async () => {
+      const prodList = document.getElementById("producao-list");
+      prodList.innerHTML = "";
+      const q = query(collection(db, "producao"), where("uid", "==", currentUser.uid));
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach(doc => {
+        const data = doc.data();
+        prodList.innerHTML += `<div class='card'><b>${data.item}</b><br>Atual: ${data.atual} ${data.unidade}</div>`;
+      });
+    };
+
+    const gerarPDFProducao = async () => {
+      const q = query(collection(db, "producao"), where("uid", "==", currentUser.uid));
+      const querySnapshot = await getDocs(q);
+      let resultado = "Itens de Produção:\n\n";
+
+      querySnapshot.forEach(doc => {
+        const data = doc.data();
+        resultado += `- ${data.item}: ${data.atual} ${data.unidade}\n`;
+      });
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(12);
+      doc.text(resultado, 10, 10);
+      doc.save("producao-cozinha.pdf");
+    };
+
+    window.gerarPDFProducao = gerarPDFProducao;
+  </script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    input, button { padding: 10px; margin: 5px 0; width: 100%; }
+    .card { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Gerenciar Estoque da Cozinha</h1>
+
+  <div id="login-section">
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Senha" />
+    <button onclick="login()">Entrar</button>
+  </div>
+
+  <div id="app-section" style="display:none">
+    <h2>Adicionar Item ao Estoque</h2>
+    <input type="text" id="item" placeholder="Nome do Item" />
+    <input type="number" id="atual" placeholder="Quantidade Atual" />
+    <input type="number" id="minima" placeholder="Quantidade Mínima" />
+    <input type="number" id="ideal" placeholder="Quantidade Ideal para Início da Semana" />
+    <input type="text" id="unidade" placeholder="Unidade (kg, unid, L, cx...)" />
+    <input type="text" id="fornecedor" placeholder="Fornecedor" />
+    <button onclick="addItem()">Salvar Item</button>
+
+    <h2>Estoque Atual</h2>
+    <div id="estoque-list"></div>
+
+    <h2>Lista de Compras</h2>
+    <button onclick="gerarLista()">Montar Lista de Compras</button>
+    <div id="lista-compras"></div>
+
+    <h2>Produção da Cozinha</h2>
+    <input type="text" id="prod-item" placeholder="Nome do Item Produzido" />
+    <input type="text" id="prod-unidade" placeholder="Unidade (kg, L, porção...)" />
+    <input type="number" id="prod-atual" placeholder="Quantidade Atual Produzida" />
+    <button onclick="addProducao()">Salvar Produção</button>
+    <div id="producao-list"></div>
+    <button onclick="gerarPDFProducao()">Gerar PDF da Produção</button>
+  </div>
+</body>
+</html>
