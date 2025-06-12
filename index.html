@@ -28,7 +28,15 @@
   </div>
 
   <div id="app-section" style="display:none">
+    <h2>Bem-vindo ao Sistema!</h2>
     <p>Login realizado com sucesso!</p>
+
+    <h3>Estoque</h3>
+    <input type="text" id="item" placeholder="Nome do item" />
+    <input type="text" id="unidade" placeholder="Unidade (kg, L, porção...)" />
+    <input type="number" id="quantidade" placeholder="Quantidade" />
+    <button onclick="salvarItem()">Salvar item</button>
+    <div id="estoque-list"></div>
   </div>
 
   <script>
@@ -44,6 +52,8 @@
 
       firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
+      const db = firebase.firestore();
+      let currentUser = null;
 
       window.login = async function () {
         const email = document.getElementById("email").value;
@@ -51,12 +61,47 @@
 
         try {
           const userCredential = await auth.signInWithEmailAndPassword(email, password);
+          currentUser = userCredential.user;
           document.getElementById("login-section").style.display = "none";
           document.getElementById("app-section").style.display = "block";
+          carregarEstoque();
         } catch (error) {
           document.getElementById("login-error").innerText = "Erro ao fazer login: " + error.message;
           console.error("Erro:", error);
         }
+      }
+
+      window.salvarItem = async function () {
+        const item = document.getElementById("item").value;
+        const unidade = document.getElementById("unidade").value;
+        const quantidade = parseFloat(document.getElementById("quantidade").value);
+
+        if (!item || !unidade || isNaN(quantidade)) {
+          alert("Preencha todos os campos.");
+          return;
+        }
+
+        await db.collection("estoque").add({
+          uid: currentUser.uid,
+          item,
+          unidade,
+          quantidade
+        });
+
+        document.getElementById("item").value = "";
+        document.getElementById("unidade").value = "";
+        document.getElementById("quantidade").value = "";
+        carregarEstoque();
+      }
+
+      async function carregarEstoque() {
+        const lista = document.getElementById("estoque-list");
+        lista.innerHTML = "";
+        const query = await db.collection("estoque").where("uid", "==", currentUser.uid).get();
+        query.forEach(doc => {
+          const data = doc.data();
+          lista.innerHTML += `<div class='card'><b>${data.item}</b><br>${data.quantidade} ${data.unidade}</div>`;
+        });
       }
     });
   </script>
