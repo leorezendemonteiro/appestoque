@@ -108,7 +108,10 @@
             const nome = data.item || "(Sem nome)";
             const qtd = data.atual !== undefined ? data.atual : data.quantidade || 0;
             const unidade = data.unidade || "(sem unidade)";
-            lista.innerHTML += `<div class='card'><b>${nome}</b><br>${qtd} ${unidade}</div>`;
+            lista.innerHTML += `<div class='card'><b>${nome}</b><br>${qtd} ${unidade}<br>
+              <input type='number' placeholder='Adicionar quantidade' id='add-${doc.id}' />
+              <button onclick="adicionarQuantidade('${doc.id}', 'estoque')">Adicionar</button>
+            </div>`;
           });
         } catch (error) {
           lista.innerHTML = "<p>Erro ao carregar estoque.</p>";
@@ -129,7 +132,10 @@
 
           query.forEach(doc => {
             const data = doc.data();
-            lista.innerHTML += `<div class='card'><b>${data.item}</b><br>${data.quantidade} ${data.unidade}</div>`;
+            lista.innerHTML += `<div class='card'><b>${data.item}</b><br>${data.quantidade} ${data.unidade}<br>
+              <input type='number' placeholder='Adicionar quantidade' id='add-${doc.id}' />
+              <button onclick="adicionarQuantidade('${doc.id}', 'producao')">Adicionar</button>
+            </div>`;
           });
         } catch (error) {
           lista.innerHTML = "<p>Erro ao carregar produção.</p>";
@@ -163,6 +169,29 @@
           carregarProducao();
         } catch (error) {
           alert("Erro ao salvar item: " + error.message);
+          console.error(error);
+        }
+      }
+
+      window.adicionarQuantidade = async function(id, colecao) {
+        const input = document.getElementById(`add-${id}`);
+        const valor = parseFloat(input.value);
+        if (isNaN(valor)) {
+          alert("Digite uma quantidade válida.");
+          return;
+        }
+        try {
+          const ref = db.collection(colecao).doc(id);
+          await db.runTransaction(async (t) => {
+            const doc = await t.get(ref);
+            const atual = doc.data().quantidade || doc.data().atual || 0;
+            const novo = atual + valor;
+            t.update(ref, { quantidade: novo, atual: novo });
+          });
+          alert("Quantidade adicionada!");
+          colecao === 'estoque' ? carregarEstoque() : carregarProducao();
+        } catch (error) {
+          alert("Erro ao adicionar: " + error.message);
           console.error(error);
         }
       }
