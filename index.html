@@ -9,12 +9,16 @@
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore-compat.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
     input, button { padding: 10px; margin: 5px 0; width: 100%; }
     .card { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+    .tabs { display: flex; justify-content: space-around; margin-top: 20px; }
+    .tab-button { padding: 10px; cursor: pointer; background: #eee; border: 1px solid #ccc; }
+    .tab-button.active { background: #ccc; font-weight: bold; }
+    .tab-content { display: none; margin-top: 20px; }
+    .tab-content.active { display: block; }
   </style>
 </head>
 <body>
@@ -31,12 +35,23 @@
     <h2>Bem-vindo ao Sistema!</h2>
     <p>Login realizado com sucesso!</p>
 
-    <h3>Estoque</h3>
-    <input type="text" id="item" placeholder="Nome do item" />
-    <input type="text" id="unidade" placeholder="Unidade (kg, L, porção...)" />
-    <input type="number" id="quantidade" placeholder="Quantidade" />
-    <button onclick="salvarItem()">Salvar item</button>
-    <div id="estoque-list"></div>
+    <div class="tabs">
+      <div class="tab-button active" onclick="mostrarAba('estoque')">Estoque</div>
+      <div class="tab-button" onclick="mostrarAba('producao')">Produção</div>
+    </div>
+
+    <div id="estoque" class="tab-content active">
+      <h3>Itens do Estoque</h3>
+      <div id="estoque-list">Carregando estoque...</div>
+    </div>
+
+    <div id="producao" class="tab-content">
+      <h3>Cadastro de Produção</h3>
+      <input type="text" id="item" placeholder="Nome do item produzido" />
+      <input type="text" id="unidade" placeholder="Unidade (kg, L, porção...)" />
+      <input type="number" id="quantidade" placeholder="Quantidade" />
+      <button onclick="salvarItem()">Salvar item produzido</button>
+    </div>
   </div>
 
   <script>
@@ -67,7 +82,6 @@
           carregarEstoque();
         } catch (error) {
           document.getElementById("login-error").innerText = "Erro ao fazer login: " + error.message;
-          console.error("Erro:", error);
         }
       }
 
@@ -81,27 +95,50 @@
           return;
         }
 
-        await db.collection("estoque").add({
-          uid: currentUser.email,
-          item,
-          unidade,
-          quantidade
-        });
+        try {
+          await db.collection("estoque").add({
+            uid: currentUser.email,
+            item,
+            unidade,
+            quantidade
+          });
 
-        document.getElementById("item").value = "";
-        document.getElementById("unidade").value = "";
-        document.getElementById("quantidade").value = "";
-        carregarEstoque();
+          document.getElementById("item").value = "";
+          document.getElementById("unidade").value = "";
+          document.getElementById("quantidade").value = "";
+          carregarEstoque();
+        } catch (error) {
+          alert("Erro ao salvar item: " + error.message);
+        }
       }
 
       async function carregarEstoque() {
         const lista = document.getElementById("estoque-list");
-        lista.innerHTML = "";
-        const query = await db.collection("estoque").where("uid", "==", currentUser.email).get();
-        query.forEach(doc => {
-          const data = doc.data();
-          lista.innerHTML += `<div class='card'><b>${data.item}</b><br>${data.quantidade} ${data.unidade}</div>`;
-        });
+        lista.innerHTML = "<p>Carregando itens do estoque...</p>";
+
+        try {
+          const query = await db.collection("estoque").where("uid", "==", currentUser.email).get();
+          lista.innerHTML = "";
+          if (query.empty) {
+            lista.innerHTML = "<p>Nenhum item encontrado.</p>";
+            return;
+          }
+
+          query.forEach(doc => {
+            const data = doc.data();
+            lista.innerHTML += `<div class='card'><b>${data.item}</b><br>${data.quantidade} ${data.unidade}</div>`;
+          });
+        } catch (error) {
+          lista.innerHTML = "<p>Erro ao carregar estoque.</p>";
+        }
+      }
+
+      window.mostrarAba = function (aba) {
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+
+        document.querySelector(`.tab-button[onclick="mostrarAba('${aba}')"]`).classList.add('active');
+        document.getElementById(aba).classList.add('active');
       }
     });
   </script>
