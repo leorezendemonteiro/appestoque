@@ -105,7 +105,10 @@
 
           query.forEach(doc => {
             const data = doc.data();
-            lista.innerHTML += `<div class='card'><b>${data.item}</b><br>${data.atual || data.quantidade} ${data.unidade}</div>`;
+            const nome = data.item || "(Sem nome)";
+            const qtd = data.atual !== undefined ? data.atual : data.quantidade || 0;
+            const unidade = data.unidade || "(sem unidade)";
+            lista.innerHTML += `<div class='card'><b>${nome}</b><br>${qtd} ${unidade}</div>`;
           });
         } catch (error) {
           lista.innerHTML = "<p>Erro ao carregar estoque.</p>";
