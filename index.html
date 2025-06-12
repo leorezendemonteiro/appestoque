@@ -14,11 +14,8 @@
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
     input, button { padding: 10px; margin: 5px 0; width: 100%; }
     .card { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
-    .tabs { display: flex; justify-content: space-around; margin-top: 20px; }
-    .tab-button { padding: 10px; cursor: pointer; background: #eee; border: 1px solid #ccc; }
-    .tab-button.active { background: #ccc; font-weight: bold; }
-    .tab-content { display: none; margin-top: 20px; }
-    .tab-content.active { display: block; }
+    .tabs button { padding: 10px; margin-right: 10px; }
+    .tabs button.active { background: #ccc; }
   </style>
 </head>
 <body>
@@ -36,21 +33,22 @@
     <p>Login realizado com sucesso!</p>
 
     <div class="tabs">
-      <div class="tab-button active" onclick="mostrarAba('estoque')">Estoque</div>
-      <div class="tab-button" onclick="mostrarAba('producao')">Produção</div>
+      <button onclick="mostrarAba('estoque')" id="btn-estoque">Estoque</button>
+      <button onclick="mostrarAba('producao')" id="btn-producao">Produção</button>
     </div>
 
-    <div id="estoque" class="tab-content active">
+    <div id="aba-estoque" style="display:block">
       <h3>Itens do Estoque</h3>
-      <div id="estoque-list">Carregando estoque...</div>
+      <div id="estoque-list"></div>
     </div>
 
-    <div id="producao" class="tab-content">
+    <div id="aba-producao" style="display:none">
       <h3>Cadastro de Produção</h3>
-      <input type="text" id="item" placeholder="Nome do item produzido" />
-      <input type="text" id="unidade" placeholder="Unidade (kg, L, porção...)" />
-      <input type="number" id="quantidade" placeholder="Quantidade" />
-      <button onclick="salvarItem()">Salvar item produzido</button>
+      <input type="text" id="item-producao" placeholder="Nome do item" />
+      <input type="text" id="unidade-producao" placeholder="Unidade (kg, L, porção...)" />
+      <input type="number" id="quantidade-producao" placeholder="Quantidade" />
+      <button onclick="salvarProducao()">Salvar item produzido</button>
+      <div id="producao-list"></div>
     </div>
   </div>
 
@@ -80,36 +78,18 @@
           document.getElementById("login-section").style.display = "none";
           document.getElementById("app-section").style.display = "block";
           carregarEstoque();
+          carregarProducao();
         } catch (error) {
           document.getElementById("login-error").innerText = "Erro ao fazer login: " + error.message;
+          console.error("Erro:", error);
         }
       }
 
-      window.salvarItem = async function () {
-        const item = document.getElementById("item").value;
-        const unidade = document.getElementById("unidade").value;
-        const quantidade = parseFloat(document.getElementById("quantidade").value);
-
-        if (!item || !unidade || isNaN(quantidade)) {
-          alert("Preencha todos os campos.");
-          return;
-        }
-
-        try {
-          await db.collection("estoque").add({
-            uid: currentUser.email,
-            item,
-            unidade,
-            quantidade
-          });
-
-          document.getElementById("item").value = "";
-          document.getElementById("unidade").value = "";
-          document.getElementById("quantidade").value = "";
-          carregarEstoque();
-        } catch (error) {
-          alert("Erro ao salvar item: " + error.message);
-        }
+      window.mostrarAba = function(aba) {
+        document.getElementById("aba-estoque").style.display = aba === 'estoque' ? 'block' : 'none';
+        document.getElementById("aba-producao").style.display = aba === 'producao' ? 'block' : 'none';
+        document.getElementById("btn-estoque").classList.toggle("active", aba === 'estoque');
+        document.getElementById("btn-producao").classList.toggle("active", aba === 'producao');
       }
 
       async function carregarEstoque() {
@@ -121,7 +101,6 @@
           lista.innerHTML = "";
           if (query.empty) {
             lista.innerHTML = "<p>Nenhum item encontrado.</p>";
-            return;
           }
 
           query.forEach(doc => {
@@ -130,15 +109,59 @@
           });
         } catch (error) {
           lista.innerHTML = "<p>Erro ao carregar estoque.</p>";
+          console.error(error);
         }
       }
 
-      window.mostrarAba = function (aba) {
-        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      async function carregarProducao() {
+        const lista = document.getElementById("producao-list");
+        lista.innerHTML = "<p>Carregando produção...</p>";
 
-        document.querySelector(`.tab-button[onclick="mostrarAba('${aba}')"]`).classList.add('active');
-        document.getElementById(aba).classList.add('active');
+        try {
+          const query = await db.collection("producao").where("uid", "==", currentUser.email).get();
+          lista.innerHTML = "";
+          if (query.empty) {
+            lista.innerHTML = "<p>Nenhum item produzido encontrado.</p>";
+          }
+
+          query.forEach(doc => {
+            const data = doc.data();
+            lista.innerHTML += `<div class='card'><b>${data.item}</b><br>${data.quantidade} ${data.unidade}</div>`;
+          });
+        } catch (error) {
+          lista.innerHTML = "<p>Erro ao carregar produção.</p>";
+          console.error(error);
+        }
+      }
+
+      window.salvarProducao = async function () {
+        const item = document.getElementById("item-producao").value;
+        const unidade = document.getElementById("unidade-producao").value;
+        const quantidade = parseFloat(document.getElementById("quantidade-producao").value);
+
+        if (!item || !unidade || isNaN(quantidade)) {
+          alert("Preencha todos os campos.");
+          return;
+        }
+
+        try {
+          await db.collection("producao").add({
+            uid: currentUser.email,
+            item,
+            unidade,
+            quantidade,
+            criadoEm: new Date()
+          });
+
+          alert("Item de produção salvo com sucesso!");
+          document.getElementById("item-producao").value = "";
+          document.getElementById("unidade-producao").value = "";
+          document.getElementById("quantidade-producao").value = "";
+          carregarProducao();
+        } catch (error) {
+          alert("Erro ao salvar item: " + error.message);
+          console.error(error);
+        }
       }
     });
   </script>
