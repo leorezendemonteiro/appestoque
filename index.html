@@ -6,9 +6,9 @@
   <title>Controle de Estoque</title>
 
   <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
@@ -32,31 +32,33 @@
   </div>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
-      authDomain: "appestoquecozinha.firebaseapp.com",
-      projectId: "appestoquecozinha",
-      storageBucket: "appestoquecozinha.firebasestorage.app",
-      messagingSenderId: "705934517110",
-      appId: "1:705934517110:web:b4d5b79059feb7e6485057"
-    };
+    window.addEventListener('DOMContentLoaded', () => {
+      const firebaseConfig = {
+        apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
+        authDomain: "appestoquecozinha.firebaseapp.com",
+        projectId: "appestoquecozinha",
+        storageBucket: "appestoquecozinha.firebasestorage.app",
+        messagingSenderId: "705934517110",
+        appId: "1:705934517110:web:b4d5b79059feb7e6485057"
+      };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
 
-    async function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+      window.login = async function () {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
 
-      try {
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
-        document.getElementById("login-section").style.display = "none";
-        document.getElementById("app-section").style.display = "block";
-      } catch (error) {
-        document.getElementById("login-error").innerText = "Erro ao fazer login: " + error.message;
-        console.error("Erro:", error);
+        try {
+          const userCredential = await auth.signInWithEmailAndPassword(email, password);
+          document.getElementById("login-section").style.display = "none";
+          document.getElementById("app-section").style.display = "block";
+        } catch (error) {
+          document.getElementById("login-error").innerText = "Erro ao fazer login: " + error.message;
+          console.error("Erro:", error);
+        }
       }
-    }
+    });
   </script>
 </body>
 </html>
