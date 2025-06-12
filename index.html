@@ -16,6 +16,7 @@
     .card { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
     .tabs button { padding: 10px; margin-right: 10px; }
     .tabs button.active { background: #ccc; }
+    .ocultar { display: none; }
   </style>
 </head>
 <body>
@@ -112,7 +113,6 @@
             if (data.fornecedor) fornecedores.add(data.fornecedor);
           });
 
-          // Preencher filtro de fornecedores
           filtro.innerHTML = '<option value="">Todos os Fornecedores</option>';
           Array.from(fornecedores).sort().forEach(f => {
             filtro.innerHTML += `<option value="${f}">${f}</option>`;
