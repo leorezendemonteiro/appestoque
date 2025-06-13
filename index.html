@@ -89,14 +89,47 @@
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
       auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
+        .then((userCredential) => {
+          const user = userCredential.user;
           document.getElementById("login-section").style.display = "none";
           document.getElementById("app-section").style.display = "block";
-          alert("Login realizado com sucesso!");
+          carregarEstoque(user.uid);
         })
         .catch((error) => {
           document.getElementById("login-error").innerText = "Erro ao fazer login: " + error.message;
         });
+    }
+
+    function carregarEstoque(uid) {
+      db.collection("estoque").where("uid", "==", uid).get().then(snapshot => {
+        const lista = document.getElementById("estoque-list");
+        const fornecedores = new Set();
+        const itens = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          data.id = doc.id;
+          itens.push(data);
+          fornecedores.add(data.fornecedor);
+        });
+
+        const filtro = document.getElementById("filtro-fornecedor");
+        filtro.innerHTML = '<option value="todos">Todos os Fornecedores</option>' +
+          Array.from(fornecedores).map(f => `<option value="${f}">${f}</option>`).join("");
+
+        listarEstoque(itens, filtro.value);
+        filtro.onchange = () => listarEstoque(itens, filtro.value);
+      });
+    }
+
+    function listarEstoque(itens, filtro) {
+      const lista = document.getElementById("estoque-list");
+      lista.innerHTML = "";
+      itens.filter(item => filtro === "todos" || item.fornecedor === filtro).forEach(item => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `<strong>${item.item}</strong><br>${item.atual ?? 0} ${item.unidade}`;
+        lista.appendChild(div);
+      });
     }
   </script>
 </body>
