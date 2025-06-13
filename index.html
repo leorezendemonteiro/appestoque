@@ -49,6 +49,7 @@
       <select id="filtro-fornecedor" onchange="filtrarEstoque()"></select>
       <div id="estoque-list"></div>
       <button onclick="abrirPopupConfirmacaoCompras()">📋 Gerar Lista de Compras (PDF)</button>
+      <button onclick="gerarRelatorioCompletoPDF()">📊 Gerar Relatório Completo (PDF)</button>
     </div>
 
     <div id="aba-producao" style="display:none">
@@ -72,131 +73,7 @@
     </div>
   </div>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
-      authDomain: "appestoquecozinha.firebaseapp.com",
-      projectId: "appestoquecozinha",
-      storageBucket: "appestoquecozinha.appspot.com",
-      messagingSenderId: "705934517110",
-      appId: "1:705934517110:web:b4d5b79059feb7e6485057"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    let uidGlobal = "";
-
-    function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      auth.signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-          const user = userCredential.user;
-          uidGlobal = user.uid;
-          document.getElementById("login-section").style.display = "none";
-          document.getElementById("app-section").style.display = "block";
-          carregarEstoque(uidGlobal);
-          carregarProducao(uidGlobal);
-        })
-        .catch((error) => {
-          document.getElementById("login-error").innerText = "Erro ao fazer login: " + error.message;
-        });
-    }
-
-    function carregarEstoque(uid) {
-      db.collection("estoque").where("uid", "==", uid).get().then(snapshot => {
-        const lista = document.getElementById("estoque-list");
-        const fornecedores = new Set();
-        const itens = [];
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          data.id = doc.id;
-          itens.push(data);
-          fornecedores.add(data.fornecedor);
-        });
-
-        const filtro = document.getElementById("filtro-fornecedor");
-        filtro.innerHTML = '<option value="todos">Todos os Fornecedores</option>' +
-          Array.from(fornecedores).map(f => `<option value="${f}">${f}</option>`).join("");
-
-        listarEstoque(itens, filtro.value);
-        filtro.onchange = () => listarEstoque(itens, filtro.value);
-      });
-    }
-
-    function listarEstoque(itens, filtro) {
-      const lista = document.getElementById("estoque-list");
-      lista.innerHTML = "";
-      itens.filter(item => filtro === "todos" || item.fornecedor === filtro).forEach(item => {
-        const div = document.createElement("div");
-        div.className = "card";
-        div.innerHTML = `<strong>${item.item}</strong><br>${item.atual ?? 0} ${item.unidade}
-          <input type='number' id='add-${item.id}' placeholder='Adicionar quantidade'>
-          <button onclick='atualizarEstoque("${item.id}", "${item.unidade}")'>Atualizar</button>`;
-        lista.appendChild(div);
-      });
-    }
-
-    function atualizarEstoque(id, unidade) {
-      const valor = parseFloat(document.getElementById(`add-${id}`).value);
-      if (!isNaN(valor)) {
-        db.collection("estoque").doc(id).get().then(doc => {
-          let atual = doc.data().atual || 0;
-          const novoValor = valor === 0 ? 0 : atual + valor;
-          db.collection("estoque").doc(id).update({ atual: novoValor });
-          carregarEstoque(uidGlobal);
-        });
-      }
-    }
-
-    function carregarProducao(uid) {
-      db.collection("producao").where("uid", "==", uid).get().then(snapshot => {
-        const lista = document.getElementById("producao-list");
-        lista.innerHTML = "";
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const div = document.createElement("div");
-          div.className = "card";
-          div.innerHTML = `<strong>${data.item}</strong><br>${data.quantidade ?? 0} ${data.unidade}
-            <input type='number' id='prod-${doc.id}' placeholder='Adicionar quantidade'>
-            <button onclick='atualizarProducao("${doc.id}", "${data.unidade}")'>Atualizar</button>`;
-          lista.appendChild(div);
-        });
-      });
-    }
-
-    function atualizarProducao(id, unidade) {
-      const valor = parseFloat(document.getElementById(`prod-${id}`).value);
-      if (!isNaN(valor)) {
-        db.collection("producao").doc(id).get().then(doc => {
-          let atual = doc.data().quantidade || 0;
-          const novoValor = valor === 0 ? 0 : atual + valor;
-          db.collection("producao").doc(id).update({ quantidade: novoValor });
-          carregarProducao(uidGlobal);
-        });
-      }
-    }
-
-    function salvarProducao() {
-      const item = document.getElementById("item-producao").value;
-      const unidade = document.getElementById("unidade-producao").value;
-      const quantidade = parseFloat(document.getElementById("quantidade-producao").value);
-      if (item && unidade && !isNaN(quantidade)) {
-        db.collection("producao").add({
-          uid: uidGlobal,
-          item,
-          unidade,
-          quantidade
-        }).then(() => {
-          carregarProducao(uidGlobal);
-        });
-      }
-    }
-
-    function mostrarAba(aba) {
-      document.getElementById("aba-estoque").style.display = aba === "estoque" ? "block" : "none";
-      document.getElementById("aba-producao").style.display = aba === "producao" ? "block" : "none";
-    }
-  </script>
+  <script src="js/pdfGerador.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
