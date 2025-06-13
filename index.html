@@ -73,7 +73,6 @@
   </div>
 
   <script>
-    // Firebase config corrigida
     const firebaseConfig = {
       apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
       authDomain: "appestoquecozinha.firebaseapp.com",
@@ -93,78 +92,11 @@
         .then(() => {
           document.getElementById("login-section").style.display = "none";
           document.getElementById("app-section").style.display = "block";
-          carregarEstoque();
-          carregarProducao();
+          alert("Login realizado com sucesso!");
         })
         .catch((error) => {
           document.getElementById("login-error").innerText = "Erro ao fazer login: " + error.message;
         });
-    }
-
-    let itensParaCompraConfirmados = [];
-
-    window.abrirPopupConfirmacaoCompras = function () {
-      const container = document.getElementById("lista-confirmacao");
-      itensParaCompraConfirmados = [];
-      container.innerHTML = "";
-
-      todosItensEstoque.forEach(item => {
-        const atual = item.atual || 0;
-        const ideal = item.ideal || 0;
-        const comprar = ideal - atual;
-
-        if (comprar > 0) {
-          const id = `${item.item}_${item.fornecedor}`;
-          itensParaCompraConfirmados.push({ ...item, comprar });
-
-          container.innerHTML += `
-            <div class='card' id='card-${id}'>
-              <b>${item.item}</b> (${item.unidade})<br>
-              Atual: ${atual} | Ideal: ${ideal}<br>
-              Comprar: <input type='number' id='input-${id}' value='${com
-prar}' />
-              <button onclick="document.getElementById('card-${id}').remove()">Excluir</button>
-            </div>`;
-        }
-      });
-
-      document.getElementById("popup-confirmacao").style.display = "flex";
-    }
-
-    window.gerarPDFConfirmado = function () {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const dataAtual = new Date().toLocaleDateString();
-      doc.text("Lista de Compras Confirmada", 15, 10);
-      doc.setFontSize(10);
-      doc.text("Data: " + dataAtual, 15, 16);
-
-      let y = 25;
-      const agrupado = {};
-
-      itensParaCompraConfirmados.forEach(item => {
-        const id = `${item.item}_${item.fornecedor}`;
-        const campo = document.getElementById(`input-${id}`);
-        const qtd = parseFloat(campo?.value || 0);
-        if (qtd <= 0) return;
-        if (!agrupado[item.fornecedor]) agrupado[item.fornecedor] = [];
-        agrupado[item.fornecedor].push({ ...item, comprar: qtd });
-      });
-
-      Object.keys(agrupado).forEach(fornecedor => {
-        doc.setFont(undefined, 'bold');
-        doc.text(fornecedor, 15, y);
-        y += 6;
-        doc.setFont(undefined, 'normal');
-        agrupado[fornecedor].forEach(item => {
-          doc.text(`- ${item.item}: Comprar ${item.comprar} ${item.unidade}`, 15, y);
-          y += 5;
-        });
-        y += 3;
-      });
-
-      doc.save("lista_compras_confirmada.pdf");
-      document.getElementById("popup-confirmacao").style.display = "none";
     }
   </script>
 </body>
