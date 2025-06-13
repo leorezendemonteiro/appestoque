@@ -9,6 +9,8 @@
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore-compat.js"></script>
+  <!-- jsPDF para gerar PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
@@ -17,6 +19,10 @@
     .tabs button { padding: 10px; margin-right: 10px; }
     .tabs button.active { background: #ccc; }
     .ocultar { display: none; }
+    .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+    .popup-content { background: #fff; padding: 20px; border-radius: 10px; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; }
+    .popup-content input { width: 60px; }
+    .popup-header { display: flex; justify-content: space-between; align-items: center; }
   </style>
 </head>
 <body>
@@ -42,6 +48,7 @@
       <h3>Itens do Estoque</h3>
       <select id="filtro-fornecedor" onchange="filtrarEstoque()"></select>
       <div id="estoque-list"></div>
+      <button onclick="abrirPopupConfirmacaoCompras()">📋 Gerar Lista de Compras (PDF)</button>
     </div>
 
     <div id="aba-producao" style="display:none">
@@ -54,180 +61,82 @@
     </div>
   </div>
 
+  <div id="popup-confirmacao" class="popup-overlay" style="display:none">
+    <div class="popup-content">
+      <div class="popup-header">
+        <h3>Confirmar Lista de Compras</h3>
+        <button onclick="document.getElementById('popup-confirmacao').style.display='none'">✖</button>
+      </div>
+      <div id="lista-confirmacao"></div>
+      <button onclick="gerarPDFConfirmado()">Gerar PDF</button>
+    </div>
+  </div>
+
   <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      const firebaseConfig = {
-        apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
-        authDomain: "appestoquecozinha.firebaseapp.com",
-        projectId: "appestoquecozinha",
-        storageBucket: "appestoquecozinha.appspot.com",
-        messagingSenderId: "705934517110",
-        appId: "1:705934517110:web:b4d5b79059feb7e6485057"
-      };
+    let itensParaCompraConfirmados = [];
 
-      firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
-      const db = firebase.firestore();
-      let currentUser = null;
-      let todosItensEstoque = [];
+    window.abrirPopupConfirmacaoCompras = function () {
+      const container = document.getElementById("lista-confirmacao");
+      itensParaCompraConfirmados = [];
+      container.innerHTML = "";
 
-      window.login = async function () {
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
+      todosItensEstoque.forEach(item => {
+        const atual = item.atual || 0;
+        const ideal = item.ideal || 0;
+        const comprar = ideal - atual;
 
-        try {
-          const userCredential = await auth.signInWithEmailAndPassword(email, password);
-          currentUser = userCredential.user;
-          document.getElementById("login-section").style.display = "none";
-          document.getElementById("app-section").style.display = "block";
-          carregarEstoque();
-          carregarProducao();
-        } catch (error) {
-          document.getElementById("login-error").innerText = "Erro ao fazer login: " + error.message;
-          console.error("Erro:", error);
-        }
-      }
+        if (comprar > 0) {
+          const id = `${item.item}_${item.fornecedor}`;
+          itensParaCompraConfirmados.push({ ...item, comprar });
 
-      window.mostrarAba = function(aba) {
-        document.getElementById("aba-estoque").style.display = aba === 'estoque' ? 'block' : 'none';
-        document.getElementById("aba-producao").style.display = aba === 'producao' ? 'block' : 'none';
-        document.getElementById("btn-estoque").classList.toggle("active", aba === 'estoque');
-        document.getElementById("btn-producao").classList.toggle("active", aba === 'producao');
-      }
-
-      async function carregarEstoque() {
-        const lista = document.getElementById("estoque-list");
-        const filtro = document.getElementById("filtro-fornecedor");
-        lista.innerHTML = "<p>Carregando itens do estoque...</p>";
-
-        try {
-          const query = await db.collection("estoque").get();
-          lista.innerHTML = "";
-
-          let fornecedores = new Set();
-          todosItensEstoque = [];
-
-          query.forEach(doc => {
-            const data = doc.data();
-            data.id = doc.id;
-            todosItensEstoque.push(data);
-            if (data.fornecedor) fornecedores.add(data.fornecedor);
-          });
-
-          filtro.innerHTML = '<option value="">Todos os Fornecedores</option>';
-          Array.from(fornecedores).sort().forEach(f => {
-            filtro.innerHTML += `<option value="${f}">${f}</option>`;
-          });
-
-          filtrarEstoque();
-        } catch (error) {
-          lista.innerHTML = "<p>Erro ao carregar estoque.</p>";
-          console.error(error);
-        }
-      }
-
-      window.filtrarEstoque = function () {
-        const lista = document.getElementById("estoque-list");
-        const filtro = document.getElementById("filtro-fornecedor").value;
-        lista.innerHTML = "";
-
-        const filtrados = filtro ? todosItensEstoque.filter(i => i.fornecedor === filtro) : todosItensEstoque;
-
-        if (filtrados.length === 0) {
-          lista.innerHTML = "<p>Nenhum item encontrado.</p>";
-        } else {
-          filtrados.forEach(data => {
-            const nome = data.item || "(Sem nome)";
-            const qtd = data.atual !== undefined ? data.atual : data.quantidade || 0;
-            const unidade = data.unidade || "(sem unidade)";
-            lista.innerHTML += `<div class='card'><b>${nome}</b><br>${qtd} ${unidade}<br>
-              <input type='number' placeholder='Adicionar quantidade' id='add-${data.id}' />
-              <button onclick="adicionarQuantidade('${data.id}', 'estoque')">Adicionar</button>
+          container.innerHTML += `
+            <div class='card' id='card-${id}'>
+              <b>${item.item}</b> (${item.unidade})<br>
+              Atual: ${atual} | Ideal: ${ideal}<br>
+              Comprar: <input type='number' id='input-${id}' value='${comprar}' />
+              <button onclick="document.getElementById('card-${id}').remove()">Excluir</button>
             </div>`;
-          });
         }
-      }
+      });
 
-      async function carregarProducao() {
-        const lista = document.getElementById("producao-list");
-        lista.innerHTML = "<p>Carregando produção...</p>";
+      document.getElementById("popup-confirmacao").style.display = "flex";
+    }
 
-        try {
-          const query = await db.collection("producao").where("uid", "==", currentUser.email).get();
-          lista.innerHTML = "";
-          if (query.empty) {
-            lista.innerHTML = "<p>Nenhum item produzido encontrado.</p>";
-          }
+    window.gerarPDFConfirmado = function () {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const dataAtual = new Date().toLocaleDateString();
+      doc.text("Lista de Compras Confirmada", 15, 10);
+      doc.setFontSize(10);
+      doc.text("Data: " + dataAtual, 15, 16);
 
-          query.forEach(doc => {
-            const data = doc.data();
-            const nome = data.item || "(Sem nome)";
-            const qtd = data.atual !== undefined ? data.atual : data.quantidade || 0;
-            const unidade = data.unidade || "(sem unidade)";
-            lista.innerHTML += `<div class='card'><b>${nome}</b><br>${qtd} ${unidade}<br>
-              <input type='number' placeholder='Adicionar quantidade' id='add-${doc.id}' />
-              <button onclick="adicionarQuantidade('${doc.id}', 'producao')">Adicionar</button>
-            </div>`;
-          });
-        } catch (error) {
-          lista.innerHTML = "<p>Erro ao carregar produção.</p>";
-          console.error(error);
-        }
-      }
+      let y = 25;
+      const agrupado = {};
 
-      window.salvarProducao = async function () {
-        const item = document.getElementById("item-producao").value;
-        const unidade = document.getElementById("unidade-producao").value;
-        const quantidade = parseFloat(document.getElementById("quantidade-producao").value);
+      itensParaCompraConfirmados.forEach(item => {
+        const id = `${item.item}_${item.fornecedor}`;
+        const campo = document.getElementById(`input-${id}`);
+        const qtd = parseFloat(campo?.value || 0);
+        if (qtd <= 0) return;
+        if (!agrupado[item.fornecedor]) agrupado[item.fornecedor] = [];
+        agrupado[item.fornecedor].push({ ...item, comprar: qtd });
+      });
 
-        if (!item || !unidade || isNaN(quantidade)) {
-          alert("Preencha todos os campos.");
-          return;
-        }
+      Object.keys(agrupado).forEach(fornecedor => {
+        doc.setFont(undefined, 'bold');
+        doc.text(fornecedor, 15, y);
+        y += 6;
+        doc.setFont(undefined, 'normal');
+        agrupado[fornecedor].forEach(item => {
+          doc.text(`- ${item.item}: Comprar ${item.comprar} ${item.unidade}`, 15, y);
+          y += 5;
+        });
+        y += 3;
+      });
 
-        try {
-          await db.collection("producao").add({
-            uid: currentUser.email,
-            item,
-            unidade,
-            quantidade,
-            criadoEm: new Date()
-          });
-
-          alert("Item de produção salvo com sucesso!");
-          document.getElementById("item-producao").value = "";
-          document.getElementById("unidade-producao").value = "";
-          document.getElementById("quantidade-producao").value = "";
-          carregarProducao();
-        } catch (error) {
-          alert("Erro ao salvar item: " + error.message);
-          console.error(error);
-        }
-      }
-
-      window.adicionarQuantidade = async function(id, colecao) {
-        const input = document.getElementById(`add-${id}`);
-        const valor = parseFloat(input.value);
-        if (isNaN(valor)) {
-          alert("Digite uma quantidade válida.");
-          return;
-        }
-        try {
-          const ref = db.collection(colecao).doc(id);
-          await db.runTransaction(async (t) => {
-            const doc = await t.get(ref);
-            const atual = doc.data().quantidade || doc.data().atual || 0;
-            const novo = valor === 0 ? 0 : atual + valor;
-            t.update(ref, { quantidade: novo, atual: novo });
-          });
-          alert(valor === 0 ? "Estoque zerado." : "Quantidade adicionada!");
-          colecao === 'estoque' ? carregarEstoque() : carregarProducao();
-        } catch (error) {
-          alert("Erro ao adicionar: " + error.message);
-          console.error(error);
-        }
-      }
-    });
+      doc.save("lista_compras_confirmada.pdf");
+      document.getElementById("popup-confirmacao").style.display = "none";
+    }
   </script>
 </body>
 </html>
