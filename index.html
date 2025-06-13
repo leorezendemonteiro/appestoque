@@ -73,6 +73,31 @@
   </div>
 
   <script>
+    // Firebase config (substitua pelos dados reais do seu projeto)
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SUA_AUTH_DOMAIN",
+      projectId: "SEU_PROJECT_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          document.getElementById("login-section").style.display = "none";
+          document.getElementById("app-section").style.display = "block";
+          carregarEstoque();
+          carregarProducao();
+        })
+        .catch((error) => {
+          document.getElementById("login-error").innerText = "Erro ao fazer login: " + error.message;
+        });
+    }
+
     let itensParaCompraConfirmados = [];
 
     window.abrirPopupConfirmacaoCompras = function () {
