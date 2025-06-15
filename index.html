@@ -104,7 +104,7 @@
                         <form id="add-item-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input type="text" id="product-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                             <input type="text" id="product-supplier" placeholder="Fornecedor" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                            <input type="number" id="product-quantity" placeholder="Qtd" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <input type="number" id="product-quantity" placeholder="Qtd" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
                             <select id="product-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
                                 <option>un</option> <option>kg</option> <option>g</option> <option>lt</option> <option>ml</option>
                             </select>
@@ -123,7 +123,7 @@
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Item à Produção</h2>
                         <form id="add-production-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input type="text" id="production-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                            <input type="number" id="production-quantity" placeholder="Qtd" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <input type="number" id="production-quantity" placeholder="Qtd" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
                             <select id="production-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
                                 <option>porção</option> <option>kg</option> <option>lt</option> <option>un</option>
                             </select>
@@ -155,7 +155,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot, addDoc, deleteDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ===================================================================
         // 1. CONFIGURAÇÃO DO FIREBASE
@@ -178,8 +178,6 @@
         
         let appState = {
             currentUser: null,
-            stock: [],
-            production: [],
             unsubscribeStock: null,
             unsubscribeProduction: null
         };
@@ -236,8 +234,8 @@
         function renderStock(stockItems) {
             renderList(stockListContainer, stockItems, 'Seu estoque está vazio.', (item) => `
                 <div>
-                    <p class="font-semibold text-gray-800">${item.name}</p>
-                    <p class="text-sm text-gray-600">Qtd: ${item.quantity} ${item.unit} ${item.supplier ? `| Fornecedor: ${item.supplier}` : ''}</p>
+                    <p class="font-semibold text-gray-800">${item.item || item.name}</p>
+                    <p class="text-sm text-gray-600">Qtd: ${item.quantidade || item.quantity} ${item.unidade || item.unit} ${item.fornecedor || item.supplier ? `| Fornecedor: ${item.fornecedor || item.supplier}` : ''}</p>
                 </div>
                 <button data-id="${item.id}" data-type="stock" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button>
             `);
@@ -275,7 +273,7 @@
                 appState.currentUser = user;
                 document.getElementById('user-email').textContent = user.email;
                 toggleViews('main-app-view');
-                switchTab('stock'); // Aba inicial
+                switchTab('stock');
                 listenToDataChanges(user.uid);
             } else {
                 appState.currentUser = null;
@@ -300,72 +298,82 @@
         tabsContainer.addEventListener('click', (e) => { if(e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
 
         // ===================================================================
-        // 6. LÓGICA DO FIRESTORE (CRUD)
+        // 6. LÓGICA DO FIRESTORE (CRUD - ESTRUTURA CORRIGIDA)
         // ===================================================================
         function listenToDataChanges(userId) {
-            const userDocRef = doc(db, "users", userId);
-            appState.unsubscribeStock = onSnapshot(userDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    appState.stock = data.estoque || [];
-                    appState.production = data.producao || [];
-                    renderStock(appState.stock);
-                    renderProduction(appState.production);
-                } else {
-                    setDoc(userDocRef, { email: auth.currentUser.email, createdAt: new Date(), estoque: [], producao: [] });
-                }
-            }, (error) => console.error("Erro ao carregar dados:", error));
+            // Caminho para a sub-coleção de estoque
+            const stockCollectionRef = collection(db, "estoque", userId, "estoque");
+            appState.unsubscribeStock = onSnapshot(query(stockCollectionRef), (snapshot) => {
+                const stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderStock(stockItems);
+            }, (error) => console.error("Erro ao carregar estoque:", error));
+
+            // Caminho para a sub-coleção de produção
+            const productionCollectionRef = collection(db, "estoque", userId, "producao");
+            appState.unsubscribeProduction = onSnapshot(query(productionCollectionRef), (snapshot) => {
+                const productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderProduction(productionItems);
+            }, (error) => console.error("Erro ao carregar produção:", error));
         }
         
-        addItemForm.addEventListener('submit', (e) => {
+        addItemForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const newItem = {
-                id: Date.now(),
-                name: document.getElementById('product-name').value,
-                supplier: document.getElementById('product-supplier').value,
-                quantity: parseFloat(document.getElementById('product-quantity').value),
-                unit: document.getElementById('product-unit').value
+                item: document.getElementById('product-name').value, // Corrigido para 'item' como no seu DB
+                fornecedor: document.getElementById('product-supplier').value, // Corrigido para 'fornecedor'
+                quantidade: parseFloat(document.getElementById('product-quantity').value),
+                unidade: document.getElementById('product-unit').value // Corrigido para 'unidade'
             };
-            const newStockArray = [...appState.stock, newItem];
-            updateFirestore({ estoque: newStockArray }).then(() => addItemForm.reset());
+            const stockCollectionRef = collection(db, "estoque", appState.currentUser.uid, "estoque");
+            try {
+                await addDoc(stockCollectionRef, newItem);
+                addItemForm.reset();
+            } catch (error) {
+                console.error("Erro ao adicionar item de estoque:", error);
+                showMessage("Não foi possível salvar o item no estoque.", true);
+            }
         });
 
-        addProductionForm.addEventListener('submit', (e) => {
+        addProductionForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const newItem = {
-                id: Date.now(),
                 name: document.getElementById('production-name').value,
                 quantity: parseFloat(document.getElementById('production-quantity').value),
                 unit: document.getElementById('production-unit').value
             };
-            const newProductionArray = [...appState.production, newItem];
-            updateFirestore({ producao: newProductionArray }).then(() => addProductionForm.reset());
+            const productionCollectionRef = collection(db, "estoque", appState.currentUser.uid, "producao");
+            try {
+                await addDoc(productionCollectionRef, newItem);
+                addProductionForm.reset();
+            } catch (error) {
+                console.error("Erro ao adicionar item de produção:", error);
+                showMessage("Não foi possível salvar o item na produção.", true);
+            }
         });
 
-        document.getElementById('app-content').addEventListener('click', (e) => {
+        document.getElementById('app-content').addEventListener('click', async (e) => {
             if (e.target.classList.contains('delete-btn')) {
-                const itemId = Number(e.target.dataset.id);
-                const type = e.target.dataset.type; // 'stock' ou 'production'
-
+                const itemId = e.target.dataset.id;
+                const type = e.target.dataset.type;
+                
+                let docRef;
                 if (type === 'stock') {
-                    const newStockArray = appState.stock.filter(item => item.id !== itemId);
-                    updateFirestore({ estoque: newStockArray });
+                    docRef = doc(db, "estoque", appState.currentUser.uid, "estoque", itemId);
                 } else if (type === 'production') {
-                    const newProductionArray = appState.production.filter(item => item.id !== itemId);
-                    updateFirestore({ producao: newProductionArray });
+                    docRef = doc(db, "estoque", appState.currentUser.uid, "producao", itemId);
+                } else {
+                    return;
+                }
+
+                try {
+                    await deleteDoc(docRef);
+                } catch (error) {
+                    console.error("Erro ao excluir item:", error);
+                    showMessage("Não foi possível excluir o item.", true);
                 }
             }
         });
 
-        async function updateFirestore(dataToUpdate) {
-            const userDocRef = doc(db, "users", appState.currentUser.uid);
-            try {
-                await updateDoc(userDocRef, dataToUpdate);
-            } catch (error) {
-                console.error("Erro ao atualizar dados:", error);
-                showMessage("Não foi possível salvar os dados.", true);
-            }
-        }
     </script>
 </body>
 </html>
