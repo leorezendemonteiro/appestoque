@@ -1,58 +1,289 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Controle de Estoque</title>
-
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore-compat.js"></script>
-
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-    input, button, select { padding: 10px; margin: 5px 0; width: 100%; }
-    .card { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
-    .tabs button { padding: 10px; margin-right: 10px; }
-    .tabs button.active { background: #ccc; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Estoque Cozinha - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <h1>Gerenciar Estoque da Cozinha</h1>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-  <div id="login-section">
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Senha" />
-    <button onclick="login()">Entrar</button>
-    <p id="login-error" style="color:red"></p>
-  </div>
+    <!-- Container Principal -->
+    <div id="app-container" class="w-full max-w-md">
 
-  <div id="app-section" style="display:none">
-    <h2>Bem-vindo ao Sistema!</h2>
-    <p>Login realizado com sucesso!</p>
+        <!-- TELA DE LOGIN -->
+        <div id="login-view" class="bg-white p-8 rounded-xl shadow-lg">
+            <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Controle de Estoque</h1>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="login-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                    <input type="email" id="login-email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="mb-6">
+                    <label for="login-password" class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
+                    <input type="password" id="login-password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="flex flex-col space-y-4">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Entrar
+                    </button>
+                    <button type="button" id="show-signup-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">
+                        Não tenho conta, quero me cadastrar
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- TELA DE CADASTRO -->
+        <div id="signup-view" class="bg-white p-8 rounded-xl shadow-lg hidden">
+            <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Criar Nova Conta</h1>
+            <form id="signup-form">
+                <div class="mb-4">
+                    <label for="signup-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                    <input type="email" id="signup-email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="mb-6">
+                    <label for="signup-password" class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
+                    <input type="password" id="signup-password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="flex flex-col space-y-4">
+                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Cadastrar
+                    </button>
+                    <button type="button" id="show-login-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">
+                        Já tenho uma conta
+                    </button>
+                </div>
+            </form>
+        </div>
 
-    <div class="tabs">
-      <button onclick="mostrarAba('estoque')" id="btn-estoque">Estoque</button>
-      <button onclick="mostrarAba('producao')" id="btn-producao">Produção</button>
+        <!-- TELA PRINCIPAL DO APP (PÓS-LOGIN) -->
+        <div id="main-app-view" class="bg-white p-8 rounded-xl shadow-lg hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">Bem-vindo!</h1>
+                <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm">
+                    Sair
+                </button>
+            </div>
+            
+            <div class="bg-gray-100 p-4 rounded-lg mb-6">
+                <h2 class="text-lg font-semibold mb-2">Informações do Usuário</h2>
+                <p class="text-sm"><strong>Email:</strong> <span id="user-email"></span></p>
+                <p class="text-sm"><strong>UID:</strong> <span id="user-uid"></span></p>
+            </div>
+
+            <!-- O CONTEÚDO PRINCIPAL DO SEU APP DE ESTOQUE VIRÁ AQUI -->
+            <div id="app-content">
+                <h2 class="text-lg font-semibold mb-2">Meus Dados do Estoque</h2>
+                <p class="text-gray-600 text-center p-8 border-2 border-dashed rounded-lg">
+                    A área para carregar e exibir os dados do Firestore aparecerá aqui.
+                </p>
+            </div>
+        </div>
+
+        <!-- MENSAGENS DE ERRO/SUCESSO -->
+        <div id="message-container" class="mt-4 text-center text-sm font-bold"></div>
+
     </div>
 
-    <div id="aba-estoque" style="display:block">
-      <h3>Itens do Estoque</h3>
-      <select id="filtro-fornecedor" onchange="filtrarEstoque()"></select>
-      <div id="estoque-list"></div>
-    </div>
+    <!-- SCRIPTS DO FIREBASE -->
+    <script type="module">
+        // Importar as funções necessárias dos SDKs do Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            onAuthStateChanged, 
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore,
+            doc,
+            getDoc,
+            setDoc
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <div id="aba-producao" style="display:none">
-      <h3>Cadastro de Produção</h3>
-      <input type="text" id="item-producao" placeholder="Nome do item" />
-      <input type="text" id="unidade-producao" placeholder="Unidade (kg, L, porção...)" />
-      <input type="number" id="quantidade-producao" placeholder="Quantidade" />
-      <button onclick="salvarProducao()">Salvar item produzido</button>
-      <div id="producao-list"></div>
-    </div>
-  </div>
+        // ===================================================================
+        // 1. CONFIGURAÇÃO DO FIREBASE (FORNECIDA POR VOCÊ)
+        // ===================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
+            authDomain: "appestoquecozinha.firebaseapp.com",
+            projectId: "appestoquecozinha",
+            storageBucket: "appestoquecozinha.firebasestorage.app",
+            messagingSenderId: "705934517110",
+            appId: "1:705934517110:web:b4d5b79059feb7e6485057"
+        };
 
-  <script src="js/app.js"></script>
+        // ===================================================================
+        // 2. INICIALIZAÇÃO DO FIREBASE
+        // ===================================================================
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // ===================================================================
+        // 3. SELETORES DA DOM
+        // ===================================================================
+        const loginView = document.getElementById('login-view');
+        const signupView = document.getElementById('signup-view');
+        const mainAppView = document.getElementById('main-app-view');
+        
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+
+        const showSignupBtn = document.getElementById('show-signup-btn');
+        const showLoginBtn = document.getElementById('show-login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        const messageContainer = document.getElementById('message-container');
+
+        // ===================================================================
+        // 4. FUNÇÕES AUXILIARES DE UI
+        // ===================================================================
+        function showMessage(message, isError = false) {
+            messageContainer.textContent = message;
+            // Add background and padding for better visibility
+            if (isError) {
+                messageContainer.className = 'mt-4 text-center text-base font-bold p-3 rounded-lg bg-red-100 text-red-700';
+            } else {
+                messageContainer.className = 'mt-4 text-center text-base font-bold p-3 rounded-lg bg-green-100 text-green-700';
+            }
+            // Reset after a delay
+            setTimeout(() => {
+                messageContainer.textContent = '';
+                // Reset class to remove background and padding
+                messageContainer.className = 'mt-4 text-center text-sm font-bold';
+            }, 4000);
+        }
+
+        function toggleViews(showView) {
+            loginView.classList.add('hidden');
+            signupView.classList.add('hidden');
+            mainAppView.classList.add('hidden');
+            
+            if (showView) {
+                document.getElementById(showView).classList.remove('hidden');
+            }
+        }
+
+        // ===================================================================
+        // 5. LÓGICA DE AUTENTICAÇÃO
+        // ===================================================================
+        
+        // --- Criar conta ---
+        signupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    showMessage("Conta criada com sucesso! Você já está logado.", false);
+                    // O onAuthStateChanged vai cuidar de mostrar a tela principal.
+                })
+                .catch((error) => {
+                    console.error("Erro ao criar conta:", error.code);
+                    if (error.code === 'auth/email-already-in-use') {
+                        showMessage("Este email já está cadastrado. Tente fazer login.", true);
+                    } else {
+                        showMessage(`Erro: ${error.message}`, true);
+                    }
+                });
+        });
+
+        // --- Fazer login ---
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                     showMessage("Login bem-sucedido!", false);
+                    // O onAuthStateChanged vai cuidar de mostrar a tela principal.
+                })
+                .catch((error) => {
+                    console.error("Erro ao fazer login:", error.code);
+                    if (error.code === 'auth/invalid-credential') {
+                        showMessage("Email ou senha inválidos. Verifique e tente novamente.", true);
+                    } else {
+                        showMessage(`Erro: ${error.message}`, true);
+                    }
+                });
+        });
+
+        // --- Fazer logout ---
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).catch((error) => {
+                console.error("Erro ao sair:", error);
+                showMessage(`Erro ao sair: ${error.message}`, true);
+            });
+        });
+
+        // --- Monitor de estado de autenticação ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Usuário está logado
+                document.getElementById('user-email').textContent = user.email;
+                document.getElementById('user-uid').textContent = user.uid;
+                toggleViews('main-app-view');
+                
+                // ** PONTO DE CARREGAMENTO DOS DADOS **
+                // É aqui que você vai carregar os dados do Firestore associados a este usuário (user.uid)
+                loadUserData(user.uid);
+
+            } else {
+                // Usuário está deslogado
+                toggleViews('login-view');
+            }
+        });
+
+        // --- Navegação entre telas de login/cadastro ---
+        showSignupBtn.addEventListener('click', () => toggleViews('signup-view'));
+        showLoginBtn.addEventListener('click', () => toggleViews('login-view'));
+        
+        // ===================================================================
+        // 6. LÓGICA DO FIRESTORE (BANCO DE DADOS)
+        // ===================================================================
+
+        /**
+         * Carrega os dados do usuário do Firestore.
+         * Esta é uma função de exemplo. Você irá expandi-la com os dados do seu app.
+         * @param {string} userId - O UID do usuário logado.
+         */
+        async function loadUserData(userId) {
+            // A referência para o documento do usuário é `users/{userId}`
+            // Dentro deste documento, você pode salvar os dados que quiser (ex: estoque, listas, etc)
+            const userDocRef = doc(db, "users", userId);
+            
+            try {
+                const docSnap = await getDoc(userDocRef);
+
+                if (docSnap.exists()) {
+                    console.log("Dados do usuário encontrados:", docSnap.data());
+                    const userData = docSnap.data();
+                    // Aqui você pegaria os dados e preencheria a tela do seu app
+                    // Exemplo: document.getElementById('app-content').innerHTML = `Seu item de estoque: ${userData.ultimoItem}`;
+                    document.querySelector('#app-content p').textContent = 'Dados do usuário carregados com sucesso. Pronto para implementar a lógica de estoque.';
+                } else {
+                    // Documento não existe. Pode ser um primeiro login.
+                    // Você pode criar um documento inicial para o usuário aqui, se necessário.
+                    console.log("Nenhum dado encontrado para este usuário. Criando documento inicial...");
+                    await setDoc(userDocRef, {
+                        email: auth.currentUser.email,
+                        createdAt: new Date(),
+                        estoque: [] // Exemplo de um campo inicial
+                    });
+                     document.querySelector('#app-content p').textContent = 'Documento de usuário criado. Comece a adicionar itens ao seu estoque.';
+                }
+            } catch (error) {
+                console.error("Erro ao carregar dados do usuário:", error);
+                showMessage("Não foi possível carregar seus dados.", true);
+            }
+        }
+
+    </script>
 </body>
 </html>
