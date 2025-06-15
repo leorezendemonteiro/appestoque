@@ -155,7 +155,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, onSnapshot, addDoc, deleteDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ===================================================================
         // 1. CONFIGURAÇÃO DO FIREBASE
@@ -177,7 +177,6 @@
         const db = getFirestore(app);
         
         let appState = {
-            currentUser: null,
             unsubscribeStock: null,
             unsubscribeProduction: null
         };
@@ -232,10 +231,10 @@
         }
         
         function renderStock(stockItems) {
-            renderList(stockListContainer, stockItems, 'Seu estoque está vazio.', (item) => `
+            renderList(stockListContainer, stockItems, 'O estoque compartilhado está vazio.', (item) => `
                 <div>
-                    <p class="font-semibold text-gray-800">${item.item || item.name}</p>
-                    <p class="text-sm text-gray-600">Qtd: ${item.quantidade || item.quantity} ${item.unidade || item.unit} ${item.fornecedor || item.supplier ? `| Fornecedor: ${item.fornecedor || item.supplier}` : ''}</p>
+                    <p class="font-semibold text-gray-800">${item.item}</p>
+                    <p class="text-sm text-gray-600">Qtd: ${item.quantidade} ${item.unidade} ${item.fornecedor ? `| Fornecedor: ${item.fornecedor}` : ''}</p>
                 </div>
                 <button data-id="${item.id}" data-type="stock" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button>
             `);
@@ -270,13 +269,11 @@
         // ===================================================================
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                appState.currentUser = user;
                 document.getElementById('user-email').textContent = user.email;
                 toggleViews('main-app-view');
                 switchTab('stock');
-                listenToDataChanges(user.uid);
+                listenToSharedData(); // Usa a nova função para dados compartilhados
             } else {
-                appState.currentUser = null;
                 if (appState.unsubscribeStock) appState.unsubscribeStock();
                 if (appState.unsubscribeProduction) appState.unsubscribeProduction();
                 toggleViews('login-view');
@@ -298,18 +295,18 @@
         tabsContainer.addEventListener('click', (e) => { if(e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
 
         // ===================================================================
-        // 6. LÓGICA DO FIRESTORE (CRUD - ESTRUTURA CORRIGIDA)
+        // 6. LÓGICA DO FIRESTORE (MODELO COLABORATIVO)
         // ===================================================================
-        function listenToDataChanges(userId) {
-            // Caminho para a sub-coleção de estoque
-            const stockCollectionRef = collection(db, "estoque", userId, "estoque");
+        function listenToSharedData() {
+            // Caminho para a coleção compartilhada de estoque
+            const stockCollectionRef = collection(db, "estoque_colaborativo");
             appState.unsubscribeStock = onSnapshot(query(stockCollectionRef), (snapshot) => {
                 const stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderStock(stockItems);
             }, (error) => console.error("Erro ao carregar estoque:", error));
 
-            // Caminho para a sub-coleção de produção
-            const productionCollectionRef = collection(db, "estoque", userId, "producao");
+            // Caminho para a coleção compartilhada de produção
+            const productionCollectionRef = collection(db, "producao_colaborativa");
             appState.unsubscribeProduction = onSnapshot(query(productionCollectionRef), (snapshot) => {
                 const productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderProduction(productionItems);
@@ -319,12 +316,12 @@
         addItemForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const newItem = {
-                item: document.getElementById('product-name').value, // Corrigido para 'item' como no seu DB
-                fornecedor: document.getElementById('product-supplier').value, // Corrigido para 'fornecedor'
+                item: document.getElementById('product-name').value,
+                fornecedor: document.getElementById('product-supplier').value,
                 quantidade: parseFloat(document.getElementById('product-quantity').value),
-                unidade: document.getElementById('product-unit').value // Corrigido para 'unidade'
+                unidade: document.getElementById('product-unit').value
             };
-            const stockCollectionRef = collection(db, "estoque", appState.currentUser.uid, "estoque");
+            const stockCollectionRef = collection(db, "estoque_colaborativo");
             try {
                 await addDoc(stockCollectionRef, newItem);
                 addItemForm.reset();
@@ -341,7 +338,7 @@
                 quantity: parseFloat(document.getElementById('production-quantity').value),
                 unit: document.getElementById('production-unit').value
             };
-            const productionCollectionRef = collection(db, "estoque", appState.currentUser.uid, "producao");
+            const productionCollectionRef = collection(db, "producao_colaborativa");
             try {
                 await addDoc(productionCollectionRef, newItem);
                 addProductionForm.reset();
@@ -358,9 +355,9 @@
                 
                 let docRef;
                 if (type === 'stock') {
-                    docRef = doc(db, "estoque", appState.currentUser.uid, "estoque", itemId);
+                    docRef = doc(db, "estoque_colaborativo", itemId);
                 } else if (type === 'production') {
-                    docRef = doc(db, "estoque", appState.currentUser.uid, "producao", itemId);
+                    docRef = doc(db, "producao_colaborativa", itemId);
                 } else {
                     return;
                 }
