@@ -5,23 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>App Estoque Cozinha</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .tab-button.active {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
 
     <!-- Container Principal -->
-    <div id="app-container" class="w-full max-w-lg mx-auto py-8 px-4">
+    <div id="app-container" class="w-full max-w-2xl mx-auto py-8 px-4">
 
         <!-- TELA DE LOGIN -->
-        <div id="login-view" class="bg-white p-8 rounded-xl shadow-lg">
+        <div id="login-view" class="bg-white p-8 rounded-xl shadow-lg max-w-md mx-auto">
             <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Controle de Estoque</h1>
             <form id="login-form">
                 <div class="mb-4">
                     <label for="login-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                    <input type="email" id="login-email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="email" id="login-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
                 </div>
                 <div class="mb-6">
                     <label for="login-password" class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
-                    <input type="password" id="login-password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="password" id="login-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
                 </div>
                 <div class="flex flex-col space-y-4">
                     <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
@@ -35,16 +48,16 @@
         </div>
         
         <!-- TELA DE CADASTRO -->
-        <div id="signup-view" class="bg-white p-8 rounded-xl shadow-lg hidden">
+        <div id="signup-view" class="bg-white p-8 rounded-xl shadow-lg hidden max-w-md mx-auto">
             <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Criar Nova Conta</h1>
             <form id="signup-form">
                 <div class="mb-4">
                     <label for="signup-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                    <input type="email" id="signup-email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="email" id="signup-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
                 </div>
                 <div class="mb-6">
                     <label for="signup-password" class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
-                    <input type="password" id="signup-password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="password" id="signup-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
                 </div>
                 <div class="flex flex-col space-y-4">
                     <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
@@ -62,7 +75,7 @@
             <header class="bg-white p-4 rounded-xl shadow-lg mb-8">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h1 class="text-xl font-bold text-gray-800">Meu Estoque</h1>
+                        <h1 class="text-xl font-bold text-gray-800">App de Gestão</h1>
                         <p id="user-email" class="text-xs text-gray-500"></p>
                     </div>
                     <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm">
@@ -71,32 +84,63 @@
                 </div>
             </header>
             
-            <!-- Conteúdo do App de Estoque -->
-            <div id="app-content" class="space-y-8">
-                <!-- Formulário para adicionar item -->
-                <div class="bg-white p-6 rounded-xl shadow-lg">
-                    <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Novo Produto</h2>
-                    <form id="add-item-form" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <input type="text" id="product-name" placeholder="Nome do Produto" class="md:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                        <input type="number" id="product-quantity" placeholder="Qtd" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                        <select id="product-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
-                            <option>un</option>
-                            <option>kg</option>
-                            <option>g</option>
-                            <option>lt</option>
-                            <option>ml</option>
-                        </select>
-                        <button type="submit" class="md:col-span-3 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                            Adicionar ao Estoque
-                        </button>
-                    </form>
+            <!-- Navegação por Abas -->
+            <div class="mb-8">
+                <div class="border-b border-gray-200">
+                    <nav id="tabs-container" class="-mb-px flex space-x-4" aria-label="Tabs">
+                        <button data-tab="stock" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Estoque</button>
+                        <button data-tab="production" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Produção</button>
+                        <button data-tab="reports" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Relatórios</button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Conteúdo das Abas -->
+            <div id="app-content">
+                <!-- Aba de Estoque -->
+                <div id="tab-stock" class="tab-content space-y-8">
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Produto ao Estoque</h2>
+                        <form id="add-item-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <input type="text" id="product-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <input type="text" id="product-supplier" placeholder="Fornecedor" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+                            <input type="number" id="product-quantity" placeholder="Qtd" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <select id="product-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
+                                <option>un</option> <option>kg</option> <option>g</option> <option>lt</option> <option>ml</option>
+                            </select>
+                            <button type="submit" class="sm:col-span-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Adicionar</button>
+                        </form>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Itens no Estoque</h2>
+                        <div id="stock-list" class="space-y-3"></div>
+                    </div>
                 </div>
 
-                <!-- Lista de Itens do Estoque -->
-                <div class="bg-white p-6 rounded-xl shadow-lg">
-                    <h2 class="text-lg font-semibold mb-4 text-gray-700">Itens no Estoque</h2>
-                    <div id="stock-list" class="space-y-3">
-                        <!-- Itens do estoque serão renderizados aqui -->
+                <!-- Aba de Produção -->
+                <div id="tab-production" class="tab-content space-y-8">
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Item à Produção</h2>
+                        <form id="add-production-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <input type="text" id="production-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <input type="number" id="production-quantity" placeholder="Qtd" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <select id="production-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
+                                <option>porção</option> <option>kg</option> <option>lt</option> <option>un</option>
+                            </select>
+                            <button type="submit" class="sm:col-span-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Adicionar</button>
+                        </form>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Itens em Produção</h2>
+                        <div id="production-list" class="space-y-3"></div>
+                    </div>
+                </div>
+
+                <!-- Aba de Relatórios -->
+                <div id="tab-reports" class="tab-content">
+                    <div class="bg-white p-8 rounded-xl shadow-lg text-center">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios</h2>
+                        <p class="text-gray-500">A área de relatórios será implementada aqui.</p>
                     </div>
                 </div>
             </div>
@@ -111,7 +155,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ===================================================================
         // 1. CONFIGURAÇÃO DO FIREBASE
@@ -135,7 +179,9 @@
         let appState = {
             currentUser: null,
             stock: [],
-            unsubscribe: null // Para parar de ouvir as mudanças quando o usuário sair
+            production: [],
+            unsubscribeStock: null,
+            unsubscribeProduction: null
         };
 
         // ===================================================================
@@ -144,14 +190,21 @@
         const loginView = document.getElementById('login-view');
         const signupView = document.getElementById('signup-view');
         const mainAppView = document.getElementById('main-app-view');
+        const tabsContainer = document.getElementById('tabs-container');
+        const tabContents = document.querySelectorAll('.tab-content');
+        // Forms
         const loginForm = document.getElementById('login-form');
         const signupForm = document.getElementById('signup-form');
+        const addItemForm = document.getElementById('add-item-form');
+        const addProductionForm = document.getElementById('add-production-form');
+        // Buttons
         const showSignupBtn = document.getElementById('show-signup-btn');
         const showLoginBtn = document.getElementById('show-login-btn');
         const logoutBtn = document.getElementById('logout-btn');
+        // Containers
         const messageContainer = document.getElementById('message-container');
-        const addItemForm = document.getElementById('add-item-form');
         const stockListContainer = document.getElementById('stock-list');
+        const productionListContainer = document.getElementById('production-list');
 
         // ===================================================================
         // 4. FUNÇÕES DE UI E RENDERIZAÇÃO
@@ -165,37 +218,54 @@
             loginView.classList.add('hidden');
             signupView.classList.add('hidden');
             mainAppView.classList.add('hidden');
-            document.body.classList.remove('flex', 'items-center', 'justify-center', 'min-h-screen');
+            const isAuthScreen = showView === 'login-view' || showView === 'signup-view';
+            document.body.classList.toggle('flex', isAuthScreen);
+            document.body.classList.toggle('items-center', isAuthScreen);
+            document.body.classList.toggle('min-h-screen', isAuthScreen);
             
-            if (showView) {
-                if (showView === 'login-view' || showView === 'signup-view') {
-                    document.body.classList.add('flex', 'items-center', 'justify-center', 'min-h-screen');
-                }
-                document.getElementById(showView).classList.remove('hidden');
-            }
+            if (showView) document.getElementById(showView).classList.remove('hidden');
+        }
+
+        function switchTab(tabId) {
+            tabsContainer.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
         }
         
         function renderStock(stockItems) {
-            stockListContainer.innerHTML = ''; // Limpa a lista antes de renderizar
-            if (!stockItems || stockItems.length === 0) {
-                stockListContainer.innerHTML = `<p class="text-gray-500 text-center p-4 border-2 border-dashed rounded-lg">Seu estoque está vazio. Adicione um produto acima.</p>`;
-                return;
-            }
-            
-            stockItems.forEach(item => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg';
-                itemDiv.innerHTML = `
-                    <div>
-                        <p class="font-semibold text-gray-800">${item.name}</p>
-                        <p class="text-sm text-gray-600">${item.quantity} ${item.unit}</p>
-                    </div>
-                    <button data-id="${item.id}" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button>
-                `;
-                stockListContainer.appendChild(itemDiv);
-            });
+            renderList(stockListContainer, stockItems, 'Seu estoque está vazio.', (item) => `
+                <div>
+                    <p class="font-semibold text-gray-800">${item.name}</p>
+                    <p class="text-sm text-gray-600">Qtd: ${item.quantity} ${item.unit} ${item.supplier ? `| Fornecedor: ${item.supplier}` : ''}</p>
+                </div>
+                <button data-id="${item.id}" data-type="stock" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button>
+            `);
+        }
+        
+        function renderProduction(productionItems) {
+            renderList(productionListContainer, productionItems, 'Nenhum item em produção.', (item) => `
+                <div>
+                    <p class="font-semibold text-gray-800">${item.name}</p>
+                    <p class="text-sm text-gray-600">Qtd: ${item.quantity} ${item.unit}</p>
+                </div>
+                <button data-id="${item.id}" data-type="production" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button>
+            `);
         }
 
+        function renderList(container, items, emptyMessage, itemTemplate) {
+            container.innerHTML = '';
+            if (!items || items.length === 0) {
+                container.innerHTML = `<p class="text-gray-500 text-center p-4 border-2 border-dashed rounded-lg">${emptyMessage}</p>`;
+                return;
+            }
+            items.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg';
+                itemDiv.innerHTML = itemTemplate(item);
+                container.appendChild(itemDiv);
+            });
+        }
 
         // ===================================================================
         // 5. LÓGICA DE AUTENTICAÇÃO
@@ -205,117 +275,97 @@
                 appState.currentUser = user;
                 document.getElementById('user-email').textContent = user.email;
                 toggleViews('main-app-view');
-                listenToStockChanges(user.uid); // Começa a ouvir os dados do estoque
+                switchTab('stock'); // Aba inicial
+                listenToDataChanges(user.uid);
             } else {
                 appState.currentUser = null;
-                if (appState.unsubscribe) appState.unsubscribe(); // Para de ouvir
+                if (appState.unsubscribeStock) appState.unsubscribeStock();
+                if (appState.unsubscribeProduction) appState.unsubscribeProduction();
                 toggleViews('login-view');
             }
         });
 
-        signupForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = signupForm.email.value;
-            const password = signupForm.password.value;
-            createUserWithEmailAndPassword(auth, email, password)
-                .catch(handleAuthError);
-        });
-
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = loginForm.email.value;
-            const password = loginForm.password.value;
-            signInWithEmailAndPassword(auth, email, password)
-                .catch(handleAuthError);
-        });
-
-        logoutBtn.addEventListener('click', () => {
-            signOut(auth).catch(handleAuthError);
-        });
-        
         function handleAuthError(error) {
             console.error("Erro de Autenticação:", error.code);
-            if (error.code === 'auth/invalid-credential') {
-                showMessage("Email ou senha inválidos.", true);
-            } else if (error.code === 'auth/email-already-in-use') {
-                showMessage("Este email já está cadastrado.", true);
-            } else {
-                showMessage("Ocorreu um erro. Tente novamente.", true);
-            }
+            if (error.code === 'auth/invalid-credential') showMessage("Email ou senha inválidos.", true);
+            else if (error.code === 'auth/email-already-in-use') showMessage("Este email já está cadastrado.", true);
+            else showMessage("Ocorreu um erro. Tente novamente.", true);
         }
 
+        signupForm.addEventListener('submit', (e) => { e.preventDefault(); createUserWithEmailAndPassword(auth, signupForm.email.value, signupForm.password.value).catch(handleAuthError); });
+        loginForm.addEventListener('submit', (e) => { e.preventDefault(); signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value).catch(handleAuthError); });
+        logoutBtn.addEventListener('click', () => signOut(auth).catch(handleAuthError));
         showSignupBtn.addEventListener('click', () => toggleViews('signup-view'));
         showLoginBtn.addEventListener('click', () => toggleViews('login-view'));
-        
+        tabsContainer.addEventListener('click', (e) => { if(e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
+
         // ===================================================================
         // 6. LÓGICA DO FIRESTORE (CRUD)
         // ===================================================================
-        
-        function listenToStockChanges(userId) {
+        function listenToDataChanges(userId) {
             const userDocRef = doc(db, "users", userId);
-            appState.unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+            appState.unsubscribeStock = onSnapshot(userDocRef, (docSnap) => {
                 if (docSnap.exists()) {
-                    const userData = docSnap.data();
-                    appState.stock = userData.estoque || [];
+                    const data = docSnap.data();
+                    appState.stock = data.estoque || [];
+                    appState.production = data.producao || [];
                     renderStock(appState.stock);
+                    renderProduction(appState.production);
                 } else {
-                    // Se o documento não existir (primeiro login), crie-o.
-                    setDoc(userDocRef, { email: auth.currentUser.email, createdAt: new Date(), estoque: [] });
+                    setDoc(userDocRef, { email: auth.currentUser.email, createdAt: new Date(), estoque: [], producao: [] });
                 }
-            }, (error) => {
-                console.error("Erro ao ouvir os dados do estoque:", error);
-                showMessage("Não foi possível carregar o estoque.", true);
-            });
+            }, (error) => console.error("Erro ao carregar dados:", error));
         }
         
-        addItemForm.addEventListener('submit', async (e) => {
+        addItemForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const name = document.getElementById('product-name').value;
-            const quantity = document.getElementById('product-quantity').value;
-            const unit = document.getElementById('product-unit').value;
-            
-            if (!name || !quantity) {
-                showMessage("Preencha o nome e a quantidade.", true);
-                return;
-            }
-            
             const newItem = {
-                id: Date.now(), // ID simples baseado no tempo
-                name: name,
-                quantity: parseFloat(quantity),
-                unit: unit
+                id: Date.now(),
+                name: document.getElementById('product-name').value,
+                supplier: document.getElementById('product-supplier').value,
+                quantity: parseFloat(document.getElementById('product-quantity').value),
+                unit: document.getElementById('product-unit').value
             };
-            
-            const userDocRef = doc(db, "users", appState.currentUser.uid);
-            const newStockArray = [...appState.stock, newItem]; // Cria novo array com o item adicionado
-            
-            try {
-                await updateDoc(userDocRef, { estoque: newStockArray });
-                addItemForm.reset();
-            } catch (error) {
-                console.error("Erro ao adicionar item:", error);
-                showMessage("Não foi possível adicionar o item.", true);
-            }
+            const newStockArray = [...appState.stock, newItem];
+            updateFirestore({ estoque: newStockArray }).then(() => addItemForm.reset());
         });
-        
-        stockListContainer.addEventListener('click', async (e) => {
+
+        addProductionForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newItem = {
+                id: Date.now(),
+                name: document.getElementById('production-name').value,
+                quantity: parseFloat(document.getElementById('production-quantity').value),
+                unit: document.getElementById('production-unit').value
+            };
+            const newProductionArray = [...appState.production, newItem];
+            updateFirestore({ producao: newProductionArray }).then(() => addProductionForm.reset());
+        });
+
+        document.getElementById('app-content').addEventListener('click', (e) => {
             if (e.target.classList.contains('delete-btn')) {
                 const itemId = Number(e.target.dataset.id);
-                const userDocRef = doc(db, "users", appState.currentUser.uid);
-                
-                // Filtra o array local para remover o item
-                const newStockArray = appState.stock.filter(item => item.id !== itemId);
-                
-                try {
-                    // Atualiza o documento no Firestore com o novo array sem o item
-                    await updateDoc(userDocRef, { estoque: newStockArray });
-                } catch (error) {
-                    console.error("Erro ao excluir item:", error);
-                    showMessage("Não foi possível excluir o item.", true);
+                const type = e.target.dataset.type; // 'stock' ou 'production'
+
+                if (type === 'stock') {
+                    const newStockArray = appState.stock.filter(item => item.id !== itemId);
+                    updateFirestore({ estoque: newStockArray });
+                } else if (type === 'production') {
+                    const newProductionArray = appState.production.filter(item => item.id !== itemId);
+                    updateFirestore({ producao: newProductionArray });
                 }
             }
         });
-        
+
+        async function updateFirestore(dataToUpdate) {
+            const userDocRef = doc(db, "users", appState.currentUser.uid);
+            try {
+                await updateDoc(userDocRef, dataToUpdate);
+            } catch (error) {
+                console.error("Erro ao atualizar dados:", error);
+                showMessage("Não foi possível salvar os dados.", true);
+            }
+        }
     </script>
 </body>
 </html>
