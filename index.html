@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Estoque Cozinha - Login</title>
+    <title>App Estoque Cozinha</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gray-100">
 
     <!-- Container Principal -->
-    <div id="app-container" class="w-full max-w-md">
+    <div id="app-container" class="w-full max-w-lg mx-auto py-8 px-4">
 
         <!-- TELA DE LOGIN -->
         <div id="login-view" class="bg-white p-8 rounded-xl shadow-lg">
@@ -58,54 +58,63 @@
         </div>
 
         <!-- TELA PRINCIPAL DO APP (PÓS-LOGIN) -->
-        <div id="main-app-view" class="bg-white p-8 rounded-xl shadow-lg hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold text-gray-800">Bem-vindo!</h1>
-                <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm">
-                    Sair
-                </button>
-            </div>
+        <div id="main-app-view" class="hidden">
+            <header class="bg-white p-4 rounded-xl shadow-lg mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-800">Meu Estoque</h1>
+                        <p id="user-email" class="text-xs text-gray-500"></p>
+                    </div>
+                    <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm">
+                        Sair
+                    </button>
+                </div>
+            </header>
             
-            <div class="bg-gray-100 p-4 rounded-lg mb-6">
-                <h2 class="text-lg font-semibold mb-2">Informações do Usuário</h2>
-                <p class="text-sm"><strong>Email:</strong> <span id="user-email"></span></p>
-                <p class="text-sm"><strong>UID:</strong> <span id="user-uid"></span></p>
-            </div>
+            <!-- Conteúdo do App de Estoque -->
+            <div id="app-content" class="space-y-8">
+                <!-- Formulário para adicionar item -->
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Novo Produto</h2>
+                    <form id="add-item-form" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <input type="text" id="product-name" placeholder="Nome do Produto" class="md:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                        <input type="number" id="product-quantity" placeholder="Qtd" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                        <select id="product-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
+                            <option>un</option>
+                            <option>kg</option>
+                            <option>g</option>
+                            <option>lt</option>
+                            <option>ml</option>
+                        </select>
+                        <button type="submit" class="md:col-span-3 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                            Adicionar ao Estoque
+                        </button>
+                    </form>
+                </div>
 
-            <!-- O CONTEÚDO PRINCIPAL DO SEU APP DE ESTOQUE VIRÁ AQUI -->
-            <div id="app-content">
-                <h2 class="text-lg font-semibold mb-2">Meus Dados do Estoque</h2>
-                <p class="text-gray-600 text-center p-8 border-2 border-dashed rounded-lg">
-                    A área para carregar e exibir os dados do Firestore aparecerá aqui.
-                </p>
+                <!-- Lista de Itens do Estoque -->
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-700">Itens no Estoque</h2>
+                    <div id="stock-list" class="space-y-3">
+                        <!-- Itens do estoque serão renderizados aqui -->
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- MENSAGENS DE ERRO/SUCESSO -->
-        <div id="message-container" class="mt-4 text-center text-sm font-bold"></div>
+        <div id="message-container" class="fixed top-5 right-5 text-sm font-bold z-50"></div>
 
     </div>
 
     <!-- SCRIPTS DO FIREBASE -->
     <script type="module">
-        // Importar as funções necessárias dos SDKs do Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            createUserWithEmailAndPassword, 
-            signInWithEmailAndPassword, 
-            onAuthStateChanged, 
-            signOut 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { 
-            getFirestore,
-            doc,
-            getDoc,
-            setDoc
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ===================================================================
-        // 1. CONFIGURAÇÃO DO FIREBASE (FORNECIDA POR VOCÊ)
+        // 1. CONFIGURAÇÃO DO FIREBASE
         // ===================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
@@ -117,11 +126,17 @@
         };
 
         // ===================================================================
-        // 2. INICIALIZAÇÃO DO FIREBASE
+        // 2. INICIALIZAÇÃO E ESTADO
         // ===================================================================
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        
+        let appState = {
+            currentUser: null,
+            stock: [],
+            unsubscribe: null // Para parar de ouvir as mudanças quando o usuário sair
+        };
 
         // ===================================================================
         // 3. SELETORES DA DOM
@@ -129,161 +144,178 @@
         const loginView = document.getElementById('login-view');
         const signupView = document.getElementById('signup-view');
         const mainAppView = document.getElementById('main-app-view');
-        
         const loginForm = document.getElementById('login-form');
         const signupForm = document.getElementById('signup-form');
-
         const showSignupBtn = document.getElementById('show-signup-btn');
         const showLoginBtn = document.getElementById('show-login-btn');
         const logoutBtn = document.getElementById('logout-btn');
-
         const messageContainer = document.getElementById('message-container');
+        const addItemForm = document.getElementById('add-item-form');
+        const stockListContainer = document.getElementById('stock-list');
 
         // ===================================================================
-        // 4. FUNÇÕES AUXILIARES DE UI
+        // 4. FUNÇÕES DE UI E RENDERIZAÇÃO
         // ===================================================================
         function showMessage(message, isError = false) {
-            messageContainer.textContent = message;
-            // Add background and padding for better visibility
-            if (isError) {
-                messageContainer.className = 'mt-4 text-center text-base font-bold p-3 rounded-lg bg-red-100 text-red-700';
-            } else {
-                messageContainer.className = 'mt-4 text-center text-base font-bold p-3 rounded-lg bg-green-100 text-green-700';
-            }
-            // Reset after a delay
-            setTimeout(() => {
-                messageContainer.textContent = '';
-                // Reset class to remove background and padding
-                messageContainer.className = 'mt-4 text-center text-sm font-bold';
-            }, 4000);
+            messageContainer.innerHTML = `<div class="p-3 rounded-lg shadow-lg ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${message}</div>`;
+            setTimeout(() => { messageContainer.innerHTML = ''; }, 4000);
         }
 
         function toggleViews(showView) {
             loginView.classList.add('hidden');
             signupView.classList.add('hidden');
             mainAppView.classList.add('hidden');
+            document.body.classList.remove('flex', 'items-center', 'justify-center', 'min-h-screen');
             
             if (showView) {
+                if (showView === 'login-view' || showView === 'signup-view') {
+                    document.body.classList.add('flex', 'items-center', 'justify-center', 'min-h-screen');
+                }
                 document.getElementById(showView).classList.remove('hidden');
             }
         }
+        
+        function renderStock(stockItems) {
+            stockListContainer.innerHTML = ''; // Limpa a lista antes de renderizar
+            if (!stockItems || stockItems.length === 0) {
+                stockListContainer.innerHTML = `<p class="text-gray-500 text-center p-4 border-2 border-dashed rounded-lg">Seu estoque está vazio. Adicione um produto acima.</p>`;
+                return;
+            }
+            
+            stockItems.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg';
+                itemDiv.innerHTML = `
+                    <div>
+                        <p class="font-semibold text-gray-800">${item.name}</p>
+                        <p class="text-sm text-gray-600">${item.quantity} ${item.unit}</p>
+                    </div>
+                    <button data-id="${item.id}" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button>
+                `;
+                stockListContainer.appendChild(itemDiv);
+            });
+        }
+
 
         // ===================================================================
         // 5. LÓGICA DE AUTENTICAÇÃO
         // ===================================================================
-        
-        // --- Criar conta ---
-        signupForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
-
-            createUserWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    showMessage("Conta criada com sucesso! Você já está logado.", false);
-                    // O onAuthStateChanged vai cuidar de mostrar a tela principal.
-                })
-                .catch((error) => {
-                    console.error("Erro ao criar conta:", error.code);
-                    if (error.code === 'auth/email-already-in-use') {
-                        showMessage("Este email já está cadastrado. Tente fazer login.", true);
-                    } else {
-                        showMessage(`Erro: ${error.message}`, true);
-                    }
-                });
-        });
-
-        // --- Fazer login ---
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-
-            signInWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                     showMessage("Login bem-sucedido!", false);
-                    // O onAuthStateChanged vai cuidar de mostrar a tela principal.
-                })
-                .catch((error) => {
-                    console.error("Erro ao fazer login:", error.code);
-                    if (error.code === 'auth/invalid-credential') {
-                        showMessage("Email ou senha inválidos. Verifique e tente novamente.", true);
-                    } else {
-                        showMessage(`Erro: ${error.message}`, true);
-                    }
-                });
-        });
-
-        // --- Fazer logout ---
-        logoutBtn.addEventListener('click', () => {
-            signOut(auth).catch((error) => {
-                console.error("Erro ao sair:", error);
-                showMessage(`Erro ao sair: ${error.message}`, true);
-            });
-        });
-
-        // --- Monitor de estado de autenticação ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Usuário está logado
+                appState.currentUser = user;
                 document.getElementById('user-email').textContent = user.email;
-                document.getElementById('user-uid').textContent = user.uid;
                 toggleViews('main-app-view');
-                
-                // ** PONTO DE CARREGAMENTO DOS DADOS **
-                // É aqui que você vai carregar os dados do Firestore associados a este usuário (user.uid)
-                loadUserData(user.uid);
-
+                listenToStockChanges(user.uid); // Começa a ouvir os dados do estoque
             } else {
-                // Usuário está deslogado
+                appState.currentUser = null;
+                if (appState.unsubscribe) appState.unsubscribe(); // Para de ouvir
                 toggleViews('login-view');
             }
         });
 
-        // --- Navegação entre telas de login/cadastro ---
+        signupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = signupForm.email.value;
+            const password = signupForm.password.value;
+            createUserWithEmailAndPassword(auth, email, password)
+                .catch(handleAuthError);
+        });
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = loginForm.email.value;
+            const password = loginForm.password.value;
+            signInWithEmailAndPassword(auth, email, password)
+                .catch(handleAuthError);
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).catch(handleAuthError);
+        });
+        
+        function handleAuthError(error) {
+            console.error("Erro de Autenticação:", error.code);
+            if (error.code === 'auth/invalid-credential') {
+                showMessage("Email ou senha inválidos.", true);
+            } else if (error.code === 'auth/email-already-in-use') {
+                showMessage("Este email já está cadastrado.", true);
+            } else {
+                showMessage("Ocorreu um erro. Tente novamente.", true);
+            }
+        }
+
         showSignupBtn.addEventListener('click', () => toggleViews('signup-view'));
         showLoginBtn.addEventListener('click', () => toggleViews('login-view'));
         
         // ===================================================================
-        // 6. LÓGICA DO FIRESTORE (BANCO DE DADOS)
+        // 6. LÓGICA DO FIRESTORE (CRUD)
         // ===================================================================
-
-        /**
-         * Carrega os dados do usuário do Firestore.
-         * Esta é uma função de exemplo. Você irá expandi-la com os dados do seu app.
-         * @param {string} userId - O UID do usuário logado.
-         */
-        async function loadUserData(userId) {
-            // A referência para o documento do usuário é `users/{userId}`
-            // Dentro deste documento, você pode salvar os dados que quiser (ex: estoque, listas, etc)
+        
+        function listenToStockChanges(userId) {
             const userDocRef = doc(db, "users", userId);
+            appState.unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const userData = docSnap.data();
+                    appState.stock = userData.estoque || [];
+                    renderStock(appState.stock);
+                } else {
+                    // Se o documento não existir (primeiro login), crie-o.
+                    setDoc(userDocRef, { email: auth.currentUser.email, createdAt: new Date(), estoque: [] });
+                }
+            }, (error) => {
+                console.error("Erro ao ouvir os dados do estoque:", error);
+                showMessage("Não foi possível carregar o estoque.", true);
+            });
+        }
+        
+        addItemForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('product-name').value;
+            const quantity = document.getElementById('product-quantity').value;
+            const unit = document.getElementById('product-unit').value;
+            
+            if (!name || !quantity) {
+                showMessage("Preencha o nome e a quantidade.", true);
+                return;
+            }
+            
+            const newItem = {
+                id: Date.now(), // ID simples baseado no tempo
+                name: name,
+                quantity: parseFloat(quantity),
+                unit: unit
+            };
+            
+            const userDocRef = doc(db, "users", appState.currentUser.uid);
+            const newStockArray = [...appState.stock, newItem]; // Cria novo array com o item adicionado
             
             try {
-                const docSnap = await getDoc(userDocRef);
-
-                if (docSnap.exists()) {
-                    console.log("Dados do usuário encontrados:", docSnap.data());
-                    const userData = docSnap.data();
-                    // Aqui você pegaria os dados e preencheria a tela do seu app
-                    // Exemplo: document.getElementById('app-content').innerHTML = `Seu item de estoque: ${userData.ultimoItem}`;
-                    document.querySelector('#app-content p').textContent = 'Dados do usuário carregados com sucesso. Pronto para implementar a lógica de estoque.';
-                } else {
-                    // Documento não existe. Pode ser um primeiro login.
-                    // Você pode criar um documento inicial para o usuário aqui, se necessário.
-                    console.log("Nenhum dado encontrado para este usuário. Criando documento inicial...");
-                    await setDoc(userDocRef, {
-                        email: auth.currentUser.email,
-                        createdAt: new Date(),
-                        estoque: [] // Exemplo de um campo inicial
-                    });
-                     document.querySelector('#app-content p').textContent = 'Documento de usuário criado. Comece a adicionar itens ao seu estoque.';
-                }
+                await updateDoc(userDocRef, { estoque: newStockArray });
+                addItemForm.reset();
             } catch (error) {
-                console.error("Erro ao carregar dados do usuário:", error);
-                showMessage("Não foi possível carregar seus dados.", true);
+                console.error("Erro ao adicionar item:", error);
+                showMessage("Não foi possível adicionar o item.", true);
             }
-        }
-
+        });
+        
+        stockListContainer.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('delete-btn')) {
+                const itemId = Number(e.target.dataset.id);
+                const userDocRef = doc(db, "users", appState.currentUser.uid);
+                
+                // Filtra o array local para remover o item
+                const newStockArray = appState.stock.filter(item => item.id !== itemId);
+                
+                try {
+                    // Atualiza o documento no Firestore com o novo array sem o item
+                    await updateDoc(userDocRef, { estoque: newStockArray });
+                } catch (error) {
+                    console.error("Erro ao excluir item:", error);
+                    showMessage("Não foi possível excluir o item.", true);
+                }
+            }
+        });
+        
     </script>
 </body>
 </html>
