@@ -19,11 +19,33 @@
         .tab-content.active {
             display: block;
         }
-        @media print {
-            body * { visibility: hidden; }
-            #shopping-list-print-area, #shopping-list-print-area * { visibility: visible; }
-            #shopping-list-print-area { position: absolute; left: 0; top: 0; width: 100%; }
-            .no-print { display: none; }
+        /* Estilos para o conteúdo que será impresso/gerado em PDF */
+        .print-area {
+            font-family: Arial, sans-serif;
+        }
+        .print-area h1 {
+            font-size: 18px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .print-area h2 {
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        .print-area table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .print-area th, .print-area td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .print-area thead {
+            background-color: #f2f2f2;
         }
     </style>
 </head>
@@ -185,7 +207,7 @@
             </div>
         </div>
         
-        <!-- Conteúdo oculto para impressão -->
+        <!-- Conteúdo oculto para geração de PDF -->
         <div id="pdf-content" class="hidden"></div>
 
         <!-- MENSAGENS DE ERRO/SUCESSO -->
@@ -486,28 +508,22 @@
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF();
             
-            const pdfContent = `
-                <div style="font-family: Arial, sans-serif; padding: 20px;">
-                    <h1 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 20px;">${title}</h1>
-                    ${content}
-                </div>
-            `;
-            
+            const pdfContent = `<div class="print-area">${content}</div>`;
             document.getElementById('pdf-content').innerHTML = pdfContent;
 
             html2canvas(document.getElementById('pdf-content'), { scale: 2 }).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
-                const imgWidth = 190;
-                const pageHeight = 295; 
+                const imgWidth = 190; // A4 width in mm with margin
+                const pageHeight = 295; // A4 height in mm
                 const imgHeight = canvas.height * imgWidth / canvas.width;
                 let heightLeft = imgHeight;
                 let position = 0;
 
-                pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
                 heightLeft -= pageHeight;
 
                 while (heightLeft >= 0) {
-                    position = heightLeft - imgHeight;
+                    position = heightLeft - imgHeight + 10;
                     pdf.addPage();
                     pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
                     heightLeft -= pageHeight;
@@ -524,22 +540,16 @@
                 return acc;
             }, {});
 
-            let content = '';
+            let content = '<h1>Relatório Geral de Estoque</h1>';
             for(const supplier in groupedBySupplier) {
-                content += `<h2 style="font-size: 16px; margin-top: 15px;">Fornecedor: ${supplier}</h2>
-                            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-                                <thead style="background-color: #f2f2f2;">
-                                    <tr>
-                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Produto</th>
-                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Quantidade</th>
-                                    </tr>
+                content += `<h2>Fornecedor: ${supplier}</h2>
+                            <table>
+                                <thead>
+                                    <tr><th>Produto</th><th>Quantidade</th></tr>
                                 </thead>
                                 <tbody>
                                     ${groupedBySupplier[supplier].map(item => `
-                                        <tr>
-                                            <td style="border: 1px solid #ddd; padding: 8px;">${item.item}</td>
-                                            <td style="border: 1px solid #ddd; padding: 8px;">${item.atual} ${item.unidade}</td>
-                                        </tr>
+                                        <tr><td>${item.item}</td><td>${item.atual} ${item.unidade}</td></tr>
                                     `).join('')}
                                 </tbody>
                             </table>`;
@@ -562,25 +572,35 @@
             for(const supplier in groupedBySupplier) {
                 content += `<h4 class="font-semibold mt-4 mb-2 text-md">${supplier}</h4>
                             <div class="space-y-2">
+                            <div class="flex items-center justify-between p-2 font-bold text-sm text-gray-600">
+                                <span class="w-2/5">Produto</span>
+                                <span class="w-1/5 text-center">Qtd. Atual</span>
+                                <span class="w-1/5 text-center">Qtd. Pedida</span>
+                                <span class="w-1/5 text-right">Ação</span>
+                            </div>
                             ${groupedBySupplier[supplier].map(item => `
                                 <div class="flex items-center justify-between p-2 bg-gray-50 rounded" data-item-id="${item.id}">
-                                    <span class="flex-1">${item.item} (Atual: ${item.atual})</span>
-                                    <input type="number" placeholder="Qtd. Pedida" class="w-24 p-1 border rounded text-sm">
-                                    <button class="delete-shopping-item-btn text-red-500 font-bold ml-2 no-print">X</button>
+                                    <span class="w-2/5">${item.item}</span>
+                                    <span class="w-1/5 text-center">${item.atual}</span>
+                                    <input type="number" placeholder="Qtd." class="w-1/5 p-1 border rounded text-sm text-center">
+                                    <button class="delete-shopping-item-btn w-1/5 text-red-500 font-bold text-right">Excluir</button>
                                 </div>
                             `).join('')}
                             </div>`;
             }
-            content += `<button id="print-shopping-list-btn" class="w-full mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded no-print">Imprimir Lista</button>`;
+            content += `<button id="generate-shopping-list-pdf-btn" class="w-full mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded">Gerar PDF da Lista</button>`;
             reportDisplayArea.innerHTML = content;
         });
         
         reportDisplayArea.addEventListener('click', e => {
             if (e.target.matches('.delete-shopping-item-btn')) {
-                e.target.closest('div').remove();
+                e.target.closest('div[data-item-id]').remove();
             }
-            if (e.target.matches('#print-shopping-list-btn')) {
-                window.print();
+            if (e.target.matches('#generate-shopping-list-pdf-btn')) {
+                 const listContent = reportDisplayArea.innerHTML;
+                 // Remove o botão de gerar PDF do conteúdo do PDF
+                 const pdfHtml = listContent.replace('<button id="generate-shopping-list-pdf-btn" class="w-full mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded">Gerar PDF da Lista</button>', '');
+                 generatePdf('Lista_de_Compras', pdfHtml);
             }
         });
         
@@ -597,21 +617,14 @@
         });
 
         function createProductionReportContent(items) {
-             return `<table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-                        <thead style="background-color: #f2f2f2;">
-                            <tr>
-                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Produto</th>
-                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Quantidade</th>
-                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Unidade</th>
-                            </tr>
+             return `<h1>Relatório de Produção</h1>
+                     <table>
+                        <thead>
+                            <tr><th>Produto</th><th>Quantidade</th><th>Unidade</th></tr>
                         </thead>
                         <tbody>
                             ${items.map(item => `
-                                <tr>
-                                    <td style="border: 1px solid #ddd; padding: 8px;">${item.item}</td>
-                                    <td style="border: 1px solid #ddd; padding: 8px;">${item.quantidade}</td>
-                                    <td style="border: 1px solid #ddd; padding: 8px;">${item.unidade}</td>
-                                </tr>
+                                <tr><td>${item.item}</td><td>${item.quantidade}</td><td>${item.unidade}</td></tr>
                             `).join('')}
                         </tbody>
                     </table>`;
@@ -619,4 +632,4 @@
 
     </script>
 </body>
-</html>
+</ht
