@@ -295,18 +295,18 @@
         tabsContainer.addEventListener('click', (e) => { if(e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
 
         // ===================================================================
-        // 6. LÓGICA DO FIRESTORE (MODELO COLABORATIVO)
+        // 6. LÓGICA DO FIRESTORE (MODELO COLABORATIVO CORRIGIDO)
         // ===================================================================
         function listenToSharedData() {
             // Caminho para a coleção compartilhada de estoque
-            const stockCollectionRef = collection(db, "estoque_colaborativo");
+            const stockCollectionRef = collection(db, "estoque_compartilhado");
             appState.unsubscribeStock = onSnapshot(query(stockCollectionRef), (snapshot) => {
                 const stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderStock(stockItems);
             }, (error) => console.error("Erro ao carregar estoque:", error));
 
             // Caminho para a coleção compartilhada de produção
-            const productionCollectionRef = collection(db, "producao_colaborativa");
+            const productionCollectionRef = collection(db, "producao_compartilhada");
             appState.unsubscribeProduction = onSnapshot(query(productionCollectionRef), (snapshot) => {
                 const productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderProduction(productionItems);
@@ -321,7 +321,7 @@
                 quantidade: parseFloat(document.getElementById('product-quantity').value),
                 unidade: document.getElementById('product-unit').value
             };
-            const stockCollectionRef = collection(db, "estoque_colaborativo");
+            const stockCollectionRef = collection(db, "estoque_compartilhado");
             try {
                 await addDoc(stockCollectionRef, newItem);
                 addItemForm.reset();
@@ -338,7 +338,7 @@
                 quantity: parseFloat(document.getElementById('production-quantity').value),
                 unit: document.getElementById('production-unit').value
             };
-            const productionCollectionRef = collection(db, "producao_colaborativa");
+            const productionCollectionRef = collection(db, "producao_compartilhada");
             try {
                 await addDoc(productionCollectionRef, newItem);
                 addProductionForm.reset();
@@ -355,9 +355,9 @@
                 
                 let docRef;
                 if (type === 'stock') {
-                    docRef = doc(db, "estoque_colaborativo", itemId);
+                    docRef = doc(db, "estoque_compartilhado", itemId);
                 } else if (type === 'production') {
-                    docRef = doc(db, "producao_colaborativa", itemId);
+                    docRef = doc(db, "producao_compartilhada", itemId);
                 } else {
                     return;
                 }
