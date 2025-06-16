@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>App Estoque Cozinha</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         .tab-button.active {
             border-color: #3b82f6;
@@ -16,6 +18,12 @@
         }
         .tab-content.active {
             display: block;
+        }
+        @media print {
+            body * { visibility: hidden; }
+            #shopping-list-print-area, #shopping-list-print-area * { visibility: visible; }
+            #shopping-list-print-area { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none; }
         }
     </style>
 </head>
@@ -105,6 +113,8 @@
                             <input type="text" id="product-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                             <input type="text" id="product-supplier" placeholder="Fornecedor" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
                             <input type="number" id="product-quantity" placeholder="Qtd. Atual" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
+                            <input type="number" id="product-min" placeholder="Qtd. Mínima" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any">
+                             <input type="number" id="product-ideal" placeholder="Qtd. Ideal" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any">
                             <select id="product-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
                                 <option>un</option> <option>kg</option> <option>g</option> <option>lt</option> <option>ml</option>
                             </select>
@@ -153,14 +163,30 @@
                 </div>
 
                 <!-- Aba de Relatórios -->
-                <div id="tab-reports" class="tab-content">
-                    <div class="bg-white p-8 rounded-xl shadow-lg text-center">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios</h2>
-                        <p class="text-gray-500">A área de relatórios será implementada aqui.</p>
+                <div id="tab-reports" class="tab-content space-y-8">
+                     <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios de Estoque</h2>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                             <button id="generate-stock-report-btn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Relatório Geral de Estoque (PDF)</button>
+                             <button id="generate-shopping-list-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded">Gerar Lista de Compras</button>
+                        </div>
+                    </div>
+                     <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios de Produção</h2>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <button id="generate-kitchen-report-btn" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded">Produção Cozinha (PDF)</button>
+                            <button id="generate-parrilla-report-btn" class="flex-1 bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded">Produção Parrilla (PDF)</button>
+                        </div>
+                    </div>
+                    <div id="report-display-area" class="bg-white p-6 rounded-xl shadow-lg hidden">
+                        <!-- A lista de compras interativa aparecerá aqui -->
                     </div>
                 </div>
             </div>
         </div>
+        
+        <!-- Conteúdo oculto para impressão -->
+        <div id="pdf-content" class="hidden"></div>
 
         <!-- MENSAGENS DE ERRO/SUCESSO -->
         <div id="message-container" class="fixed top-5 right-5 text-sm font-bold z-50"></div>
@@ -221,6 +247,12 @@
         const productionListContainer = document.getElementById('production-list');
         const supplierFilter = document.getElementById('supplier-filter');
         const sectorFilter = document.getElementById('sector-filter');
+        // Relatórios
+        const generateStockReportBtn = document.getElementById('generate-stock-report-btn');
+        const generateShoppingListBtn = document.getElementById('generate-shopping-list-btn');
+        const generateKitchenReportBtn = document.getElementById('generate-kitchen-report-btn');
+        const generateParrillaReportBtn = document.getElementById('generate-parrilla-report-btn');
+        const reportDisplayArea = document.getElementById('report-display-area');
 
 
         // ===================================================================
@@ -364,7 +396,9 @@
             const newItem = {
                 item: document.getElementById('product-name').value,
                 fornecedor: document.getElementById('product-supplier').value,
-                atual: parseFloat(document.getElementById('product-quantity').value),
+                atual: parseFloat(document.getElementById('product-quantity').value || 0),
+                minima: parseFloat(document.getElementById('product-min').value || 0),
+                ideal: parseFloat(document.getElementById('product-ideal').value || 0),
                 unidade: document.getElementById('product-unit').value
             };
             const stockCollectionRef = collection(db, "estoque");
@@ -443,6 +477,145 @@
             appState.currentSectorFilter = e.target.value;
             renderProduction();
         });
+        
+        // ===================================================================
+        // 7. LÓGICA DE RELATÓRIOS
+        // ===================================================================
+
+        function generatePdf(title, content) {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            
+            const pdfContent = `
+                <div style="font-family: Arial, sans-serif; padding: 20px;">
+                    <h1 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 20px;">${title}</h1>
+                    ${content}
+                </div>
+            `;
+            
+            document.getElementById('pdf-content').innerHTML = pdfContent;
+
+            html2canvas(document.getElementById('pdf-content'), { scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 190;
+                const pageHeight = 295; 
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                pdf.save(`${title.replace(/ /g, '_')}.pdf`);
+            });
+        }
+
+        generateStockReportBtn.addEventListener('click', () => {
+            const groupedBySupplier = appState.stockItems.reduce((acc, item) => {
+                const supplier = item.fornecedor || 'Sem Fornecedor';
+                if (!acc[supplier]) acc[supplier] = [];
+                acc[supplier].push(item);
+                return acc;
+            }, {});
+
+            let content = '';
+            for(const supplier in groupedBySupplier) {
+                content += `<h2 style="font-size: 16px; margin-top: 15px;">Fornecedor: ${supplier}</h2>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                                <thead style="background-color: #f2f2f2;">
+                                    <tr>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Produto</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Quantidade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${groupedBySupplier[supplier].map(item => `
+                                        <tr>
+                                            <td style="border: 1px solid #ddd; padding: 8px;">${item.item}</td>
+                                            <td style="border: 1px solid #ddd; padding: 8px;">${item.atual} ${item.unidade}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>`;
+            }
+            generatePdf('Relatorio_Geral_Estoque', content);
+        });
+        
+        generateShoppingListBtn.addEventListener('click', () => {
+            const itemsToBuy = appState.stockItems.filter(item => item.atual <= (item.minima || 0));
+            const groupedBySupplier = itemsToBuy.reduce((acc, item) => {
+                const supplier = item.fornecedor || 'Sem Fornecedor';
+                if (!acc[supplier]) acc[supplier] = [];
+                acc[supplier].push(item);
+                return acc;
+            }, {});
+            
+            reportDisplayArea.classList.remove('hidden');
+            let content = `<h3 class="text-lg font-bold mb-4">Lista de Compras</h3>`;
+            
+            for(const supplier in groupedBySupplier) {
+                content += `<h4 class="font-semibold mt-4 mb-2 text-md">${supplier}</h4>
+                            <div class="space-y-2">
+                            ${groupedBySupplier[supplier].map(item => `
+                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded" data-item-id="${item.id}">
+                                    <span class="flex-1">${item.item} (Atual: ${item.atual})</span>
+                                    <input type="number" placeholder="Qtd. Pedida" class="w-24 p-1 border rounded text-sm">
+                                    <button class="delete-shopping-item-btn text-red-500 font-bold ml-2 no-print">X</button>
+                                </div>
+                            `).join('')}
+                            </div>`;
+            }
+            content += `<button id="print-shopping-list-btn" class="w-full mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded no-print">Imprimir Lista</button>`;
+            reportDisplayArea.innerHTML = content;
+        });
+        
+        reportDisplayArea.addEventListener('click', e => {
+            if (e.target.matches('.delete-shopping-item-btn')) {
+                e.target.closest('div').remove();
+            }
+            if (e.target.matches('#print-shopping-list-btn')) {
+                window.print();
+            }
+        });
+        
+        generateKitchenReportBtn.addEventListener('click', () => {
+            const kitchenItems = appState.productionItems.filter(item => item.setor === 'COZINHA');
+            let content = createProductionReportContent(kitchenItems);
+            generatePdf('producao_cozinha', content);
+        });
+        
+        generateParrillaReportBtn.addEventListener('click', () => {
+            const parrillaItems = appState.productionItems.filter(item => item.setor === 'PARRILLA');
+            let content = createProductionReportContent(parrillaItems);
+            generatePdf('producao_parrilla', content);
+        });
+
+        function createProductionReportContent(items) {
+             return `<table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                        <thead style="background-color: #f2f2f2;">
+                            <tr>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Produto</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Quantidade</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Unidade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${items.map(item => `
+                                <tr>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${item.item}</td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${item.quantidade}</td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${item.unidade}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>`;
+        }
 
     </script>
 </body>
