@@ -140,7 +140,14 @@
                         </form>
                     </div>
                     <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Itens em Produção</h2>
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold text-gray-700">Itens em Produção</h2>
+                            <select id="sector-filter" class="shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm">
+                                <option value="TODOS">TODOS</option>
+                                <option value="COZINHA">COZINHA</option>
+                                <option value="PARRILLA">PARRILLA</option>
+                            </select>
+                        </div>
                         <div id="production-list" class="space-y-3"></div>
                     </div>
                 </div>
@@ -189,6 +196,7 @@
             stockItems: [],
             productionItems: [],
             currentSupplierFilter: 'TODOS',
+            currentSectorFilter: 'TODOS',
             unsubscribeStock: null,
             unsubscribeProduction: null
         };
@@ -212,6 +220,7 @@
         const stockListContainer = document.getElementById('stock-list');
         const productionListContainer = document.getElementById('production-list');
         const supplierFilter = document.getElementById('supplier-filter');
+        const sectorFilter = document.getElementById('sector-filter');
 
 
         // ===================================================================
@@ -259,7 +268,11 @@
         }
         
         function renderProduction() {
-            renderList(productionListContainer, appState.productionItems, 'Nenhum item em produção.', (item) => `
+            const filteredItems = appState.currentSectorFilter === 'TODOS'
+                ? appState.productionItems
+                : appState.productionItems.filter(item => item.setor === appState.currentSectorFilter);
+
+            renderList(productionListContainer, filteredItems, 'Nenhum item em produção.', (item) => `
                  <div class="flex-1">
                     <p class="font-semibold text-gray-800">${item.item}</p>
                     <p class="text-sm text-gray-600">Qtd: ${item.quantidade} ${item.unidade} | Setor: ${item.setor || 'N/A'}</p>
@@ -424,6 +437,11 @@
         supplierFilter.addEventListener('change', (e) => {
             appState.currentSupplierFilter = e.target.value;
             renderStock();
+        });
+
+        sectorFilter.addEventListener('change', (e) => {
+            appState.currentSectorFilter = e.target.value;
+            renderProduction();
         });
 
     </script>
