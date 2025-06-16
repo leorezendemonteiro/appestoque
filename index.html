@@ -104,7 +104,7 @@
                         <form id="add-item-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input type="text" id="product-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                             <input type="text" id="product-supplier" placeholder="Fornecedor" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                            <input type="number" id="product-quantity" placeholder="Qtd" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
+                            <input type="number" id="product-quantity" placeholder="Qtd. Atual" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
                             <select id="product-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
                                 <option>un</option> <option>kg</option> <option>g</option> <option>lt</option> <option>ml</option>
                             </select>
@@ -177,6 +177,7 @@
         const db = getFirestore(app);
         
         let appState = {
+            currentUser: null,
             unsubscribeStock: null,
             unsubscribeProduction: null
         };
@@ -231,10 +232,10 @@
         }
         
         function renderStock(stockItems) {
-            renderList(stockListContainer, stockItems, 'O estoque compartilhado está vazio.', (item) => `
+            renderList(stockListContainer, stockItems, 'O estoque está vazio.', (item) => `
                 <div>
                     <p class="font-semibold text-gray-800">${item.item}</p>
-                    <p class="text-sm text-gray-600">Qtd: ${item.quantidade} ${item.unidade} ${item.fornecedor ? `| Fornecedor: ${item.fornecedor}` : ''}</p>
+                    <p class="text-sm text-gray-600">Qtd: ${item.atual} ${item.unidade} ${item.fornecedor ? `| Fornecedor: ${item.fornecedor}` : ''}</p>
                 </div>
                 <button data-id="${item.id}" data-type="stock" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button>
             `);
@@ -243,8 +244,8 @@
         function renderProduction(productionItems) {
             renderList(productionListContainer, productionItems, 'Nenhum item em produção.', (item) => `
                 <div>
-                    <p class="font-semibold text-gray-800">${item.name}</p>
-                    <p class="text-sm text-gray-600">Qtd: ${item.quantity} ${item.unit}</p>
+                    <p class="font-semibold text-gray-800">${item.item}</p>
+                    <p class="text-sm text-gray-600">Qtd: ${item.quantidade} ${item.unidade}</p>
                 </div>
                 <button data-id="${item.id}" data-type="production" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button>
             `);
@@ -269,11 +270,13 @@
         // ===================================================================
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                appState.currentUser = user; // Guarda o usuário logado
                 document.getElementById('user-email').textContent = user.email;
                 toggleViews('main-app-view');
                 switchTab('stock');
-                listenToSharedData(); // Usa a nova função para dados compartilhados
+                listenToDataChanges(user.uid); 
             } else {
+                appState.currentUser = null;
                 if (appState.unsubscribeStock) appState.unsubscribeStock();
                 if (appState.unsubscribeProduction) appState.unsubscribeProduction();
                 toggleViews('login-view');
@@ -295,18 +298,22 @@
         tabsContainer.addEventListener('click', (e) => { if(e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
 
         // ===================================================================
-        // 6. LÓGICA DO FIRESTORE (MODELO COLABORATIVO CORRIGIDO)
+        // 6. LÓGICA DO FIRESTORE (ESTRUTURA CORRETA)
         // ===================================================================
-        function listenToSharedData() {
-            // Caminho para a coleção compartilhada de estoque
-            const stockCollectionRef = collection(db, "estoque_compartilhado");
+        function listenToDataChanges(userId) {
+            // Define o UID para ser usado nos testes, conforme solicitado. 
+            // Para produção, você usaria o `userId` do usuário logado.
+            const targetUid = "amIh4pPLv9fkBVJfc9KYTPR1hbm2"; 
+
+            // Caminho para a sub-coleção de estoque
+            const stockCollectionRef = collection(db, "estoque", targetUid, "estoque");
             appState.unsubscribeStock = onSnapshot(query(stockCollectionRef), (snapshot) => {
                 const stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderStock(stockItems);
             }, (error) => console.error("Erro ao carregar estoque:", error));
 
-            // Caminho para a coleção compartilhada de produção
-            const productionCollectionRef = collection(db, "producao_compartilhada");
+            // Caminho para a sub-coleção de produção
+            const productionCollectionRef = collection(db, "producao", targetUid, "producao");
             appState.unsubscribeProduction = onSnapshot(query(productionCollectionRef), (snapshot) => {
                 const productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderProduction(productionItems);
@@ -315,13 +322,15 @@
         
         addItemForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const targetUid = "amIh4pPLv9fkBVJfc9KYTPR1hbm2"; // UID fixo
             const newItem = {
                 item: document.getElementById('product-name').value,
                 fornecedor: document.getElementById('product-supplier').value,
-                quantidade: parseFloat(document.getElementById('product-quantity').value),
-                unidade: document.getElementById('product-unit').value
+                atual: parseFloat(document.getElementById('product-quantity').value),
+                unidade: document.getElementById('product-unit').value,
+                uid: targetUid // Adiciona o UID ao item, como na sua planilha
             };
-            const stockCollectionRef = collection(db, "estoque_compartilhado");
+            const stockCollectionRef = collection(db, "estoque", targetUid, "estoque");
             try {
                 await addDoc(stockCollectionRef, newItem);
                 addItemForm.reset();
@@ -333,12 +342,14 @@
 
         addProductionForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const targetUid = "amIh4pPLv9fkBVJfc9KYTPR1hbm2"; // UID fixo
             const newItem = {
-                name: document.getElementById('production-name').value,
-                quantity: parseFloat(document.getElementById('production-quantity').value),
-                unit: document.getElementById('production-unit').value
+                item: document.getElementById('production-name').value,
+                quantidade: parseFloat(document.getElementById('production-quantity').value),
+                unidade: document.getElementById('production-unit').value,
+                uid: targetUid
             };
-            const productionCollectionRef = collection(db, "producao_compartilhada");
+            const productionCollectionRef = collection(db, "producao", targetUid, "producao");
             try {
                 await addDoc(productionCollectionRef, newItem);
                 addProductionForm.reset();
@@ -352,12 +363,13 @@
             if (e.target.classList.contains('delete-btn')) {
                 const itemId = e.target.dataset.id;
                 const type = e.target.dataset.type;
+                const targetUid = "amIh4pPLv9fkBVJfc9KYTPR1hbm2"; // UID fixo
                 
                 let docRef;
                 if (type === 'stock') {
-                    docRef = doc(db, "estoque_compartilhado", itemId);
+                    docRef = doc(db, "estoque", targetUid, "estoque", itemId);
                 } else if (type === 'production') {
-                    docRef = doc(db, "producao_compartilhada", itemId);
+                    docRef = doc(db, "producao", targetUid, "producao", itemId);
                 } else {
                     return;
                 }
