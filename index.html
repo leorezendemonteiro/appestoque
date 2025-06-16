@@ -177,7 +177,6 @@
         const db = getFirestore(app);
         
         let appState = {
-            currentUser: null,
             unsubscribeStock: null,
             unsubscribeProduction: null
         };
@@ -270,13 +269,11 @@
         // ===================================================================
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                appState.currentUser = user; // Guarda o usuário logado
                 document.getElementById('user-email').textContent = user.email;
                 toggleViews('main-app-view');
                 switchTab('stock');
-                listenToDataChanges(user.uid); 
+                listenToDataChanges(); 
             } else {
-                appState.currentUser = null;
                 if (appState.unsubscribeStock) appState.unsubscribeStock();
                 if (appState.unsubscribeProduction) appState.unsubscribeProduction();
                 toggleViews('login-view');
@@ -298,22 +295,21 @@
         tabsContainer.addEventListener('click', (e) => { if(e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
 
         // ===================================================================
-        // 6. LÓGICA DO FIRESTORE (ESTRUTURA CORRETA)
+        // 6. LÓGICA DO FIRESTORE (CORREÇÃO FINAL DE CAMINHO)
         // ===================================================================
-        function listenToDataChanges(userId) {
-            // Define o UID para ser usado nos testes, conforme solicitado. 
-            // Para produção, você usaria o `userId` do usuário logado.
-            const targetUid = "amIh4pPLv9fkBVJfc9KYTPR1hbm2"; 
+        function listenToDataChanges() {
+            // *** CORREÇÃO: Usando o ID do documento real do seu Firebase ***
+            const sharedDocumentId = "01qWWbze7JEiusGnNFW3m"; 
 
             // Caminho para a sub-coleção de estoque
-            const stockCollectionRef = collection(db, "estoque", targetUid, "estoque");
+            const stockCollectionRef = collection(db, "estoque", sharedDocumentId, "estoque");
             appState.unsubscribeStock = onSnapshot(query(stockCollectionRef), (snapshot) => {
                 const stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderStock(stockItems);
             }, (error) => console.error("Erro ao carregar estoque:", error));
 
-            // Caminho para a sub-coleção de produção
-            const productionCollectionRef = collection(db, "producao", targetUid, "producao");
+            // Caminho para a sub-coleção de produção, dentro do mesmo documento compartilhado
+            const productionCollectionRef = collection(db, "estoque", sharedDocumentId, "producao");
             appState.unsubscribeProduction = onSnapshot(query(productionCollectionRef), (snapshot) => {
                 const productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderProduction(productionItems);
@@ -322,15 +318,14 @@
         
         addItemForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const targetUid = "amIh4pPLv9fkBVJfc9KYTPR1hbm2"; // UID fixo
+            const sharedDocumentId = "01qWWbze7JEiusGnNFW3m";
             const newItem = {
                 item: document.getElementById('product-name').value,
                 fornecedor: document.getElementById('product-supplier').value,
                 atual: parseFloat(document.getElementById('product-quantity').value),
-                unidade: document.getElementById('product-unit').value,
-                uid: targetUid // Adiciona o UID ao item, como na sua planilha
+                unidade: document.getElementById('product-unit').value
             };
-            const stockCollectionRef = collection(db, "estoque", targetUid, "estoque");
+            const stockCollectionRef = collection(db, "estoque", sharedDocumentId, "estoque");
             try {
                 await addDoc(stockCollectionRef, newItem);
                 addItemForm.reset();
@@ -342,14 +337,13 @@
 
         addProductionForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const targetUid = "amIh4pPLv9fkBVJfc9KYTPR1hbm2"; // UID fixo
+            const sharedDocumentId = "01qWWbze7JEiusGnNFW3m"; 
             const newItem = {
                 item: document.getElementById('production-name').value,
                 quantidade: parseFloat(document.getElementById('production-quantity').value),
-                unidade: document.getElementById('production-unit').value,
-                uid: targetUid
+                unidade: document.getElementById('production-unit').value
             };
-            const productionCollectionRef = collection(db, "producao", targetUid, "producao");
+            const productionCollectionRef = collection(db, "estoque", sharedDocumentId, "producao");
             try {
                 await addDoc(productionCollectionRef, newItem);
                 addProductionForm.reset();
@@ -363,13 +357,14 @@
             if (e.target.classList.contains('delete-btn')) {
                 const itemId = e.target.dataset.id;
                 const type = e.target.dataset.type;
-                const targetUid = "amIh4pPLv9fkBVJfc9KYTPR1hbm2"; // UID fixo
+                const sharedDocumentId = "01qWWbze7JEiusGnNFW3m";
                 
                 let docRef;
                 if (type === 'stock') {
-                    docRef = doc(db, "estoque", targetUid, "estoque", itemId);
+                    docRef = doc(db, "estoque", sharedDocumentId, "estoque", itemId);
                 } else if (type === 'production') {
-                    docRef = doc(db, "producao", targetUid, "producao", itemId);
+                    // Corrigindo o caminho para a coleção de produção
+                    docRef = doc(db, "estoque", sharedDocumentId, "producao", itemId);
                 } else {
                     return;
                 }
