@@ -112,7 +112,12 @@
                         </form>
                     </div>
                     <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Itens no Estoque</h2>
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold text-gray-700">Itens no Estoque</h2>
+                            <select id="supplier-filter" class="shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm">
+                                <!-- Opções de filtro serão inseridas aqui -->
+                            </select>
+                        </div>
                         <div id="stock-list" class="space-y-3"></div>
                     </div>
                 </div>
@@ -123,6 +128,10 @@
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Item à Produção</h2>
                         <form id="add-production-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input type="text" id="production-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                             <select id="production-sector" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
+                                <option value="COZINHA">COZINHA</option> 
+                                <option value="PARRILLA">PARRILLA</option> 
+                            </select>
                             <input type="number" id="production-quantity" placeholder="Qtd" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
                             <select id="production-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
                                 <option>porção</option> <option>kg</option> <option>lt</option> <option>un</option>
@@ -155,7 +164,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, query, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ===================================================================
         // 1. CONFIGURAÇÃO DO FIREBASE
@@ -177,6 +186,9 @@
         const db = getFirestore(app);
         
         let appState = {
+            stockItems: [],
+            productionItems: [],
+            currentSupplierFilter: 'TODOS',
             unsubscribeStock: null,
             unsubscribeProduction: null
         };
@@ -199,6 +211,8 @@
         const messageContainer = document.getElementById('message-container');
         const stockListContainer = document.getElementById('stock-list');
         const productionListContainer = document.getElementById('production-list');
+        const supplierFilter = document.getElementById('supplier-filter');
+
 
         // ===================================================================
         // 4. FUNÇÕES DE UI E RENDERIZAÇÃO
@@ -226,24 +240,48 @@
             document.getElementById(`tab-${tabId}`).classList.add('active');
         }
         
-        function renderStock(stockItems) {
-            renderList(stockListContainer, stockItems, 'O estoque está vazio.', (item) => `
-                <div>
+        function renderStock() {
+            const filteredItems = appState.currentSupplierFilter === 'TODOS' 
+                ? appState.stockItems 
+                : appState.stockItems.filter(item => item.fornecedor === appState.currentSupplierFilter);
+            
+            renderList(stockListContainer, filteredItems, 'O estoque está vazio.', (item) => `
+                <div class="flex-1">
                     <p class="font-semibold text-gray-800">${item.item}</p>
                     <p class="text-sm text-gray-600">Qtd: ${item.atual} ${item.unidade} ${item.fornecedor ? `| Fornecedor: ${item.fornecedor}` : ''}</p>
                 </div>
-                <button data-id="${item.id}" data-type="stock" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button>
+                <div class="flex items-center gap-2">
+                    <input type="number" step="any" placeholder="Nova Qtd." class="update-quantity-input w-24 text-sm p-1 border rounded">
+                    <button data-id="${item.id}" data-type="stock" class="update-btn text-xs bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-2 rounded">Atualizar</button>
+                    <button data-id="${item.id}" data-type="stock" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button>
+                </div>
             `);
         }
         
-        function renderProduction(productionItems) {
-            renderList(productionListContainer, productionItems, 'Nenhum item em produção.', (item) => `
-                <div>
+        function renderProduction() {
+            renderList(productionListContainer, appState.productionItems, 'Nenhum item em produção.', (item) => `
+                 <div class="flex-1">
                     <p class="font-semibold text-gray-800">${item.item}</p>
-                    <p class="text-sm text-gray-600">Qtd: ${item.quantidade} ${item.unidade}</p>
+                    <p class="text-sm text-gray-600">Qtd: ${item.quantidade} ${item.unidade} | Setor: ${item.setor || 'N/A'}</p>
                 </div>
-                <button data-id="${item.id}" data-type="production" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button>
+                <div class="flex items-center gap-2">
+                    <input type="number" step="any" placeholder="Nova Qtd." class="update-quantity-input w-24 text-sm p-1 border rounded">
+                    <button data-id="${item.id}" data-type="production" class="update-btn text-xs bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-2 rounded">Atualizar</button>
+                    <button data-id="${item.id}" data-type="production" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button>
+                </div>
             `);
+        }
+        
+        function populateSupplierFilter() {
+            const suppliers = [...new Set(appState.stockItems.map(item => item.fornecedor).filter(Boolean))];
+            supplierFilter.innerHTML = '<option>TODOS</option>';
+            suppliers.sort().forEach(supplier => {
+                const option = document.createElement('option');
+                option.value = supplier;
+                option.textContent = supplier;
+                supplierFilter.appendChild(option);
+            });
+            supplierFilter.value = appState.currentSupplierFilter;
         }
 
         function renderList(container, items, emptyMessage, itemTemplate) {
@@ -254,7 +292,7 @@
             }
             items.forEach(item => {
                 const itemDiv = document.createElement('div');
-                itemDiv.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg';
+                itemDiv.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg gap-4';
                 itemDiv.innerHTML = itemTemplate(item);
                 container.appendChild(itemDiv);
             });
@@ -294,17 +332,17 @@
         // 6. LÓGICA DO FIRESTORE (ESTRUTURA SIMPLIFICADA)
         // ===================================================================
         function listenToDataChanges() {
-            // *** CORREÇÃO: Apontando para as coleções de nível raiz corretas ***
             const stockCollectionRef = collection(db, "estoque");
             appState.unsubscribeStock = onSnapshot(query(stockCollectionRef), (snapshot) => {
-                const stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderStock(stockItems);
+                appState.stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                populateSupplierFilter();
+                renderStock();
             }, (error) => console.error("Erro ao carregar estoque:", error));
 
             const productionCollectionRef = collection(db, "producao");
             appState.unsubscribeProduction = onSnapshot(query(productionCollectionRef), (snapshot) => {
-                const productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderProduction(productionItems);
+                appState.productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderProduction();
             }, (error) => console.error("Erro ao carregar produção:", error));
         }
         
@@ -331,7 +369,8 @@
             const newItem = {
                 item: document.getElementById('production-name').value,
                 quantidade: parseFloat(document.getElementById('production-quantity').value),
-                unidade: document.getElementById('production-unit').value
+                unidade: document.getElementById('production-unit').value,
+                setor: document.getElementById('production-sector').value
             };
             const productionCollectionRef = collection(db, "producao");
             try {
@@ -344,26 +383,47 @@
         });
 
         document.getElementById('app-content').addEventListener('click', async (e) => {
-            if (e.target.classList.contains('delete-btn')) {
+            if (e.target.matches('.delete-btn')) {
                 const itemId = e.target.dataset.id;
                 const type = e.target.dataset.type;
-                
-                let docRef;
-                if (type === 'stock') {
-                    docRef = doc(db, "estoque", itemId);
-                } else if (type === 'production') {
-                    docRef = doc(db, "producao", itemId);
-                } else {
-                    return;
-                }
-
+                const docRef = doc(db, type === 'stock' ? "estoque" : "producao", itemId);
                 try {
                     await deleteDoc(docRef);
+                    showMessage("Item excluído com sucesso.");
                 } catch (error) {
                     console.error("Erro ao excluir item:", error);
                     showMessage("Não foi possível excluir o item.", true);
                 }
             }
+            
+            if (e.target.matches('.update-btn')) {
+                const itemId = e.target.dataset.id;
+                const type = e.target.dataset.type;
+                const input = e.target.previousElementSibling;
+                const newQuantity = parseFloat(input.value);
+
+                if (isNaN(newQuantity)) {
+                    showMessage("Por favor, insira um número válido.", true);
+                    return;
+                }
+                
+                const docRef = doc(db, type === 'stock' ? "estoque" : "producao", itemId);
+                const fieldToUpdate = type === 'stock' ? 'atual' : 'quantidade';
+
+                try {
+                    await updateDoc(docRef, { [fieldToUpdate]: newQuantity });
+                    showMessage("Quantidade atualizada!");
+                    input.value = '';
+                } catch (error) {
+                    console.error("Erro ao atualizar quantidade:", error);
+                    showMessage("Falha ao atualizar a quantidade.", true);
+                }
+            }
+        });
+        
+        supplierFilter.addEventListener('change', (e) => {
+            appState.currentSupplierFilter = e.target.value;
+            renderStock();
         });
 
     </script>
