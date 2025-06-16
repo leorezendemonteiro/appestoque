@@ -189,16 +189,13 @@
         const mainAppView = document.getElementById('main-app-view');
         const tabsContainer = document.getElementById('tabs-container');
         const tabContents = document.querySelectorAll('.tab-content');
-        // Forms
         const loginForm = document.getElementById('login-form');
         const signupForm = document.getElementById('signup-form');
         const addItemForm = document.getElementById('add-item-form');
         const addProductionForm = document.getElementById('add-production-form');
-        // Buttons
         const showSignupBtn = document.getElementById('show-signup-btn');
         const showLoginBtn = document.getElementById('show-login-btn');
         const logoutBtn = document.getElementById('logout-btn');
-        // Containers
         const messageContainer = document.getElementById('message-container');
         const stockListContainer = document.getElementById('stock-list');
         const productionListContainer = document.getElementById('production-list');
@@ -219,7 +216,6 @@
             document.body.classList.toggle('flex', isAuthScreen);
             document.body.classList.toggle('items-center', isAuthScreen);
             document.body.classList.toggle('min-h-screen', isAuthScreen);
-            
             if (showView) document.getElementById(showView).classList.remove('hidden');
         }
 
@@ -295,21 +291,17 @@
         tabsContainer.addEventListener('click', (e) => { if(e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
 
         // ===================================================================
-        // 6. LÓGICA DO FIRESTORE (CORREÇÃO FINAL DE CAMINHO)
+        // 6. LÓGICA DO FIRESTORE (ESTRUTURA SIMPLIFICADA)
         // ===================================================================
         function listenToDataChanges() {
-            // *** CORREÇÃO: Usando o ID do documento real do seu Firebase ***
-            const sharedDocumentId = "01qWWbze7JEiusGnNFW3m"; 
-
-            // Caminho para a sub-coleção de estoque
-            const stockCollectionRef = collection(db, "estoque", sharedDocumentId, "estoque");
+            // *** CORREÇÃO: Apontando para as coleções de nível raiz corretas ***
+            const stockCollectionRef = collection(db, "estoque");
             appState.unsubscribeStock = onSnapshot(query(stockCollectionRef), (snapshot) => {
                 const stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderStock(stockItems);
             }, (error) => console.error("Erro ao carregar estoque:", error));
 
-            // Caminho para a sub-coleção de produção, dentro do mesmo documento compartilhado
-            const productionCollectionRef = collection(db, "estoque", sharedDocumentId, "producao");
+            const productionCollectionRef = collection(db, "producao");
             appState.unsubscribeProduction = onSnapshot(query(productionCollectionRef), (snapshot) => {
                 const productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderProduction(productionItems);
@@ -318,14 +310,13 @@
         
         addItemForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const sharedDocumentId = "01qWWbze7JEiusGnNFW3m";
             const newItem = {
                 item: document.getElementById('product-name').value,
                 fornecedor: document.getElementById('product-supplier').value,
                 atual: parseFloat(document.getElementById('product-quantity').value),
                 unidade: document.getElementById('product-unit').value
             };
-            const stockCollectionRef = collection(db, "estoque", sharedDocumentId, "estoque");
+            const stockCollectionRef = collection(db, "estoque");
             try {
                 await addDoc(stockCollectionRef, newItem);
                 addItemForm.reset();
@@ -337,13 +328,12 @@
 
         addProductionForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const sharedDocumentId = "01qWWbze7JEiusGnNFW3m"; 
             const newItem = {
                 item: document.getElementById('production-name').value,
                 quantidade: parseFloat(document.getElementById('production-quantity').value),
                 unidade: document.getElementById('production-unit').value
             };
-            const productionCollectionRef = collection(db, "estoque", sharedDocumentId, "producao");
+            const productionCollectionRef = collection(db, "producao");
             try {
                 await addDoc(productionCollectionRef, newItem);
                 addProductionForm.reset();
@@ -357,14 +347,12 @@
             if (e.target.classList.contains('delete-btn')) {
                 const itemId = e.target.dataset.id;
                 const type = e.target.dataset.type;
-                const sharedDocumentId = "01qWWbze7JEiusGnNFW3m";
                 
                 let docRef;
                 if (type === 'stock') {
-                    docRef = doc(db, "estoque", sharedDocumentId, "estoque", itemId);
+                    docRef = doc(db, "estoque", itemId);
                 } else if (type === 'production') {
-                    // Corrigindo o caminho para a coleção de produção
-                    docRef = doc(db, "estoque", sharedDocumentId, "producao", itemId);
+                    docRef = doc(db, "producao", itemId);
                 } else {
                     return;
                 }
