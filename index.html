@@ -287,11 +287,6 @@
             tabContents.forEach(content => content.classList.remove('active'));
             document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active');
             document.getElementById(`tab-${tabId}`).classList.add('active');
-            // Esconde a área de relatório de compras ao trocar de aba
-            if (tabId !== 'reports') {
-                reportDisplayArea.classList.add('hidden');
-                reportDisplayArea.innerHTML = '';
-            }
         }
         
         function renderStock() {
@@ -495,40 +490,34 @@
         // 7. LÓGICA DE RELATÓRIOS
         // ===================================================================
 
-        // FUNÇÃO DE PDF SUBSTITUÍDA PELA VERSÃO MAIS ROBUSTA
         function generatePdf(title, content) {
-            const pdfContent = document.getElementById('pdf-content');
-            pdfContent.innerHTML = `<div class="print-area">${content}</div>`;
-            const contentToPrint = pdfContent.firstElementChild;
-            html2canvas(contentToPrint, { scale: 2, useCORS: true }).then(canvas => {
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('p', 'mm', 'a4');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            
+            const pdfContent = `<div class="print-area">${content}</div>`;
+            document.getElementById('pdf-content').innerHTML = pdfContent;
+
+            html2canvas(document.getElementById('pdf-content'), { scale: 2 }).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
-                const pageMargin = 15;
-                const pdfPageWidth = pdf.internal.pageSize.getWidth() - (2 * pageMargin);
-                const pdfPageHeight = pdf.internal.pageSize.getHeight() - (2 * pageMargin);
-                const canvasAspectRatio = canvas.width / canvas.height;
-                const imgWidthOnPdf = pdfPageWidth;
-                const imgHeightOnPdf = pdfPageWidth / canvasAspectRatio;
-                let totalHeightLeft = imgHeightOnPdf;
-                let currentPosition = 0;
-                pdf.addImage(imgData, 'PNG', pageMargin, pageMargin, imgWidthOnPdf, imgHeightOnPdf);
-                totalHeightLeft -= pdfPageHeight;
-                while (totalHeightLeft > 0) {
-                    currentPosition -= pdfPageHeight;
+                const imgWidth = 190; // A4 width in mm with margin
+                const pageHeight = 295; // A4 height in mm
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight + 10;
                     pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', pageMargin, currentPosition + pageMargin, imgWidthOnPdf, imgHeightOnPdf);
-                    totalHeightLeft -= pdfPageHeight;
+                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
                 }
                 pdf.save(`${title.replace(/ /g, '_')}.pdf`);
-                pdfContent.innerHTML = '';
-            }).catch(err => {
-                console.error("PDF generation error:", err);
-                showMessage("Ocorreu um erro ao gerar o PDF. Tente novamente.", true);
             });
         }
 
-        // LÓGICA ORIGINAL RESTAURADA
         generateStockReportBtn.addEventListener('click', () => {
             const groupedBySupplier = appState.stockItems.reduce((acc, item) => {
                 const supplier = item.fornecedor || 'Sem Fornecedor';
@@ -539,3 +528,94 @@
 
             let content = '<h1>Relatório Geral de Estoque</h1>';
             for(const supplier in groupedBySupplier) {
+                content += `<h2>Fornecedor: ${supplier}</h2>
+                            <table>
+                                <thead>
+                                    <tr><th>Produto</th><th>Quantidade</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${groupedBySupplier[supplier].map(item => `
+                                        <tr><td>${item.item}</td><td>${item.atual} ${item.unidade}</td></tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>`;
+            }
+            generatePdf('Relatorio_Geral_Estoque', content);
+        });
+        
+        generateShoppingListBtn.addEventListener('click', () => {
+            const itemsToBuy = appState.stockItems.filter(item => item.atual <= (item.minima || 0));
+            const groupedBySupplier = itemsToBuy.reduce((acc, item) => {
+                const supplier = item.fornecedor || 'Sem Fornecedor';
+                if (!acc[supplier]) acc[supplier] = [];
+                acc[supplier].push(item);
+                return acc;
+            }, {});
+            
+            reportDisplayArea.classList.remove('hidden');
+            let content = `<h3 class="text-lg font-bold mb-4">Lista de Compras</h3>`;
+            
+            for(const supplier in groupedBySupplier) {
+                content += `<h4 class="font-semibold mt-4 mb-2 text-md">${supplier}</h4>
+                            <div class="space-y-2">
+                            <div class="flex items-center justify-between p-2 font-bold text-sm text-gray-600">
+                                <span class="w-2/5">Produto</span>
+                                <span class="w-1/5 text-center">Qtd. Atual</span>
+                                <span class="w-1/5 text-center">Qtd. Pedida</span>
+                                <span class="w-1/5 text-right">Ação</span>
+                            </div>
+                            ${groupedBySupplier[supplier].map(item => `
+                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded" data-item-id="${item.id}">
+                                    <span class="w-2/5">${item.item}</span>
+                                    <span class="w-1/5 text-center">${item.atual}</span>
+                                    <input type="number" placeholder="Qtd." class="w-1/5 p-1 border rounded text-sm text-center">
+                                    <button class="delete-shopping-item-btn w-1/5 text-red-500 font-bold text-right">Excluir</button>
+                                </div>
+                            `).join('')}
+                            </div>`;
+            }
+            content += `<button id="generate-shopping-list-pdf-btn" class="w-full mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded">Gerar PDF da Lista</button>`;
+            reportDisplayArea.innerHTML = content;
+        });
+        
+        reportDisplayArea.addEventListener('click', e => {
+            if (e.target.matches('.delete-shopping-item-btn')) {
+                e.target.closest('div[data-item-id]').remove();
+            }
+            if (e.target.matches('#generate-shopping-list-pdf-btn')) {
+                  const listContent = reportDisplayArea.innerHTML;
+                  // Remove o botão de gerar PDF do conteúdo do PDF
+                  const pdfHtml = listContent.replace('<button id="generate-shopping-list-pdf-btn" class="w-full mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded">Gerar PDF da Lista</button>', '');
+                  generatePdf('Lista_de_Compras', pdfHtml);
+            }
+        });
+        
+        generateKitchenReportBtn.addEventListener('click', () => {
+            const kitchenItems = appState.productionItems.filter(item => item.setor === 'COZINHA');
+            let content = createProductionReportContent(kitchenItems);
+            generatePdf('producao_cozinha', content);
+        });
+        
+        generateParrillaReportBtn.addEventListener('click', () => {
+            const parrillaItems = appState.productionItems.filter(item => item.setor === 'PARRILLA');
+            let content = createProductionReportContent(parrillaItems);
+            generatePdf('producao_parrilla', content);
+        });
+
+        function createProductionReportContent(items) {
+             return `<h1>Relatório de Produção</h1>
+                     <table>
+                         <thead>
+                             <tr><th>Produto</th><th>Quantidade</th><th>Unidade</th></tr>
+                         </thead>
+                         <tbody>
+                             ${items.map(item => `
+                                 <tr><td>${item.item}</td><td>${item.quantidade}</td><td>${item.unidade}</td></tr>
+                             `).join('')}
+                         </tbody>
+                     </table>`;
+        }
+
+    </script>
+</body>
+</html>
