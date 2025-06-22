@@ -19,13 +19,11 @@
         .tab-content.active {
             display: block;
         }
-        /* Estilo para a lista de compras com rolagem */
         #report-display-area.interactive-list {
             max-height: 60vh;
             overflow-y: auto;
             border: 1px solid #e5e7eb;
         }
-        /* Estilos para o conteúdo que será impresso/gerado em PDF */
         .print-area {
             font-family: Arial, sans-serif;
         }
@@ -368,6 +366,7 @@
         });
 
         addProductionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
             const newItem = { item: document.getElementById('production-name').value, quantidade: parseFloat(document.getElementById('production-quantity').value), unidade: document.getElementById('production-unit').value, setor: document.getElementById('production-sector').value };
             try { await addDoc(collection(db, "producao"), newItem); addProductionForm.reset(); } catch (error) { console.error("Erro ao adicionar item de produção:", error); showMessage("Não foi possível salvar o item na produção.", true); }
         });
@@ -437,6 +436,7 @@
             generatePdf('Relatorio_Geral_Estoque', content);
         });
         
+        // BOTÃO DA LISTA DE COMPRAS - LÓGICA NOVA E ISOLADA
         generateShoppingListBtn.addEventListener('click', () => {
             reportDisplayArea.className = 'bg-white rounded-xl shadow-lg interactive-list p-6';
             const itemsToBuy = appState.stockItems.filter(i => i.atual <= (i.minima || 0));
@@ -459,57 +459,4 @@
                 const sorted = [...itemsToBuy].sort((a, b) => (a.item || '').localeCompare(b.item || ''));
                 const filtered = (selected === 'TODOS') ? sorted : sorted.filter(i => (i.fornecedor || 'Sem Fornecedor') === selected);
                 if (filtered.length === 0) { container.innerHTML = `<p class="text-gray-500 text-center p-4">Nenhum item para este fornecedor.</p>`; return; }
-                container.innerHTML += `<div class="flex items-center justify-between p-2 font-bold text-sm text-gray-600 bg-gray-100 rounded-t-md"><span class="w-2/5">Produto</span><span class="w-1/5 text-center">Qtd. Atual</span><span class="w-1/5 text-center">Qtd. Pedida</span><span class="w-1/5 text-right pr-2">Ação</span></div>`;
-                filtered.forEach(item => {
-                    const div = document.createElement('div'); div.className = 'shopping-list-item flex items-center justify-between p-2 bg-gray-50 rounded';
-                    div.dataset.itemName = item.item; div.dataset.itemUnit = item.unidade; div.dataset.supplier = item.fornecedor || 'Sem Fornecedor';
-                    div.innerHTML = `<span class="w-2/5 text-sm">${escapeHtml(item.item)}</span><span class="w-1/5 text-center text-sm">${item.atual} ${item.unidade}</span>
-                        <input type="number" placeholder="Qtd." class="shopping-quantity-input w-1/5 p-1 border rounded text-sm text-center" step="any">
-                        <button class="delete-shopping-item-btn w-1/5 text-red-500 hover:text-red-700 font-bold text-right text-sm">Excluir</button>`;
-                    container.appendChild(div);
-                });
-            };
-            reportDisplayArea.querySelector('#shopping-list-supplier-filter').addEventListener('change', renderFilteredShoppingList);
-            renderFilteredShoppingList();
-        });
-        
-        reportDisplayArea.addEventListener('click', e => {
-            if (e.target.matches('.delete-shopping-item-btn')) e.target.closest('.shopping-list-item').remove();
-            if (e.target.matches('#generate-shopping-list-pdf-btn')) {
-                const itemsForPdf = [];
-                reportDisplayArea.querySelectorAll('.shopping-list-item').forEach(row => {
-                    const quantity = parseFloat(row.querySelector('.shopping-quantity-input').value);
-                    itemsForPdf.push({ name: row.dataset.itemName, supplier: row.dataset.supplier, quantity: (quantity > 0) ? `${quantity} ${row.dataset.itemUnit || ''}`.trim() : '_______' });
-                });
-                if (itemsForPdf.length === 0) { showMessage("A lista de compras está vazia.", true); return; }
-                const grouped = itemsForPdf.reduce((acc, i) => { const s = i.supplier || 'Sem Fornecedor'; if (!acc[s]) acc[s] = []; acc[s].push(i); return acc; }, {});
-                let pdfHtml = '<h1>Lista de Compras</h1>';
-                Object.keys(grouped).sort().forEach(s => {
-                     const sorted = grouped[s].sort((a,b) => (a.name || '').localeCompare(b.name || ''));
-                     pdfHtml += `<h2>Fornecedor: ${escapeHtml(s)}</h2><table><thead><tr><th>Produto</th><th>Qtd. Pedida</th></tr></thead><tbody>
-                         ${sorted.map(i => `<tr><td>${escapeHtml(i.name)}</td><td>${escapeHtml(i.quantity)}</td></tr>`).join('')}
-                         </tbody></table>`;
-                });
-                generatePdf('Lista_de_Compras', pdfHtml);
-            }
-        });
-        
-        function createProductionReportContent(items) {
-             return `<h1>Relatório de Produção</h1><table><thead><tr><th>Produto</th><th>Quantidade</th><th>Unidade</th></tr></thead><tbody>
-                 ${items.map(item => `<tr><td>${item.item}</td><td>${item.quantidade}</td><td>${item.unidade}</td></tr>`).join('')}
-             </tbody></table>`;
-        }
-        generateKitchenReportBtn.addEventListener('click', () => {
-            const kitchenItems = appState.productionItems.filter(item => item.setor === 'COZINHA');
-            let content = createProductionReportContent(kitchenItems);
-            generatePdf('producao_cozinha', content);
-        });
-        generateParrillaReportBtn.addEventListener('click', () => {
-            const parrillaItems = appState.productionItems.filter(item => item.setor === 'PARRILLA');
-            let content = createProductionReportContent(parrillaItems);
-            generatePdf('producao_parrilla', content);
-        });
-
-    </script>
-</body>
-</html>
+                container.innerHTML += `<div class="flex items-center justify-between p-2 font-bold text-sm text-gray-600 bg-gray-100 rounded-t-md"><span class="w-2/5">Produto</span><span class="w-1/5 text-center">Qtd. Atual</span><span class="w-1/5 text-center">Qtd. Pedida</span><span class="w-1/5 text
