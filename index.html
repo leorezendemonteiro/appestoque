@@ -19,13 +19,11 @@
         .tab-content.active {
             display: block;
         }
-        /* Estilo para a lista de compras com rolagem */
         #report-display-area.interactive-list {
             max-height: 60vh;
             overflow-y: auto;
             border: 1px solid #e5e7eb;
         }
-        /* Estilos para o conteúdo que será impresso/gerado em PDF */
         .print-area {
             font-family: Arial, sans-serif;
         }
@@ -64,15 +62,15 @@
             <form id="login-form">
                 <div class="mb-4">
                     <label for="login-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                    <input type="email" id="login-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="email" id="login-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                 </div>
                 <div class="mb-6">
                     <label for="login-password" class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
-                    <input type="password" id="login-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="password" id="login-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                 </div>
                 <div class="flex flex-col space-y-4">
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Entrar</button>
-                    <button type="button" id="show-signup-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">Não tenho conta, quero me cadastrar</button>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Entrar</button>
+                    <button type="button" id="show-signup-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">Não tenho conta</button>
                 </div>
             </form>
         </div>
@@ -82,14 +80,14 @@
             <form id="signup-form">
                 <div class="mb-4">
                     <label for="signup-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                    <input type="email" id="signup-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="email" id="signup-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                 </div>
                 <div class="mb-6">
                     <label for="signup-password" class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
-                    <input type="password" id="signup-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="password" id="signup-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                 </div>
                 <div class="flex flex-col space-y-4">
-                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Cadastrar</button>
+                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Cadastrar</button>
                     <button type="button" id="show-login-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">Já tenho uma conta</button>
                 </div>
             </form>
@@ -102,7 +100,7 @@
                         <h1 class="text-xl font-bold text-gray-800">App de Gestão</h1>
                         <p id="user-email" class="text-xs text-gray-500"></p>
                     </div>
-                    <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm">Sair</button>
+                    <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm">Sair</button>
                 </div>
             </header>
             
@@ -125,7 +123,7 @@
                             <input type="text" id="product-supplier" placeholder="Fornecedor" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
                             <input type="number" id="product-quantity" placeholder="Qtd. Atual" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
                             <input type="number" id="product-min" placeholder="Qtd. Mínima" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any">
-                             <input type="number" id="product-ideal" placeholder="Qtd. Ideal" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any">
+                            <input type="number" id="product-ideal" placeholder="Qtd. Ideal" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any">
                             <select id="product-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
                                 <option>un</option> <option>kg</option> <option>g</option> <option>lt</option> <option>ml</option>
                             </select>
@@ -146,326 +144,13 @@
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Item à Produção</h2>
                         <form id="add-production-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input type="text" id="production-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                             <select id="production-sector" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
-                                 <option value="COZINHA">COZINHA</option> 
-                                 <option value="PARRILLA">PARRILLA</option> 
-                             </select>
+                            <select id="production-sector" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
+                                <option value="COZINHA">COZINHA</option> 
+                                <option value="PARRILLA">PARRILLA</option> 
+                            </select>
                             <input type="number" id="production-quantity" placeholder="Qtd" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
                             <select id="production-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
                                 <option>porção</option> <option>kg</option> <option>lt</option> <option>un</option>
                             </select>
                             <button type="submit" class="sm:col-span-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Adicionar</button>
-                        </form>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-semibold text-gray-700">Itens em Produção</h2>
-                            <select id="sector-filter" class="shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm">
-                                <option value="TODOS">TODOS</option>
-                                <option value="COZINHA">COZINHA</option>
-                                <option value="PARRILLA">PARRILLA</option>
-                            </select>
-                        </div>
-                        <div id="production-list" class="space-y-3"></div>
-                    </div>
-                </div>
-
-                <div id="tab-reports" class="tab-content space-y-8">
-                     <div class="bg-white p-6 rounded-xl shadow-lg">
-                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios de Estoque</h2>
-                         <div class="flex flex-col sm:flex-row gap-4">
-                              <button id="generate-stock-report-btn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Relatório Geral de Estoque (PDF)</button>
-                              <button id="generate-shopping-list-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded">Gerar Lista de Compras</button>
-                         </div>
-                     </div>
-                     <div class="bg-white p-6 rounded-xl shadow-lg">
-                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios de Produção</h2>
-                         <div class="flex flex-col sm:flex-row gap-4">
-                             <button id="generate-kitchen-report-btn" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded">Produção Cozinha (PDF)</button>
-                             <button id="generate-parrilla-report-btn" class="flex-1 bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded">Produção Parrilla (PDF)</button>
-                         </div>
-                     </div>
-                     <div id="report-display-area" class="bg-white rounded-xl shadow-lg hidden"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div id="pdf-content" class="hidden"></div>
-        <div id="message-container" class="fixed top-5 right-5 text-sm font-bold z-50"></div>
-
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, query, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // ===================================================================
-        // 1. CONFIGURAÇÃO DO FIREBASE
-        // ===================================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
-            authDomain: "appestoquecozinha.firebaseapp.com",
-            projectId: "appestoquecozinha",
-            storageBucket: "appestoquecozinha.appspot.com",
-            messagingSenderId: "705934517110",
-            appId: "1:705934517110:web:b4d5b79059feb7e6485057"
-        };
-
-        // ===================================================================
-        // 2. INICIALIZAÇÃO E ESTADO
-        // ===================================================================
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        
-        let appState = { stockItems: [], productionItems: [], currentSupplierFilter: 'TODOS', currentSectorFilter: 'TODOS', unsubscribeStock: null, unsubscribeProduction: null };
-
-        // ===================================================================
-        // 3. SELETORES DA DOM (ESTRUTURA ORIGINAL VALIDADA)
-        // ===================================================================
-        const loginView = document.getElementById('login-view');
-        const signupView = document.getElementById('signup-view');
-        const mainAppView = document.getElementById('main-app-view');
-        const tabsContainer = document.getElementById('tabs-container');
-        const tabContents = document.querySelectorAll('.tab-content');
-        const loginForm = document.getElementById('login-form');
-        const signupForm = document.getElementById('signup-form');
-        const addItemForm = document.getElementById('add-item-form');
-        const addProductionForm = document.getElementById('add-production-form');
-        const showSignupBtn = document.getElementById('show-signup-btn');
-        const showLoginBtn = document.getElementById('show-login-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        const messageContainer = document.getElementById('message-container');
-        const stockListContainer = document.getElementById('stock-list');
-        const productionListContainer = document.getElementById('production-list');
-        const supplierFilter = document.getElementById('supplier-filter');
-        const sectorFilter = document.getElementById('sector-filter');
-        const generateStockReportBtn = document.getElementById('generate-stock-report-btn');
-        const generateShoppingListBtn = document.getElementById('generate-shopping-list-btn');
-        const generateKitchenReportBtn = document.getElementById('generate-kitchen-report-btn');
-        const generateParrillaReportBtn = document.getElementById('generate-parrilla-report-btn');
-        const reportDisplayArea = document.getElementById('report-display-area');
-
-        // ===================================================================
-        // 4. FUNÇÕES DE UI E RENDERIZAÇÃO
-        // ===================================================================
-        function showMessage(message, isError = false) {
-            messageContainer.innerHTML = `<div class="p-3 rounded-lg shadow-lg ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${message}</div>`;
-            setTimeout(() => { messageContainer.innerHTML = ''; }, 4000);
-        }
-
-        function toggleViews(showView) {
-            loginView.classList.add('hidden');
-            signupView.classList.add('hidden');
-            mainAppView.classList.add('hidden');
-            const isAuthScreen = showView === 'login-view' || showView === 'signup-view';
-            document.body.classList.toggle('flex', isAuthScreen);
-            document.body.classList.toggle('items-center', isAuthScreen);
-            document.body.classList.toggle('min-h-screen', isAuthScreen);
-            if (showView) document.getElementById(showView).classList.remove('hidden');
-        }
-
-        function switchTab(tabId) {
-            tabsContainer.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-            document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active');
-            document.getElementById(`tab-${tabId}`).classList.add('active');
-            if (tabId !== 'reports') {
-                reportDisplayArea.classList.add('hidden');
-                reportDisplayArea.innerHTML = '';
-            }
-        }
-        
-        function renderStock() {
-            const filteredItems = appState.currentSupplierFilter === 'TODOS' ? appState.stockItems : appState.stockItems.filter(item => item.fornecedor === appState.currentSupplierFilter);
-            renderList(stockListContainer, filteredItems, 'O estoque está vazio.', (item) => `
-                <div class="flex-1"><p class="font-semibold text-gray-800">${item.item}</p><p class="text-sm text-gray-600">Qtd: ${item.atual} ${item.unidade} ${item.fornecedor ? `| Fornecedor: ${item.fornecedor}` : ''}</p></div>
-                <div class="flex items-center gap-2"><input type="number" step="any" placeholder="Nova Qtd." class="update-quantity-input w-24 text-sm p-1 border rounded"><button data-id="${item.id}" data-type="stock" class="update-btn text-xs bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-2 rounded">Atualizar</button><button data-id="${item.id}" data-type="stock" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button></div>`);
-        }
-        
-        function renderProduction() {
-            const filteredItems = appState.currentSectorFilter === 'TODOS' ? appState.productionItems : appState.productionItems.filter(item => item.setor === appState.currentSectorFilter);
-            renderList(productionListContainer, filteredItems, 'Nenhum item em produção.', (item) => `
-                <div class="flex-1"><p class="font-semibold text-gray-800">${item.item}</p><p class="text-sm text-gray-600">Qtd: ${item.quantidade} ${item.unidade} | Setor: ${item.setor || 'N/A'}</p></div>
-                <div class="flex items-center gap-2"><input type="number" step="any" placeholder="Nova Qtd." class="update-quantity-input w-24 text-sm p-1 border rounded"><button data-id="${item.id}" data-type="production" class="update-btn text-xs bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-2 rounded">Atualizar</button><button data-id="${item.id}" data-type="production" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button></div>`);
-        }
-        
-        function populateSupplierFilter() {
-            const suppliers = [...new Set(appState.stockItems.map(item => item.fornecedor).filter(Boolean))];
-            supplierFilter.innerHTML = '<option value="TODOS">TODOS</option>';
-            suppliers.sort().forEach(supplier => {
-                const option = document.createElement('option'); option.value = supplier; option.textContent = supplier; supplierFilter.appendChild(option);
-            });
-            supplierFilter.value = appState.currentSupplierFilter;
-        }
-
-        function renderList(container, items, emptyMessage, itemTemplate) {
-            container.innerHTML = '';
-            if (!items || items.length === 0) { container.innerHTML = `<p class="text-gray-500 text-center p-4 border-2 border-dashed rounded-lg">${emptyMessage}</p>`; return; }
-            items.forEach(item => {
-                const itemDiv = document.createElement('div'); itemDiv.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg gap-4'; itemDiv.innerHTML = itemTemplate(item); container.appendChild(itemDiv);
-            });
-        }
-        
-        function escapeHtml(text) {
-            if (typeof text !== 'string') return text;
-            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
-
-        // ===================================================================
-        // 5. LÓGICA DE AUTENTICAÇÃO (ESTRUTURA ORIGINAL VALIDADA)
-        // ===================================================================
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('user-email').textContent = user.email;
-                toggleViews('main-app-view');
-                switchTab('stock');
-                listenToDataChanges(); 
-            } else {
-                if (appState.unsubscribeStock) appState.unsubscribeStock();
-                if (appState.unsubscribeProduction) appState.unsubscribeProduction();
-                toggleViews('login-view');
-            }
-        });
-
-        function handleAuthError(error) {
-            console.error("Erro de Autenticação:", error.code);
-            if (error.code === 'auth/invalid-credential') showMessage("Email ou senha inválidos.", true);
-            else if (error.code === 'auth/email-already-in-use') showMessage("Este email já está cadastrado.", true);
-            else showMessage("Ocorreu um erro. Tente novamente.", true);
-        }
-
-        signupForm.addEventListener('submit', (e) => { e.preventDefault(); createUserWithEmailAndPassword(auth, signupForm.email.value, signupForm.password.value).catch(handleAuthError); });
-        loginForm.addEventListener('submit', (e) => { e.preventDefault(); signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value).catch(handleAuthError); });
-        logoutBtn.addEventListener('click', () => signOut(auth).catch(handleAuthError));
-        showSignupBtn.addEventListener('click', () => toggleViews('signup-view'));
-        showLoginBtn.addEventListener('click', () => toggleViews('login-view'));
-        tabsContainer.addEventListener('click', (e) => { if(e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
-
-        // ===================================================================
-        // 6. LÓGICA DO FIRESTORE (ESTRUTURA ORIGINAL VALIDADA)
-        // ===================================================================
-        function listenToDataChanges() {
-            const stockCollectionRef = collection(db, "estoque");
-            appState.unsubscribeStock = onSnapshot(query(stockCollectionRef), (snapshot) => {
-                appState.stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                populateSupplierFilter();
-                renderStock();
-            }, (error) => console.error("Erro ao carregar estoque:", error));
-
-            const productionCollectionRef = collection(db, "producao");
-            appState.unsubscribeProduction = onSnapshot(query(productionCollectionRef), (snapshot) => {
-                appState.productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderProduction();
-            }, (error) => console.error("Erro ao carregar produção:", error));
-        }
-        
-        addItemForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const newItem = { item: document.getElementById('product-name').value, fornecedor: document.getElementById('product-supplier').value, atual: parseFloat(document.getElementById('product-quantity').value || 0), minima: parseFloat(document.getElementById('product-min').value || 0), ideal: parseFloat(document.getElementById('product-ideal').value || 0), unidade: document.getElementById('product-unit').value };
-            try { await addDoc(collection(db, "estoque"), newItem); addItemForm.reset(); } catch (error) { console.error("Erro ao adicionar item de estoque:", error); showMessage("Não foi possível salvar o item no estoque.", true); }
-        });
-
-        addProductionForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const newItem = { item: document.getElementById('production-name').value, quantidade: parseFloat(document.getElementById('production-quantity').value), unidade: document.getElementById('production-unit').value, setor: document.getElementById('production-sector').value };
-            try { await addDoc(collection(db, "producao"), newItem); addProductionForm.reset(); } catch (error) { console.error("Erro ao adicionar item de produção:", error); showMessage("Não foi possível salvar o item na produção.", true); }
-        });
-
-        document.getElementById('app-content').addEventListener('click', async (e) => {
-            if (e.target.matches('.delete-btn')) {
-                const itemId = e.target.dataset.id; const type = e.target.dataset.type; const docRef = doc(db, type === 'stock' ? "estoque" : "producao", itemId);
-                try { await deleteDoc(docRef); showMessage("Item excluído com sucesso."); } catch (error) { console.error("Erro ao excluir item:", error); showMessage("Não foi possível excluir o item.", true); }
-            }
-            if (e.target.matches('.update-btn')) {
-                const itemId = e.target.dataset.id; const type = e.target.dataset.type; const input = e.target.previousElementSibling; const newQuantity = parseFloat(input.value);
-                if (isNaN(newQuantity)) { showMessage("Por favor, insira um número válido.", true); return; }
-                const docRef = doc(db, type === 'stock' ? "estoque" : "producao", itemId); const fieldToUpdate = type === 'stock' ? 'atual' : 'quantidade';
-                try { await updateDoc(docRef, { [fieldToUpdate]: newQuantity }); showMessage("Quantidade atualizada!"); input.value = ''; } catch (error) { console.error("Erro ao atualizar quantidade:", error); showMessage("Falha ao atualizar a quantidade.", true); }
-            }
-        });
-        
-        supplierFilter.addEventListener('change', (e) => { appState.currentSupplierFilter = e.target.value; renderStock(); });
-        sectorFilter.addEventListener('change', (e) => { appState.currentSectorFilter = e.target.value; renderProduction(); });
-        
-        // ===================================================================
-        // 7. LÓGICA DE RELATÓRIOS (COM ALTERAÇÕES CIRÚRGICAS)
-        // ===================================================================
-
-        // FUNÇÃO DE PDF ATUALIZADA E ROBUSTA
-        function generatePdf(title, content) {
-            const pdfContent = document.getElementById('pdf-content');
-            pdfContent.innerHTML = `<div class="print-area">${content}</div>`;
-            const contentToPrint = pdfContent.firstElementChild;
-            html2canvas(contentToPrint, { scale: 2, useCORS: true }).then(canvas => {
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgData = canvas.toDataURL('image/png');
-                const pageMargin = 15;
-                const pdfPageWidth = pdf.internal.pageSize.getWidth() - (2 * pageMargin);
-                const pdfPageHeight = pdf.internal.pageSize.getHeight() - (2 * pageMargin);
-                const canvasAspectRatio = canvas.width / canvas.height;
-                const imgWidthOnPdf = pdfPageWidth;
-                const imgHeightOnPdf = pdfPageWidth / canvasAspectRatio;
-                let totalHeightLeft = imgHeightOnPdf;
-                let currentPosition = 0;
-                pdf.addImage(imgData, 'PNG', pageMargin, pageMargin, imgWidthOnPdf, imgHeightOnPdf);
-                totalHeightLeft -= pdfPageHeight;
-                while (totalHeightLeft > 0) {
-                    currentPosition -= pdfPageHeight;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', pageMargin, currentPosition + pageMargin, imgWidthOnPdf, imgHeightOnPdf);
-                    totalHeightLeft -= pdfPageHeight;
-                }
-                pdf.save(`${title.replace(/ /g, '_')}.pdf`);
-                pdfContent.innerHTML = '';
-            }).catch(err => {
-                console.error("PDF generation error:", err);
-                showMessage("Ocorreu um erro ao gerar o PDF. Tente novamente.", true);
-            });
-        }
-
-        // LÓGICA ORIGINAL DO BOTÃO (SEM ALTERAÇÃO)
-        generateStockReportBtn.addEventListener('click', () => {
-            const groupedBySupplier = appState.stockItems.reduce((acc, item) => {
-                const supplier = item.fornecedor || 'Sem Fornecedor';
-                if (!acc[supplier]) acc[supplier] = [];
-                acc[supplier].push(item);
-                return acc;
-            }, {});
-            let content = '<h1>Relatório Geral de Estoque</h1>';
-            for(const supplier in groupedBySupplier) {
-                content += `<h2>Fornecedor: ${supplier}</h2>
-                            <table>
-                                <thead><tr><th>Produto</th><th>Quantidade</th></tr></thead>
-                                <tbody>
-                                    ${groupedBySupplier[supplier].map(item => `
-                                        <tr><td>${item.item}</td><td>${item.atual} ${item.unidade}</td></tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>`;
-            }
-            generatePdf('Relatorio_Geral_Estoque', content);
-        });
-        
-        // BOTÃO DA LISTA DE COMPRAS - LÓGICA NOVA E ISOLADA
-        generateShoppingListBtn.addEventListener('click', () => {
-            reportDisplayArea.className = 'bg-white rounded-xl shadow-lg interactive-list p-6';
-            const itemsToBuy = appState.stockItems.filter(i => i.atual <= (i.minima || 0));
-            if (itemsToBuy.length === 0) { showMessage("Nenhum item na lista de compras."); reportDisplayArea.classList.add('hidden'); return; }
-            const suppliers = ['TODOS', ...new Set(itemsToBuy.map(i => i.fornecedor || 'Sem Fornecedor').sort())];
-            reportDisplayArea.innerHTML = `
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                    <h3 class="text-lg font-bold">Lista de Compras</h3>
-                    <div class="flex items-center gap-2">
-                        <label for="shopping-list-supplier-filter" class="text-sm font-medium">Fornecedor:</label>
-                        <select id="shopping-list-supplier-filter" class="shadow-sm appearance-none border rounded py-1 px-3 bg-white text-sm">${suppliers.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}</select>
-                    </div>
-                </div>
-                <div id="shopping-list-items-container" class="space-y-2"></div>
-                <button id="generate-shopping-list-pdf-btn" class="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">Gerar PDF da Lista</button>`;
-            
-            const renderFilteredShoppingList = () => {
-                const selected = reportDisplayArea.querySelector('#shopping-list-supplier-filter').value;
-                const container = reportDisplayArea.querySelector
+                        </form
