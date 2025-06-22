@@ -189,7 +189,6 @@
         </div>
         
         <div id="pdf-content" class="hidden"></div>
-
         <div id="message-container" class="fixed top-5 right-5 text-sm font-bold z-50"></div>
 
     </div>
@@ -214,52 +213,54 @@
         
         let appState = { stockItems: [], productionItems: [], currentSupplierFilter: 'TODOS', currentSectorFilter: 'TODOS', unsubscribeStock: null, unsubscribeProduction: null };
 
-        const loginView = document.getElementById('login-view'), signupView = document.getElementById('signup-view'), mainAppView = document.getElementById('main-app-view'),
-              tabsContainer = document.getElementById('tabs-container'), tabContents = document.querySelectorAll('.tab-content'), loginForm = document.getElementById('login-form'),
-              signupForm = document.getElementById('signup-form'), addItemForm = document.getElementById('add-item-form'), addProductionForm = document.getElementById('add-production-form'),
-              showSignupBtn = document.getElementById('show-signup-btn'), showLoginBtn = document.getElementById('show-login-btn'), logoutBtn = document.getElementById('logout-btn'),
-              messageContainer = document.getElementById('message-container'), stockListContainer = document.getElementById('stock-list'), productionListContainer = document.getElementById('production-list'),
-              supplierFilter = document.getElementById('supplier-filter'), sectorFilter = document.getElementById('sector-filter'), generateStockReportBtn = document.getElementById('generate-stock-report-btn'),
-              generateShoppingListBtn = document.getElementById('generate-shopping-list-btn'), generateKitchenReportBtn = document.getElementById('generate-kitchen-report-btn'),
-              generateParrillaReportBtn = document.getElementById('generate-parrilla-report-btn'), reportDisplayArea = document.getElementById('report-display-area');
+        const DOMElements = {
+            loginView: document.getElementById('login-view'), signupView: document.getElementById('signup-view'), mainAppView: document.getElementById('main-app-view'),
+            tabsContainer: document.getElementById('tabs-container'), tabContents: document.querySelectorAll('.tab-content'), loginForm: document.getElementById('login-form'),
+            signupForm: document.getElementById('signup-form'), addItemForm: document.getElementById('add-item-form'), addProductionForm: document.getElementById('add-production-form'),
+            showSignupBtn: document.getElementById('show-signup-btn'), showLoginBtn: document.getElementById('show-login-btn'), logoutBtn: document.getElementById('logout-btn'),
+            messageContainer: document.getElementById('message-container'), stockListContainer: document.getElementById('stock-list'), productionListContainer: document.getElementById('production-list'),
+            supplierFilter: document.getElementById('supplier-filter'), sectorFilter: document.getElementById('sector-filter'), generateStockReportBtn: document.getElementById('generate-stock-report-btn'),
+            generateShoppingListBtn: document.getElementById('generate-shopping-list-btn'), generateKitchenReportBtn: document.getElementById('generate-kitchen-report-btn'),
+            generateParrillaReportBtn: document.getElementById('generate-parrilla-report-btn'), reportDisplayArea: document.getElementById('report-display-area')
+        };
 
         function showMessage(message, isError = false) {
-            messageContainer.innerHTML = `<div class="p-3 rounded-lg shadow-lg ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${message}</div>`;
-            setTimeout(() => { messageContainer.innerHTML = ''; }, 4000);
+            DOMElements.messageContainer.innerHTML = `<div class="p-3 rounded-lg shadow-lg ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${message}</div>`;
+            setTimeout(() => { DOMElements.messageContainer.innerHTML = ''; }, 4000);
         }
 
         function toggleViews(showView) {
-            loginView.classList.add('hidden'); signupView.classList.add('hidden'); mainAppView.classList.add('hidden');
+            DOMElements.loginView.classList.add('hidden'); DOMElements.signupView.classList.add('hidden'); DOMElements.mainAppView.classList.add('hidden');
             const isAuthScreen = showView === 'login-view' || showView === 'signup-view';
             document.body.classList.toggle('flex', isAuthScreen); document.body.classList.toggle('items-center', isAuthScreen); document.body.classList.toggle('min-h-screen', isAuthScreen);
             if (showView) document.getElementById(showView).classList.remove('hidden');
         }
 
         function switchTab(tabId) {
-            tabsContainer.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active')); tabContents.forEach(c => c.classList.remove('active'));
+            DOMElements.tabsContainer.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active')); DOMElements.tabContents.forEach(c => c.classList.remove('active'));
             document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active'); document.getElementById(`tab-${tabId}`).classList.add('active');
-            if (tabId !== 'reports') { reportDisplayArea.classList.add('hidden'); reportDisplayArea.innerHTML = ''; }
+            if (tabId !== 'reports') { DOMElements.reportDisplayArea.classList.add('hidden'); DOMElements.reportDisplayArea.innerHTML = ''; }
         }
         
         function renderStock() {
             const filtered = appState.currentSupplierFilter === 'TODOS' ? appState.stockItems : appState.stockItems.filter(i => i.fornecedor === appState.currentSupplierFilter);
-            renderList(stockListContainer, filtered, 'O estoque está vazio.', item => `
+            renderList(DOMElements.stockListContainer, filtered, 'O estoque está vazio.', item => `
                 <div class="flex-1"><p class="font-semibold text-gray-800">${item.item}</p><p class="text-sm text-gray-600">Qtd: ${item.atual} ${item.unidade} ${item.fornecedor ? `| Forn: ${item.fornecedor}` : ''}</p></div>
                 <div class="flex items-center gap-2"><input type="number" step="any" placeholder="Nova Qtd." class="update-quantity-input w-24 text-sm p-1 border rounded"><button data-id="${item.id}" data-type="stock" class="update-btn text-xs bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-2 rounded">Atualizar</button><button data-id="${item.id}" data-type="stock" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button></div>`);
         }
         
         function renderProduction() {
             const filtered = appState.currentSectorFilter === 'TODOS' ? appState.productionItems : appState.productionItems.filter(i => i.setor === appState.currentSectorFilter);
-            renderList(productionListContainer, filtered, 'Nenhum item em produção.', item => `
+            renderList(DOMElements.productionListContainer, filtered, 'Nenhum item em produção.', item => `
                 <div class="flex-1"><p class="font-semibold text-gray-800">${item.item}</p><p class="text-sm text-gray-600">Qtd: ${item.quantidade} ${item.unidade} | Setor: ${item.setor || 'N/A'}</p></div>
                 <div class="flex items-center gap-2"><input type="number" step="any" placeholder="Nova Qtd." class="update-quantity-input w-24 text-sm p-1 border rounded"><button data-id="${item.id}" data-type="production" class="update-btn text-xs bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-2 rounded">Atualizar</button><button data-id="${item.id}" data-type="production" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button></div>`);
         }
         
         function populateSupplierFilter() {
             const suppliers = [...new Set(appState.stockItems.map(item => item.fornecedor).filter(Boolean))].sort();
-            supplierFilter.innerHTML = '<option value="TODOS">TODOS</option>';
-            suppliers.forEach(s => supplierFilter.innerHTML += `<option value="${s}">${s}</option>`);
-            supplierFilter.value = appState.currentSupplierFilter;
+            DOMElements.supplierFilter.innerHTML = '<option value="TODOS">TODOS</option>';
+            suppliers.forEach(s => DOMElements.supplierFilter.innerHTML += `<option value="${s}">${s}</option>`);
+            DOMElements.supplierFilter.value = appState.currentSupplierFilter;
         }
 
         function renderList(container, items, emptyMessage, itemTemplate) {
@@ -270,34 +271,36 @@
 
         onAuthStateChanged(auth, user => {
             if (user) {
-                document.getElementById('user-email').textContent = user.email; toggleViews('main-app-view'); switchTab('stock'); listenToDataChanges(); 
+                DOMElements.logoutBtn.previousElementSibling.querySelector('#user-email').textContent = user.email; toggleViews('main-app-view'); switchTab('stock'); listenToDataChanges(); 
             } else {
                 if (appState.unsubscribeStock) appState.unsubscribeStock(); if (appState.unsubscribeProduction) appState.unsubscribeProduction(); toggleViews('login-view');
             }
         });
 
         const handleAuthError = e => { console.error("Auth Error:", e.code); showMessage(e.code === 'auth/invalid-credential' ? "Credenciais inválidas." : e.code === 'auth/email-already-in-use' ? "Email já cadastrado." : "Ocorreu um erro.", true); };
-        signupForm.addEventListener('submit', e => { e.preventDefault(); createUserWithEmailAndPassword(auth, signupForm.email.value, signupForm.password.value).catch(handleAuthError); });
-        loginForm.addEventListener('submit', e => { e.preventDefault(); signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value).catch(handleAuthError); });
-        logoutBtn.addEventListener('click', () => signOut(auth).catch(handleAuthError));
-        showSignupBtn.addEventListener('click', () => toggleViews('signup-view')); showLoginBtn.addEventListener('click', () => toggleViews('login-view'));
-        tabsContainer.addEventListener('click', e => { if(e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
+        DOMElements.signupForm.addEventListener('submit', e => { e.preventDefault(); createUserWithEmailAndPassword(auth, DOMElements.signupForm.email.value, DOMElements.signupForm.password.value).catch(handleAuthError); });
+        DOMElements.loginForm.addEventListener('submit', e => { e.preventDefault(); signInWithEmailAndPassword(auth, DOMElements.loginForm.email.value, DOMElements.loginForm.password.value).catch(handleAuthError); });
+        DOMElements.logoutBtn.addEventListener('click', () => signOut(auth).catch(handleAuthError));
+        DOMElements.showSignupBtn.addEventListener('click', () => toggleViews('signup-view')); DOMElements.showLoginBtn.addEventListener('click', () => toggleViews('login-view'));
+        DOMElements.tabsContainer.addEventListener('click', e => { if(e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
 
         function listenToDataChanges() {
             appState.unsubscribeStock = onSnapshot(query(collection(db, "estoque")), s => { appState.stockItems = s.docs.map(d => ({ id: d.id, ...d.data() })); populateSupplierFilter(); renderStock(); }, e => console.error("Stock listener error:", e));
             appState.unsubscribeProduction = onSnapshot(query(collection(db, "producao")), s => { appState.productionItems = s.docs.map(d => ({ id: d.id, ...d.data() })); renderProduction(); }, e => console.error("Production listener error:", e));
         }
         
-        addItemForm.addEventListener('submit', async e => {
+        DOMElements.addItemForm.addEventListener('submit', async e => {
             e.preventDefault();
-            const newItem = { item: addItemForm['product-name'].value, fornecedor: addItemForm['product-supplier'].value, atual: parseFloat(addItemForm['product-quantity'].value || 0), minima: parseFloat(addItemForm['product-min'].value || 0), ideal: parseFloat(addItemForm['product-ideal'].value || 0), unidade: addItemForm['product-unit'].value };
-            try { await addDoc(collection(db, "estoque"), newItem); addItemForm.reset(); } catch (err) { console.error("Erro ao adicionar item:", err); showMessage("Falha ao salvar item.", true); }
+            const form = DOMElements.addItemForm;
+            const newItem = { item: form['product-name'].value, fornecedor: form['product-supplier'].value, atual: parseFloat(form['product-quantity'].value || 0), minima: parseFloat(form['product-min'].value || 0), ideal: parseFloat(form['product-ideal'].value || 0), unidade: form['product-unit'].value };
+            try { await addDoc(collection(db, "estoque"), newItem); form.reset(); } catch (err) { console.error("Erro ao adicionar item:", err); showMessage("Falha ao salvar item.", true); }
         });
 
-        addProductionForm.addEventListener('submit', async e => {
+        DOMElements.addProductionForm.addEventListener('submit', async e => {
             e.preventDefault();
-            const newItem = { item: addProductionForm['production-name'].value, quantidade: parseFloat(addProductionForm['production-quantity'].value), unidade: addProductionForm['production-unit'].value, setor: addProductionForm['production-sector'].value };
-            try { await addDoc(collection(db, "producao"), newItem); addProductionForm.reset(); } catch (err) { console.error("Erro ao adicionar item de produção:", err); showMessage("Falha ao salvar item.", true); }
+            const form = DOMElements.addProductionForm;
+            const newItem = { item: form['production-name'].value, quantidade: parseFloat(form['production-quantity'].value), unidade: form['production-unit'].value, setor: form['production-sector'].value };
+            try { await addDoc(collection(db, "producao"), newItem); form.reset(); } catch (err) { console.error("Erro ao adicionar item de produção:", err); showMessage("Falha ao salvar item.", true); }
         });
 
         document.getElementById('app-content').addEventListener('click', async e => {
@@ -312,8 +315,8 @@
             }
         });
         
-        supplierFilter.addEventListener('change', e => { appState.currentSupplierFilter = e.target.value; renderStock(); });
-        sectorFilter.addEventListener('change', e => { appState.currentSectorFilter = e.target.value; renderProduction(); });
+        DOMElements.supplierFilter.addEventListener('change', e => { appState.currentSupplierFilter = e.target.value; renderStock(); });
+        DOMElements.sectorFilter.addEventListener('change', e => { appState.currentSectorFilter = e.target.value; renderProduction(); });
         
         // --- LÓGICA DE RELATÓRIOS ---
 
@@ -322,22 +325,48 @@
             return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
         
+        // FUNÇÃO DE GERAR PDF REESCRITA PARA MAIOR ROBUSTEZ
         function generatePdf(title, content) {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF();
-            document.getElementById('pdf-content').innerHTML = `<div class="print-area">${content}</div>`;
-            html2canvas(document.getElementById('pdf-content'), { scale: 2, useCORS: true })
+            const pdfContent = document.getElementById('pdf-content');
+            pdfContent.innerHTML = `<div class="print-area">${content}</div>`;
+            const contentToPrint = pdfContent.firstElementChild;
+
+            html2canvas(contentToPrint, { scale: 2, useCORS: true })
                 .then(canvas => {
-                    const imgData = canvas.toDataURL('image/png'), imgWidth = 190, pageHeight = 295, imgHeight = canvas.height * imgWidth / canvas.width;
-                    let heightLeft = imgHeight, position = 0;
-                    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
-                    while (heightLeft >= 0) { position = heightLeft - imgHeight + 10; pdf.addPage(); pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight); heightLeft -= pageHeight; }
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const imgData = canvas.toDataURL('image/png');
+                    
+                    const pageMargin = 15;
+                    const pdfPageWidth = pdf.internal.pageSize.getWidth() - (2 * pageMargin);
+                    const pdfPageHeight = pdf.internal.pageSize.getHeight() - (2 * pageMargin);
+                    
+                    const canvasAspectRatio = canvas.width / canvas.height;
+                    const imgWidthOnPdf = pdfPageWidth;
+                    const imgHeightOnPdf = pdfPageWidth / canvasAspectRatio;
+                    
+                    let totalHeightLeft = imgHeightOnPdf;
+                    let currentPosition = 0;
+
+                    pdf.addImage(imgData, 'PNG', pageMargin, pageMargin, imgWidthOnPdf, imgHeightOnPdf);
+                    totalHeightLeft -= pdfPageHeight;
+
+                    while (totalHeightLeft > 0) {
+                        currentPosition -= pdfPageHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', pageMargin, currentPosition + pageMargin, imgWidthOnPdf, imgHeightOnPdf);
+                        totalHeightLeft -= pdfPageHeight;
+                    }
+
                     pdf.save(`${title.replace(/ /g, '_')}.pdf`);
-                }).catch(err => { console.error("PDF generation error:", err); showMessage("Ocorreu um erro ao gerar o PDF. Tente novamente.", true); });
+                    pdfContent.innerHTML = '';
+                }).catch(err => {
+                    console.error("PDF generation error:", err);
+                    showMessage("Ocorreu um erro ao gerar o PDF. Tente novamente.", true);
+                });
         }
 
-        generateStockReportBtn.addEventListener('click', () => {
+        DOMElements.generateStockReportBtn.addEventListener('click', () => {
             const sorted = [...appState.stockItems].sort((a, b) => (a.item || '').localeCompare(b.item || ''));
             const grouped = sorted.reduce((acc, i) => { const s = i.fornecedor || 'Sem Fornecedor'; if (!acc[s]) acc[s] = []; acc[s].push(i); return acc; }, {});
             let content = '<h1>Relatório Geral de Estoque</h1>';
@@ -349,67 +378,19 @@
             generatePdf('Relatorio_Geral_Estoque', content);
         });
         
-        generateShoppingListBtn.addEventListener('click', () => {
-            reportDisplayArea.className = 'bg-white rounded-xl shadow-lg interactive-list p-6';
+        DOMElements.generateShoppingListBtn.addEventListener('click', () => {
+            DOMElements.reportDisplayArea.className = 'bg-white rounded-xl shadow-lg interactive-list p-6';
             const itemsToBuy = appState.stockItems.filter(i => i.atual <= (i.minima || 0));
-            if (itemsToBuy.length === 0) { showMessage("Nenhum item na lista de compras."); reportDisplayArea.classList.add('hidden'); return; }
+            if (itemsToBuy.length === 0) { showMessage("Nenhum item na lista de compras."); DOMElements.reportDisplayArea.classList.add('hidden'); return; }
             const suppliers = ['TODOS', ...new Set(itemsToBuy.map(i => i.fornecedor || 'Sem Fornecedor').sort())];
-            reportDisplayArea.innerHTML = `
+            DOMElements.reportDisplayArea.innerHTML = `
                 <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4"><h3 class="text-lg font-bold">Lista de Compras</h3><div class="flex items-center gap-2">
-                <label for="shopping-list-supplier-filter" class="text-sm font-medium">Fornecedor:</label><select id="shopping-list-supplier-filter" class="shadow-sm appearance-none border rounded py-1 px-3 bg-white text-sm">${suppliers.map(s => `<option value="${s}">${s}</option>`).join('')}</select></div></div>
+                <label for="shopping-list-supplier-filter" class="text-sm font-medium">Fornecedor:</label><select id="shopping-list-supplier-filter" class="shadow-sm appearance-none border rounded py-1 px-3 bg-white text-sm">${suppliers.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}</select></div></div>
                 <div id="shopping-list-items-container" class="space-y-2"></div><button id="generate-shopping-list-pdf-btn" class="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">Gerar PDF da Lista</button>`;
             
             const renderFilteredShoppingList = () => {
-                const selected = document.getElementById('shopping-list-supplier-filter').value;
-                const container = document.getElementById('shopping-list-items-container'); container.innerHTML = '';
+                const selected = DOMElements.reportDisplayArea.querySelector('#shopping-list-supplier-filter').value;
+                const container = DOMElements.reportDisplayArea.querySelector('#shopping-list-items-container'); container.innerHTML = '';
                 const sorted = [...itemsToBuy].sort((a, b) => (a.item || '').localeCompare(b.item || ''));
                 const filtered = (selected === 'TODOS') ? sorted : sorted.filter(i => (i.fornecedor || 'Sem Fornecedor') === selected);
-                if (filtered.length === 0) { container.innerHTML = `<p class="text-gray-500 text-center p-4">Nenhum item para este fornecedor.</p>`; return; }
-                container.innerHTML += `<div class="flex items-center justify-between p-2 font-bold text-sm text-gray-600 bg-gray-100 rounded-t-md"><span class="w-2/5">Produto</span><span class="w-1/5 text-center">Qtd. Atual</span><span class="w-1/5 text-center">Qtd. Pedida</span><span class="w-1/5 text-right pr-2">Ação</span></div>`;
-                filtered.forEach(item => {
-                    const div = document.createElement('div'); div.className = 'shopping-list-item flex items-center justify-between p-2 bg-gray-50 rounded';
-                    div.dataset.itemName = item.item; div.dataset.itemUnit = item.unidade; div.dataset.supplier = item.fornecedor || 'Sem Fornecedor';
-                    div.innerHTML = `<span class="w-2/5 text-sm">${escapeHtml(item.item)}</span><span class="w-1/5 text-center text-sm">${item.atual} ${item.unidade}</span>
-                        <input type="number" placeholder="Qtd." class="shopping-quantity-input w-1/5 p-1 border rounded text-sm text-center" step="any">
-                        <button class="delete-shopping-item-btn w-1/5 text-red-500 hover:text-red-700 font-bold text-right text-sm">Excluir</button>`;
-                    container.appendChild(div);
-                });
-            };
-            document.getElementById('shopping-list-supplier-filter').addEventListener('change', renderFilteredShoppingList); renderFilteredShoppingList();
-        });
-        
-        reportDisplayArea.addEventListener('click', e => {
-            if (e.target.matches('.delete-shopping-item-btn')) e.target.closest('.shopping-list-item').remove();
-            if (e.target.matches('#generate-shopping-list-pdf-btn')) {
-                const itemsForPdf = [];
-                document.querySelectorAll('.shopping-list-item').forEach(row => {
-                    const quantity = parseFloat(row.querySelector('.shopping-quantity-input').value);
-                    itemsForPdf.push({ name: row.dataset.itemName, supplier: row.dataset.supplier, quantity: (quantity > 0) ? `${quantity} ${row.dataset.itemUnit || ''}`.trim() : '_______' });
-                });
-                if (itemsForPdf.length === 0) { showMessage("A lista de compras está vazia.", true); return; }
-                const grouped = itemsForPdf.reduce((acc, i) => { const s = i.supplier || 'Sem Fornecedor'; if (!acc[s]) acc[s] = []; acc[s].push(i); return acc; }, {});
-                let pdfHtml = '<h1>Lista de Compras</h1>';
-                Object.keys(grouped).sort().forEach(s => {
-                     const sorted = grouped[s].sort((a,b) => a.name.localeCompare(b.name));
-                     pdfHtml += `<h2>Fornecedor: ${escapeHtml(s)}</h2><table><thead><tr><th>Produto</th><th>Qtd. Pedida</th></tr></thead><tbody>
-                         ${sorted.map(i => `<tr><td>${escapeHtml(i.name)}</td><td>${escapeHtml(i.quantity)}</td></tr>`).join('')}
-                         </tbody></table>`;
-                });
-                generatePdf('Lista_de_Compras', pdfHtml);
-            }
-        });
-        
-        const createProductionReport = (sector) => {
-            const items = appState.productionItems.filter(i => i.setor === sector);
-            const sorted = [...items].sort((a, b) => (a.item || '').localeCompare(b.item || ''));
-            let content = `<h1>Relatório de Produção - ${sector}</h1><table><thead><tr><th>Produto</th><th>Quantidade</th><th>Unidade</th></tr></thead><tbody>
-                ${sorted.map(i => `<tr><td>${escapeHtml(i.item)}</td><td>${i.quantidade}</td><td>${escapeHtml(i.unidade)}</td></tr>`).join('')}
-                </tbody></table>`;
-            generatePdf(`producao_${sector.toLowerCase()}`, content);
-        };
-        generateKitchenReportBtn.addEventListener('click', () => createProductionReport('COZINHA'));
-        generateParrillaReportBtn.addEventListener('click', () => createProductionReport('PARRILLA'));
-
-    </script>
-</body>
-</html>
+                if (filtered.length === 0) { container.innerHTML = `<p class="text-gray-5
