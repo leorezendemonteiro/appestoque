@@ -3,36 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teste de Login - App Estoque</title>
+    <title>App Estoque Cozinha</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .tab-button.active {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gray-100">
 
-    <div id="login-view" class="bg-white p-8 rounded-xl shadow-lg max-w-md mx-auto">
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Teste de Conexão</h1>
-        <form id="login-form">
-            <div class="mb-4">
-                <label for="login-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                <input type="email" id="login-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+    <div id="app-container" class="w-full max-w-2xl mx-auto py-8 px-4">
+
+        <div id="login-view" class="bg-white p-8 rounded-xl shadow-lg max-w-md mx-auto">
+            <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Controle de Estoque</h1>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="login-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                    <input type="email" id="login-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                </div>
+                <div class="mb-6">
+                    <label for="login-password" class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
+                    <input type="password" id="login-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                </div>
+                <div class="flex flex-col space-y-4">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Entrar</button>
+                </div>
+                <div id="login-error-message" class="mt-4 text-red-500 text-center text-sm"></div>
+            </form>
+        </div>
+
+        <div id="main-app-view" class="hidden">
+            <header class="bg-white p-4 rounded-xl shadow-lg mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-800">App de Gestão</h1>
+                        <p id="user-email" class="text-xs text-gray-500"></p>
+                    </div>
+                    <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm">Sair</button>
+                </div>
+            </header>
+            
+            <div class="mb-8">
+                <div class="border-b border-gray-200">
+                    <nav id="tabs-container" class="-mb-px flex space-x-4" aria-label="Tabs">
+                        <button data-tab="stock" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Estoque</button>
+                        <button data-tab="production" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Produção</button>
+                        <button data-tab="reports" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Relatórios</button>
+                    </nav>
+                </div>
             </div>
-            <div class="mb-6">
-                <label for="login-password" class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
-                <input type="password" id="login-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
+
+            <div id="app-content">
+                <div id="tab-stock" class="tab-content space-y-8">
+                    <p>Aba de Estoque (em breve)</p>
+                </div>
+                <div id="tab-production" class="tab-content space-y-8">
+                     <p>Aba de Produção (em breve)</p>
+                </div>
+                <div id="tab-reports" class="tab-content space-y-8">
+                     <p>Aba de Relatórios (em breve)</p>
+                </div>
             </div>
-            <div class="flex flex-col space-y-4">
-                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                    Testar Login
-                </button>
-            </div>
-        </form>
-        <div id="error-message" class="mt-4 text-red-500 text-center text-sm"></div>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // 1. CONFIGURAÇÃO DO FIREBASE (versão original validada)
+        // 1. CONFIGURAÇÃO DO FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
             authDomain: "appestoquecozinha.firebaseapp.com",
@@ -46,30 +94,72 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        // 3. ELEMENTOS E EVENTOS
+        // 3. SELETORES DE ELEMENTOS
+        const loginView = document.getElementById('login-view');
+        const mainAppView = document.getElementById('main-app-view');
         const loginForm = document.getElementById('login-form');
-        const errorMessage = document.getElementById('error-message');
+        const loginErrorMessage = document.getElementById('login-error-message');
+        const userEmailDisplay = document.getElementById('user-email');
+        const logoutBtn = document.getElementById('logout-btn');
+        const tabsContainer = document.getElementById('tabs-container');
+        const tabContents = document.querySelectorAll('.tab-content');
 
+        // 4. FUNÇÕES DE UI
+        function toggleViews(showView) {
+            loginView.classList.add('hidden');
+            mainAppView.classList.add('hidden');
+            
+            // Ajusta o layout do body para centralizar a tela de login
+            const isAuthScreen = showView === 'login-view';
+            document.body.classList.toggle('flex', isAuthScreen);
+            document.body.classList.toggle('items-center', isAuthScreen);
+            document.body.classList.toggle('min-h-screen', isAuthScreen);
+
+            if (showView) {
+                document.getElementById(showView).classList.remove('hidden');
+            }
+        }
+
+        function switchTab(tabId) {
+            tabsContainer.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+        }
+
+        // 5. LÓGICA DE AUTENTICAÇÃO
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            errorMessage.textContent = ''; // Limpa a mensagem de erro
+            loginErrorMessage.textContent = '';
             const email = loginForm.email.value;
             const password = loginForm.password.value;
 
             signInWithEmailAndPassword(auth, email, password)
                 .catch((error) => {
                     console.error("Erro no login:", error.code);
-                    errorMessage.textContent = "Falha no login: " + error.code;
+                    loginErrorMessage.textContent = "Email ou senha inválidos.";
                 });
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth);
+        });
+        
+        tabsContainer.addEventListener('click', (e) => {
+            if (e.target.matches('.tab-button')) {
+                switchTab(e.target.dataset.tab);
+            }
         });
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // SE ESTE ALERTA APARECER, A BASE ESTÁ FUNCIONANDO
-                alert("Login bem-sucedido! A base está funcionando.");
-                console.log("Usuário logado:", user.email);
+                // Login bem-sucedido: mostra a tela principal
+                userEmailDisplay.textContent = user.email;
+                toggleViews('main-app-view');
+                switchTab('stock'); // Abre na aba de estoque por padrão
             } else {
-                console.log("Nenhum usuário logado.");
+                // Usuário deslogado: mostra a tela de login
+                toggleViews('login-view');
             }
         });
     </script>
