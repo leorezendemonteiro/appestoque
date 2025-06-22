@@ -6,113 +6,191 @@
     <title>App Estoque Cozinha</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        .tab-button.active {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        #report-display-area.interactive-list {
+            max-height: 60vh;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+        }
+        .print-area {
+            font-family: Arial, sans-serif;
+        }
+        .print-area h1 {
+            font-size: 18px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .print-area h2 {
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        .print-area table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .print-area th, .print-area td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .print-area thead {
+            background-color: #f2f2f2;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <div id="app">
-        <!-- Tela de Login -->
-        <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
-            <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
-                <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Controle de Estoque</h1>
-                
-                <div id="login-form">
-                    <div class="mb-4">
-                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                        <input type="email" id="email" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    </div>
-                    
-                    <div class="mb-6">
-                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
-                        <input type="password" id="password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    </div>
-                    
-                    <button id="login-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
-                        Entrar
-                    </button>
-                    
-                    <button id="register-btn" class="w-full mt-3 bg-transparent hover:bg-blue-50 text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded-md transition duration-300">
-                        Não tenho conta, quero me cadastrar
-                    </button>
-                </div>
+<body class="bg-gray-100">
 
-                <!-- Indicador de carregamento -->
-                <div id="loading-indicator" class="hidden text-center py-4">
-                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <p class="mt-2 text-gray-600">Conectando...</p>
-                </div>
+    <div id="app-container" class="w-full max-w-2xl mx-auto py-8 px-4">
 
-                <!-- Status de conectividade -->
-                <div id="connectivity-status" class="mt-4 text-center text-sm">
-                    <span id="status-text" class="text-gray-500">Verificando conectividade...</span>
+        <div id="login-view" class="bg-white p-8 rounded-xl shadow-lg max-w-md mx-auto">
+            <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Controle de Estoque</h1>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="login-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                    <input type="email" id="login-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                 </div>
-            </div>
+                <div class="mb-6">
+                    <label for="login-password" class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
+                    <input type="password" id="login-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                </div>
+                <div class="flex flex-col space-y-4">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Entrar</button>
+                    <button type="button" id="show-signup-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">Não tenho conta, quero me cadastrar</button>
+                </div>
+            </form>
+        </div>
+        
+        <div id="signup-view" class="bg-white p-8 rounded-xl shadow-lg hidden max-w-md mx-auto">
+            <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Criar Nova Conta</h1>
+            <form id="signup-form">
+                <div class="mb-4">
+                    <label for="signup-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                    <input type="email" id="signup-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                </div>
+                <div class="mb-6">
+                    <label for="signup-password" class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
+                    <input type="password" id="signup-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                </div>
+                <div class="flex flex-col space-y-4">
+                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Cadastrar</button>
+                    <button type="button" id="show-login-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">Já tenho uma conta</button>
+                </div>
+            </form>
         </div>
 
-        <!-- Tela Principal -->
-        <div id="main-screen" class="hidden min-h-screen bg-gray-50">
-            <nav class="bg-white shadow-lg">
-                <div class="max-w-7xl mx-auto px-4">
-                    <div class="flex justify-between items-center py-4">
-                        <h1 class="text-2xl font-bold text-gray-800">Controle de Estoque</h1>
-                        <div class="flex items-center space-x-4">
-                            <span id="user-email" class="text-gray-600"></span>
-                            <button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition duration-300">
-                                Sair
-                            </button>
-                        </div>
+        <div id="main-app-view" class="hidden">
+            <header class="bg-white p-4 rounded-xl shadow-lg mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-800">App de Gestão</h1>
+                        <p id="user-email" class="text-xs text-gray-500"></p>
                     </div>
+                    <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm">Sair</button>
                 </div>
-            </nav>
+            </header>
+            
+            <div class="mb-8">
+                <div class="border-b border-gray-200">
+                    <nav id="tabs-container" class="-mb-px flex space-x-4" aria-label="Tabs">
+                        <button data-tab="stock" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Estoque</button>
+                        <button data-tab="production" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Produção</button>
+                        <button data-tab="reports" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Relatórios</button>
+                    </nav>
+                </div>
+            </div>
 
-            <div class="max-w-7xl mx-auto px-4 py-8">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Seção de Adição de Produtos -->
+            <div id="app-content">
+                <div id="tab-stock" class="tab-content space-y-8">
                     <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Produto</h2>
-                        <div class="space-y-4">
-                            <input type="text" id="product-name" placeholder="Nome do produto" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <input type="number" id="product-quantity" placeholder="Quantidade" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <select id="product-supplier" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">Selecione o fornecedor</option>
-                                <option value="Assai Atacadista">Assai Atacadista</option>
-                                <option value="Moscavo">Moscavo</option>
-                                <option value="Io Brownie">Io Brownie</option>
-                                <option value="Angelo forneria">Angelo forneria</option>
+                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Produto ao Estoque</h2>
+                        <form id="add-item-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <input type="text" id="product-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <input type="text" id="product-supplier" placeholder="Fornecedor" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+                            <input type="number" id="product-quantity" placeholder="Qtd. Atual" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
+                            <input type="number" id="product-min" placeholder="Qtd. Mínima" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any">
+                             <input type="number" id="product-ideal" placeholder="Qtd. Ideal" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any">
+                            <select id="product-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
+                                <option>un</option> <option>kg</option> <option>g</option> <option>lt</option> <option>ml</option>
                             </select>
-                            <select id="product-category" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">Selecione a categoria</option>
-                                <option value="estoque">Estoque</option>
-                                <option value="producao">Produção</option>
-                            </select>
-                            <button id="add-product-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
-                                Adicionar Produto
-                            </button>
-                        </div>
+                            <button type="submit" class="sm:col-span-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Adicionar</button>
+                        </form>
                     </div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold text-gray-700">Itens no Estoque</h2>
+                            <select id="supplier-filter" class="shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm"></select>
+                        </div>
+                        <div id="stock-list" class="space-y-3"></div>
+                    </div>
+                </div>
 
-                    <!-- Seção de Relatórios -->
-                    <div class="space-y-6">
-                        <div class="bg-white p-6 rounded-xl shadow-lg">
-                            <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios de Estoque</h2>
-                            <div class="flex flex-col sm:flex-row gap-4">
-                                <button id="generate-stock-report-btn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Relatório Geral de Estoque (PDF)</button>
-                                <button id="generate-shopping-list-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded">Gerar Lista de Compras</button>
-                            </div>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-lg">
-                            <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios de Produção</h2>
-                            <div class="flex flex-col sm:flex-row gap-4">
-                                <button id="generate-kitchen-report-btn" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded">Produção Cozinha (PDF)</button>
-                                <button id="generate-parrilla-report-btn" class="flex-1 bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded">Produção Parrilla (PDF)</button>
-                            </div>
-                        </div>
-                        <div id="report-display-area" class="bg-white p-6 rounded-xl shadow-lg hidden">
-                        </div>
+                <div id="tab-production" class="tab-content space-y-8">
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Item à Produção</h2>
+                        <form id="add-production-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <input type="text" id="production-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                             <select id="production-sector" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
+                                 <option value="COZINHA">COZINHA</option> 
+                                 <option value="PARRILLA">PARRILLA</option> 
+                             </select>
+                            <input type="number" id="production-quantity" placeholder="Qtd" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
+                            <select id="production-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
+                                <option>porção</option> <option>kg</option> <option>lt</option> <option>un</option>
+                            </select>
+                            <button type="submit" class="sm:col-span-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Adicionar</button>
+                        </form>
                     </div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold text-gray-700">Itens em Produção</h2>
+                            <select id="sector-filter" class="shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm">
+                                <option value="TODOS">TODOS</option>
+                                <option value="COZINHA">COZINHA</option>
+                                <option value="PARRILLA">PARRILLA</option>
+                            </select>
+                        </div>
+                        <div id="production-list" class="space-y-3"></div>
+                    </div>
+                </div>
+
+                <div id="tab-reports" class="tab-content space-y-8">
+                     <div class="bg-white p-6 rounded-xl shadow-lg">
+                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios de Estoque</h2>
+                         <div class="flex flex-col sm:flex-row gap-4">
+                              <button id="generate-stock-report-btn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Relatório Geral de Estoque (PDF)</button>
+                              <button id="generate-shopping-list-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded">Gerar Lista de Compras</button>
+                         </div>
+                     </div>
+                     <div class="bg-white p-6 rounded-xl shadow-lg">
+                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios de Produção</h2>
+                         <div class="flex flex-col sm:flex-row gap-4">
+                             <button id="generate-kitchen-report-btn" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded">Produção Cozinha (PDF)</button>
+                             <button id="generate-parrilla-report-btn" class="flex-1 bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded">Produção Parrilla (PDF)</button>
+                         </div>
+                     </div>
+                     <div id="report-display-area" class="bg-white rounded-xl shadow-lg hidden"></div>
                 </div>
             </div>
         </div>
-
+        
+        <div id="pdf-content" class="hidden"></div>
         <div id="message-container" class="fixed top-5 right-5 text-sm font-bold z-50"></div>
+
     </div>
 
     <script type="module">
@@ -120,9 +198,6 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, query, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ===================================================================
-        // 1. CONFIGURAÇÃO DO FIREBASE COM MELHORIAS DE CONECTIVIDADE
-        // ===================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
             authDomain: "appestoquecozinha.firebaseapp.com",
@@ -132,575 +207,328 @@
             appId: "1:705934517110:web:b4d5b79059feb7e6485057"
         };
 
-        // ===================================================================
-        // 2. FUNÇÕES DE CONECTIVIDADE E DIAGNÓSTICO
-        // ===================================================================
-        function checkConnectivity() {
-            return new Promise((resolve) => {
-                if (!navigator.onLine) {
-                    resolve(false);
-                    return;
-                }
-                
-                // Teste de conectividade com Google DNS
-                fetch('https://dns.google/resolve?name=google.com&type=A', {
-                    method: 'GET',
-                    mode: 'cors'
-                })
-                .then(() => resolve(true))
-                .catch(() => {
-                    // Fallback: teste com Firebase
-                    fetch('https://firebase.googleapis.com/', {
-                        method: 'HEAD',
-                        mode: 'no-cors'
-                    })
-                    .then(() => resolve(true))
-                    .catch(() => resolve(false));
-                });
-            });
-        }
-
-        function updateConnectivityStatus(isConnected) {
-            const statusElement = document.getElementById('status-text');
-            if (isConnected) {
-                statusElement.textContent = 'Conectado ao Firebase';
-                statusElement.className = 'text-green-600';
-            } else {
-                statusElement.textContent = 'Problemas de conectividade detectados';
-                statusElement.className = 'text-red-600';
-            }
-        }
-
-        // ===================================================================
-        // 3. INICIALIZAÇÃO COM TRATAMENTO DE ERROS MELHORADO
-        // ===================================================================
-        let app, auth, db;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
         
-        async function initializeFirebase() {
-            try {
-                // Verificar conectividade primeiro
-                const isConnected = await checkConnectivity();
-                updateConnectivityStatus(isConnected);
-                
-                if (!isConnected) {
-                    throw new Error('Sem conectividade com a internet');
-                }
+        let appState = { stockItems: [], productionItems: [], currentSupplierFilter: 'TODOS', currentSectorFilter: 'TODOS', unsubscribeStock: null, unsubscribeProduction: null };
 
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                
-                // Configurar timeout para operações de autenticação
-                auth.settings = {
-                    appVerificationDisabledForTesting: false
-                };
-                
-                console.log('Firebase inicializado com sucesso');
-                return true;
-            } catch (error) {
-                console.error('Erro ao inicializar Firebase:', error);
-                showMessage('Erro de conectividade. Verifique sua conexão com a internet.', 'error');
-                return false;
-            }
+        const loginView = document.getElementById('login-view');
+        const signupView = document.getElementById('signup-view');
+        const mainAppView = document.getElementById('main-app-view');
+        const tabsContainer = document.getElementById('tabs-container');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const addItemForm = document.getElementById('add-item-form');
+        const addProductionForm = document.getElementById('add-production-form');
+        const showSignupBtn = document.getElementById('show-signup-btn');
+        const showLoginBtn = document.getElementById('show-login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const messageContainer = document.getElementById('message-container');
+        const stockListContainer = document.getElementById('stock-list');
+        const productionListContainer = document.getElementById('production-list');
+        const supplierFilter = document.getElementById('supplier-filter');
+        const sectorFilter = document.getElementById('sector-filter');
+        const generateStockReportBtn = document.getElementById('generate-stock-report-btn');
+        const generateShoppingListBtn = document.getElementById('generate-shopping-list-btn');
+        const generateKitchenReportBtn = document.getElementById('generate-kitchen-report-btn');
+        const generateParrillaReportBtn = document.getElementById('generate-parrilla-report-btn');
+        const reportDisplayArea = document.getElementById('report-display-area');
+
+        function showMessage(message, isError = false) {
+            messageContainer.innerHTML = `<div class="p-3 rounded-lg shadow-lg ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${message}</div>`;
+            setTimeout(() => { messageContainer.innerHTML = ''; }, 4000);
         }
 
-        // ===================================================================
-        // 4. FUNÇÕES DE AUTENTICAÇÃO COM RETRY E MELHOR TRATAMENTO DE ERROS
-        // ===================================================================
-        async function retryOperation(operation, maxRetries = 3, delay = 1000) {
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    return await operation();
-                } catch (error) {
-                    console.log(`Tentativa ${i + 1} falhou:`, error.message);
-                    
-                    if (i === maxRetries - 1) {
-                        throw error;
-                    }
-                    
-                    // Verificar conectividade antes de tentar novamente
-                    const isConnected = await checkConnectivity();
-                    if (!isConnected) {
-                        throw new Error('Sem conectividade com a internet');
-                    }
-                    
-                    await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
-                }
-            }
+        function toggleViews(showView) {
+            loginView.classList.add('hidden'); signupView.classList.add('hidden'); mainAppView.classList.add('hidden');
+            const isAuthScreen = showView === 'login-view' || showView === 'signup-view';
+            document.body.classList.toggle('flex', isAuthScreen); document.body.classList.toggle('items-center', isAuthScreen); document.body.classList.toggle('min-h-screen', isAuthScreen);
+            if (showView) document.getElementById(showView).classList.remove('hidden');
         }
 
-        function getErrorMessage(errorCode) {
-            const errorMessages = {
-                'auth/network-request-failed': 'Erro de conectividade. Verifique sua conexão com a internet e tente novamente.',
-                'auth/timeout': 'Timeout na conexão. Tente novamente.',
-                'auth/user-not-found': 'Usuário não encontrado.',
-                'auth/wrong-password': 'Senha incorreta.',
-                'auth/email-already-in-use': 'Este email já está em uso.',
-                'auth/weak-password': 'A senha deve ter pelo menos 6 caracteres.',
-                'auth/invalid-email': 'Email inválido.',
-                'auth/too-many-requests': 'Muitas tentativas. Tente novamente mais tarde.',
-                'default': 'Erro inesperado. Tente novamente.'
-            };
-            
-            return errorMessages[errorCode] || errorMessages['default'];
+        function switchTab(tabId) {
+            tabsContainer.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            if (tabId !== 'reports') { reportDisplayArea.classList.add('hidden'); reportDisplayArea.innerHTML = ''; }
+        }
+        
+        function renderStock() {
+            const filteredItems = appState.currentSupplierFilter === 'TODOS' ? appState.stockItems : appState.stockItems.filter(item => item.fornecedor === appState.currentSupplierFilter);
+            renderList(stockListContainer, filteredItems, 'O estoque está vazio.', (item) => `
+                <div class="flex-1"><p class="font-semibold text-gray-800">${item.item}</p><p class="text-sm text-gray-600">Qtd: ${item.atual} ${item.unidade} ${item.fornecedor ? `| Fornecedor: ${item.fornecedor}` : ''}</p></div>
+                <div class="flex items-center gap-2"><input type="number" step="any" placeholder="Nova Qtd." class="update-quantity-input w-24 text-sm p-1 border rounded"><button data-id="${item.id}" data-type="stock" class="update-btn text-xs bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-2 rounded">Atualizar</button><button data-id="${item.id}" data-type="stock" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button></div>`);
+        }
+        
+        function renderProduction() {
+            const filteredItems = appState.currentSectorFilter === 'TODOS' ? appState.productionItems : appState.productionItems.filter(item => item.setor === appState.currentSectorFilter);
+            renderList(productionListContainer, filteredItems, 'Nenhum item em produção.', (item) => `
+                <div class="flex-1"><p class="font-semibold text-gray-800">${item.item}</p><p class="text-sm text-gray-600">Qtd: ${item.quantidade} ${item.unidade} | Setor: ${item.setor || 'N/A'}</p></div>
+                <div class="flex items-center gap-2"><input type="number" step="any" placeholder="Nova Qtd." class="update-quantity-input w-24 text-sm p-1 border rounded"><button data-id="${item.id}" data-type="production" class="update-btn text-xs bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-2 rounded">Atualizar</button><button data-id="${item.id}" data-type="production" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button></div>`);
+        }
+        
+        function populateSupplierFilter() {
+            const suppliers = [...new Set(appState.stockItems.map(item => item.fornecedor).filter(Boolean))];
+            supplierFilter.innerHTML = '<option>TODOS</option>';
+            suppliers.sort().forEach(supplier => { const option = document.createElement('option'); option.value = supplier; option.textContent = supplier; supplierFilter.appendChild(option); });
+            supplierFilter.value = appState.currentSupplierFilter;
         }
 
-        async function handleLogin() {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            
-            if (!email || !password) {
-                showMessage('Por favor, preencha todos os campos.', 'error');
-                return;
-            }
-
-            showLoading(true);
-            
-            try {
-                await retryOperation(async () => {
-                    return await signInWithEmailAndPassword(auth, email, password);
-                });
-                
-                showMessage('Login realizado com sucesso!', 'success');
-            } catch (error) {
-                console.error('Erro no login:', error);
-                const message = getErrorMessage(error.code);
-                showMessage(message, 'error');
-            } finally {
-                showLoading(false);
-            }
+        function renderList(container, items, emptyMessage, itemTemplate) {
+            container.innerHTML = '';
+            if (!items || items.length === 0) { container.innerHTML = `<p class="text-gray-500 text-center p-4 border-2 border-dashed rounded-lg">${emptyMessage}</p>`; return; }
+            items.forEach(item => { const div = document.createElement('div'); div.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg gap-4'; div.innerHTML = itemTemplate(item); container.appendChild(div); });
+        }
+        
+        function escapeHtml(text) {
+            if (typeof text !== 'string') return text;
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
-        async function handleRegister() {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            
-            if (!email || !password) {
-                showMessage('Por favor, preencha todos os campos.', 'error');
-                return;
-            }
-
-            if (password.length < 6) {
-                showMessage('A senha deve ter pelo menos 6 caracteres.', 'error');
-                return;
-            }
-
-            showLoading(true);
-            
-            try {
-                await retryOperation(async () => {
-                    return await createUserWithEmailAndPassword(auth, email, password);
-                });
-                
-                showMessage('Conta criada com sucesso!', 'success');
-            } catch (error) {
-                console.error('Erro no registro:', error);
-                const message = getErrorMessage(error.code);
-                showMessage(message, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        function showLoading(show) {
-            const loginForm = document.getElementById('login-form');
-            const loadingIndicator = document.getElementById('loading-indicator');
-            
-            if (show) {
-                loginForm.classList.add('hidden');
-                loadingIndicator.classList.remove('hidden');
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('user-email').textContent = user.email;
+                toggleViews('main-app-view');
+                switchTab('stock');
+                listenToDataChanges(); 
             } else {
-                loginForm.classList.remove('hidden');
-                loadingIndicator.classList.add('hidden');
+                if (appState.unsubscribeStock) appState.unsubscribeStock();
+                if (appState.unsubscribeProduction) appState.unsubscribeProduction();
+                toggleViews('login-view');
             }
+        });
+
+        function handleAuthError(error) {
+            console.error("Auth Error:", error.code);
+            if (error.code === 'auth/invalid-credential') showMessage("Email ou senha inválidos.", true);
+            else if (error.code === 'auth/email-already-in-use') showMessage("Este email já está cadastrado.", true);
+            else showMessage("Ocorreu um erro.", true);
         }
 
-        // ===================================================================
-        // 5. ESTADO DA APLICAÇÃO E GERENCIAMENTO DE DADOS
-        // ===================================================================
-        let appState = {
-            stockItems: [],
-            productionItems: [],
-            user: null
-        };
+        signupForm.addEventListener('submit', (e) => { e.preventDefault(); createUserWithEmailAndPassword(auth, signupForm.email.value, signupForm.password.value).catch(handleAuthError); });
+        loginForm.addEventListener('submit', (e) => { e.preventDefault(); signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value).catch(handleAuthError); });
+        logoutBtn.addEventListener('click', () => signOut(auth).catch(handleAuthError));
+        showSignupBtn.addEventListener('click', () => toggleViews('signup-view'));
+        showLoginBtn.addEventListener('click', () => toggleViews('login-view'));
+        tabsContainer.addEventListener('click', (e) => { if(e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
 
+        function listenToDataChanges() {
+            const stockCollectionRef = collection(db, "estoque");
+            appState.unsubscribeStock = onSnapshot(query(stockCollectionRef), (snapshot) => {
+                appState.stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                populateSupplierFilter();
+                renderStock();
+            }, (error) => console.error("Erro ao carregar estoque:", error));
+
+            const productionCollectionRef = collection(db, "producao");
+            appState.unsubscribeProduction = onSnapshot(query(productionCollectionRef), (snapshot) => {
+                appState.productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderProduction();
+            }, (error) => console.error("Erro ao carregar produção:", error));
+        }
+        
+        addItemForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newItem = { item: addItemForm['product-name'].value, fornecedor: addItemForm['product-supplier'].value, atual: parseFloat(addItemForm['product-quantity'].value || 0), minima: parseFloat(addItemForm['product-min'].value || 0), ideal: parseFloat(addItemForm['product-ideal'].value || 0), unidade: addItemForm['product-unit'].value };
+            try { await addDoc(collection(db, "estoque"), newItem); addItemForm.reset(); } catch (error) { console.error("Erro ao adicionar item:", error); showMessage("Falha ao salvar item.", true); }
+        });
+
+        addProductionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newItem = { item: addProductionForm['production-name'].value, quantidade: parseFloat(addProductionForm['production-quantity'].value), unidade: addProductionForm['production-unit'].value, setor: addProductionForm['production-sector'].value };
+            try { await addDoc(collection(db, "producao"), newItem); addProductionForm.reset(); } catch (error) { console.error("Erro ao adicionar item de produção:", error); showMessage("Falha ao salvar item.", true); }
+        });
+
+        document.getElementById('app-content').addEventListener('click', async (e) => {
+            if (e.target.matches('.delete-btn')) {
+                try { await deleteDoc(doc(db, e.target.dataset.type === 'stock' ? "estoque" : "producao", e.target.dataset.id)); showMessage("Item excluído."); } catch (err) { console.error("Erro ao excluir:", err); showMessage("Falha ao excluir.", true); }
+            }
+            if (e.target.matches('.update-btn')) {
+                const input = e.target.previousElementSibling; const newQuantity = parseFloat(input.value);
+                if (isNaN(newQuantity)) { showMessage("Insira um número válido.", true); return; }
+                const field = e.target.dataset.type === 'stock' ? 'atual' : 'quantidade';
+                try { await updateDoc(doc(db, e.target.dataset.type === 'stock' ? "estoque" : "producao", e.target.dataset.id), { [field]: newQuantity }); showMessage("Quantidade atualizada!"); input.value = ''; } catch (err) { console.error("Erro ao atualizar:", err); showMessage("Falha ao atualizar.", true); }
+            }
+        });
+        
+        supplierFilter.addEventListener('change', (e) => { appState.currentSupplierFilter = e.target.value; renderStock(); });
+        sectorFilter.addEventListener('change', (e) => { appState.currentSectorFilter = e.target.value; renderProduction(); });
+        
         // ===================================================================
-        // 6. FUNÇÕES DE INTERFACE E MENSAGENS
+        // 7. LÓGICA DE RELATÓRIOS
         // ===================================================================
-        function showMessage(message, type = 'info') {
-            const container = document.getElementById('message-container');
-            const messageDiv = document.createElement('div');
-            
-            const bgColor = type === 'success' ? 'bg-green-500' : 
-                           type === 'error' ? 'bg-red-500' : 'bg-blue-500';
-            
-            messageDiv.className = `${bgColor} text-white px-4 py-2 rounded-md mb-2 shadow-lg`;
-            messageDiv.textContent = message;
-            
-            container.appendChild(messageDiv);
-            
+        function generatePdfFromHtml(title, content) {
+            const pdfContent = document.getElementById('pdf-content');
+            pdfContent.innerHTML = `<div class="print-area">${content}</div>`;
+            const contentToPrint = pdfContent.firstElementChild;
             setTimeout(() => {
-                if (messageDiv.parentNode) {
-                    messageDiv.parentNode.removeChild(messageDiv);
-                }
-            }, 5000);
-        }
-
-        function showScreen(screenId) {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('main-screen').classList.add('hidden');
-            document.getElementById(screenId).classList.remove('hidden');
-        }
-
-        // ===================================================================
-        // 7. FUNÇÕES DE PRODUTOS E ESTOQUE
-        // ===================================================================
-        async function addProduct() {
-            const name = document.getElementById('product-name').value.trim();
-            const quantity = parseInt(document.getElementById('product-quantity').value);
-            const supplier = document.getElementById('product-supplier').value;
-            const category = document.getElementById('product-category').value;
-            
-            if (!name || !quantity || !supplier || !category) {
-                showMessage('Por favor, preencha todos os campos.', 'error');
-                return;
-            }
-
-            try {
-                const collectionName = category === 'estoque' ? 'stockItems' : 'productionItems';
-                await addDoc(collection(db, collectionName), {
-                    name: name,
-                    quantity: quantity,
-                    supplier: supplier,
-                    createdAt: new Date()
-                });
-                
-                // Limpar campos
-                document.getElementById('product-name').value = '';
-                document.getElementById('product-quantity').value = '';
-                document.getElementById('product-supplier').value = '';
-                document.getElementById('product-category').value = '';
-                
-                showMessage('Produto adicionado com sucesso!', 'success');
-            } catch (error) {
-                console.error('Erro ao adicionar produto:', error);
-                showMessage('Erro ao adicionar produto. Tente novamente.', 'error');
-            }
-        }
-
-        // ===================================================================
-        // 8. FUNÇÕES DE GERAÇÃO DE PDF MELHORADAS
-        // ===================================================================
-        function generateStockReport() {
-            try {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                doc.setFontSize(18);
-                doc.text('Relatório Geral de Estoque', 20, 20);
-                doc.setFontSize(12);
-                doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, 30);
-                
-                let yPosition = 50;
-                
-                appState.stockItems.forEach((item, index) => {
-                    if (yPosition > 270) {
-                        doc.addPage();
-                        yPosition = 20;
+                html2canvas(contentToPrint, { scale: 2, useCORS: true }).then(canvas => {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const imgData = canvas.toDataURL('image/png');
+                    const pageMargin = 15;
+                    const pdfPageWidth = pdf.internal.pageSize.getWidth() - (2 * pageMargin);
+                    const pdfPageHeight = pdf.internal.pageSize.getHeight() - (2 * pageMargin);
+                    const canvasAspectRatio = canvas.width / canvas.height;
+                    const imgWidthOnPdf = pdfPageWidth;
+                    const imgHeightOnPdf = pdfPageWidth / canvasAspectRatio;
+                    let totalHeightLeft = imgHeightOnPdf;
+                    let currentPosition = 0;
+                    pdf.addImage(imgData, 'PNG', pageMargin, pageMargin, imgWidthOnPdf, imgHeightOnPdf);
+                    totalHeightLeft -= pdfPageHeight;
+                    while (totalHeightLeft > 0) {
+                        currentPosition -= pdfPageHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', pageMargin, currentPosition + pageMargin, imgWidthOnPdf, imgHeightOnPdf);
+                        totalHeightLeft -= pdfPageHeight;
                     }
-                    
-                    doc.text(`${index + 1}. ${item.name}`, 20, yPosition);
-                    doc.text(`Quantidade: ${item.quantity}`, 30, yPosition + 10);
-                    doc.text(`Fornecedor: ${item.supplier}`, 30, yPosition + 20);
-                    yPosition += 35;
+                    pdf.save(`${title.replace(/ /g, '_')}.pdf`);
+                    pdfContent.innerHTML = '';
+                }).catch(err => {
+                    console.error("PDF generation error:", err);
+                    showMessage("Ocorreu um erro ao gerar o PDF. Tente novamente.", true);
                 });
-                
-                doc.save('relatorio_estoque.pdf');
-                showMessage('Relatório de estoque gerado com sucesso!', 'success');
-            } catch (error) {
-                console.error('Erro ao gerar relatório:', error);
-                showMessage('Erro ao gerar relatório. Tente novamente.', 'error');
-            }
+            }, 500);
         }
 
-        function generateShoppingList() {
-            const reportArea = document.getElementById('report-display-area');
-            reportArea.classList.remove('hidden');
-            
-            // Agrupar itens por fornecedor
-            const itemsBySupplier = {};
-            appState.stockItems.forEach(item => {
-                if (!itemsBySupplier[item.supplier]) {
-                    itemsBySupplier[item.supplier] = [];
+        function generateManualPdf(title, groupedData) {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 15;
+            const lineHeight = 7;
+            let y = margin;
+
+            function checkPageBreak(neededHeight = lineHeight) {
+                if (y + neededHeight > pageHeight - margin) {
+                    pdf.addPage();
+                    y = margin;
                 }
-                itemsBySupplier[item.supplier].push(item);
-            });
-            
-            let html = '<h2 class="text-xl font-bold mb-4">Lista de Compras</h2>';
-            
-            Object.keys(itemsBySupplier).forEach(supplier => {
-                html += `
-                    <div class="supplier-section mb-6">
-                        <h3 class="text-lg font-semibold bg-gray-200 p-3 rounded-t-lg">${supplier}</h3>
-                        <div class="border border-gray-300 rounded-b-lg max-h-80 overflow-y-auto">
-                            <table class="w-full">
-                                <thead class="bg-gray-100">
-                                    <tr>
-                                        <th class="text-left p-3 border-b">Produto</th>
-                                        <th class="text-left p-3 border-b">Qtd. Atual</th>
-                                        <th class="text-left p-3 border-b">Qtd. Pedida</th>
-                                        <th class="text-left p-3 border-b">Ação</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                `;
+            }
+
+            pdf.setFontSize(18);
+            pdf.setFont(undefined, 'bold');
+            pdf.text(title, margin, y);
+            y += lineHeight * 2;
+
+            Object.keys(groupedData).sort().forEach(supplier => {
+                checkPageBreak(lineHeight * 2); 
+                pdf.setFontSize(14);
+                pdf.setFont(undefined, 'bold');
+                pdf.text(escapeHtml(supplier), margin, y);
+                y += lineHeight * 1.5;
+
+                pdf.setFontSize(10);
+                pdf.setFont(undefined, 'normal');
+                const sortedItems = groupedData[supplier].sort((a,b) => (a.name || '').localeCompare(b.name || ''));
                 
-                itemsBySupplier[supplier].forEach(item => {
-                    html += `
-                        <tr class="border-b">
-                            <td class="p-3">${item.name}</td>
-                            <td class="p-3">${item.quantity}</td>
-                            <td class="p-3">
-                                <input type="number" class="w-20 px-2 py-1 border rounded" 
-                                       placeholder="${item.quantity === 0 ? '' : 'Qtd.'}" 
-                                       data-item-id="${item.id}">
-                            </td>
-                            <td class="p-3">
-                                <button onclick="removeFromShoppingList('${item.id}')" 
-                                        class="text-red-600 hover:text-red-800">Excluir</button>
-                            </td>
-                        </tr>
-                    `;
+                sortedItems.forEach(item => {
+                    checkPageBreak();
+                    const itemText = escapeHtml(item.name);
+                    const quantityText = escapeHtml(item.quantity);
+                    pdf.text(itemText, margin, y, { maxWidth: 120 });
+                    pdf.text(quantityText, pdf.internal.pageSize.getWidth() - margin, y, { align: 'right' });
+                    y += lineHeight;
                 });
-                
-                html += `
-                                </tbody>
-                            </table>
-                        </div>
+                y += lineHeight; 
+            });
+
+            pdf.save(`${title.replace(/ /g, '_')}.pdf`);
+        }
+        
+        generateStockReportBtn.addEventListener('click', () => {
+            const groupedBySupplier = appState.stockItems.reduce((acc, item) => {
+                const supplier = item.fornecedor || 'Sem Fornecedor'; if (!acc[supplier]) acc[supplier] = []; acc[supplier].push(item); return acc;
+            }, {});
+            let content = '<h1>Relatório Geral de Estoque</h1>';
+            Object.keys(groupedBySupplier).sort().forEach(supplier => {
+                content += `<h2>Fornecedor: ${escapeHtml(supplier)}</h2><table><thead><tr><th>Produto</th><th>Quantidade</th></tr></thead><tbody>
+                    ${groupedBySupplier[supplier].sort((a,b) => (a.item||'').localeCompare(b.item||'')).map(item => `
+                        <tr><td>${escapeHtml(item.item)}</td><td>${escapeHtml(item.atual)} ${escapeHtml(item.unidade || '')}</td></tr>`).join('')}
+                </tbody></table>`;
+            });
+            generatePdfFromHtml('Relatorio_Geral_Estoque', content);
+        });
+        
+        generateShoppingListBtn.addEventListener('click', () => {
+            reportDisplayArea.className = 'bg-white rounded-xl shadow-lg interactive-list p-6';
+            const itemsToBuy = appState.stockItems.filter(i => i.atual <= (i.minima || 0));
+            if (itemsToBuy.length === 0) { showMessage("Nenhum item na lista de compras."); reportDisplayArea.classList.add('hidden'); return; }
+            const suppliers = ['TODOS', ...new Set(itemsToBuy.map(i => i.fornecedor || 'Sem Fornecedor').sort())];
+            reportDisplayArea.innerHTML = `
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                    <h3 class="text-lg font-bold">Lista de Compras</h3>
+                    <div class="flex items-center gap-2">
+                        <label for="shopping-list-supplier-filter" class="text-sm font-medium">Fornecedor:</label>
+                        <select id="shopping-list-supplier-filter" class="shadow-sm appearance-none border rounded py-1 px-3 bg-white text-sm">${suppliers.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}</select>
                     </div>
-                `;
-            });
-            
-            html += `
-                <div class="mt-6">
-                    <button onclick="generateShoppingListPDF()" 
-                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        Gerar PDF da Lista de Compras
-                    </button>
                 </div>
-            `;
+                <div id="shopping-list-items-container" class="space-y-2"></div>
+                <button id="generate-shopping-list-pdf-btn" class="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">Gerar PDF da Lista</button>`;
             
-            reportArea.innerHTML = html;
-        }
-
-        window.generateShoppingListPDF = function() {
-            try {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                // Agrupar itens por fornecedor
-                const itemsBySupplier = {};
-                appState.stockItems.forEach(item => {
-                    if (!itemsBySupplier[item.supplier]) {
-                        itemsBySupplier[item.supplier] = [];
-                    }
-                    itemsBySupplier[item.supplier].push(item);
+            const renderFilteredShoppingList = () => {
+                const selectedValue = reportDisplayArea.querySelector('#shopping-list-supplier-filter').value;
+                const container = reportDisplayArea.querySelector('#shopping-list-items-container'); container.innerHTML = '';
+                const sorted = [...itemsToBuy].sort((a, b) => (a.item || '').localeCompare(b.item || ''));
+                const filtered = (selectedValue === 'TODOS') ? sorted : sorted.filter(i => (i.fornecedor || 'Sem Fornecedor') === selectedValue);
+                if (filtered.length === 0) { container.innerHTML = `<p class="text-gray-500 text-center p-4">Nenhum item para este fornecedor.</p>`; return; }
+                container.innerHTML += `<div class="flex items-center justify-between p-2 font-bold text-sm text-gray-600 bg-gray-100 rounded-t-md"><span class="w-2/5">Produto</span><span class="w-1/5 text-center">Qtd. Atual</span><span class="w-1/5 text-center">Qtd. Pedida</span><span class="w-1/5 text-right pr-2">Ação</span></div>`;
+                filtered.forEach(item => {
+                    const div = document.createElement('div'); div.className = 'shopping-list-item flex items-center justify-between p-2 bg-gray-50 rounded';
+                    div.dataset.itemName = item.item; div.dataset.itemUnit = item.unidade; div.dataset.supplier = item.fornecedor || 'Sem Fornecedor';
+                    div.innerHTML = `<span class="w-2/5 text-sm">${escapeHtml(item.item)}</span><span class="w-1/5 text-center text-sm">${escapeHtml(item.atual)} ${escapeHtml(item.unidade || '')}</span>
+                        <input type="number" placeholder="Qtd." class="shopping-quantity-input w-1/5 p-1 border rounded text-sm text-center" step="any">
+                        <button class="delete-shopping-item-btn w-1/5 text-red-500 hover:text-red-700 font-bold text-right text-sm">Excluir</button>`;
+                    container.appendChild(div);
                 });
-                
-                let isFirstPage = true;
-                
-                Object.keys(itemsBySupplier).forEach(supplier => {
-                    if (!isFirstPage) {
-                        doc.addPage();
-                    }
-                    isFirstPage = false;
-                    
-                    // Cabeçalho da página
-                    doc.setFontSize(18);
-                    doc.text('Lista de Compras', 20, 20);
-                    doc.setFontSize(14);
-                    doc.text(`Fornecedor: ${supplier}`, 20, 35);
-                    doc.setFontSize(12);
-                    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, 45);
-                    
-                    // Cabeçalho da tabela
-                    let yPosition = 65;
-                    doc.setFontSize(10);
-                    doc.text('Produto', 20, yPosition);
-                    doc.text('Qtd. Atual', 100, yPosition);
-                    doc.text('Qtd. Pedida', 140, yPosition);
-                    
-                    // Linha separadora
-                    doc.line(20, yPosition + 5, 180, yPosition + 5);
-                    yPosition += 15;
-                    
-                    // Itens do fornecedor
-                    itemsBySupplier[supplier].forEach(item => {
-                        if (yPosition > 270) {
-                            doc.addPage();
-                            yPosition = 20;
-                        }
-                        
-                        doc.text(item.name, 20, yPosition);
-                        doc.text(item.quantity.toString(), 100, yPosition);
-                        doc.text('_______', 140, yPosition); // Campo para preenchimento manual
-                        yPosition += 12;
+            };
+            reportDisplayArea.querySelector('#shopping-list-supplier-filter').addEventListener('change', renderFilteredShoppingList);
+            renderFilteredShoppingList();
+        });
+        
+        reportDisplayArea.addEventListener('click', e => {
+            if (e.target.matches('.delete-shopping-item-btn')) e.target.closest('.shopping-list-item').remove();
+            if (e.target.matches('#generate-shopping-list-pdf-btn')) {
+                const itemsForPdf = [];
+                reportDisplayArea.querySelectorAll('.shopping-list-item').forEach(row => {
+                    const quantity = parseFloat(row.querySelector('.shopping-quantity-input').value);
+                    itemsForPdf.push({ 
+                        name: row.dataset.itemName, 
+                        supplier: row.dataset.supplier || 'Sem Fornecedor', 
+                        quantity: (quantity > 0) ? `${quantity} ${row.dataset.itemUnit || ''}`.trim() : '_______' 
                     });
                 });
+                if (itemsForPdf.length === 0) { showMessage("A lista de compras está vazia.", true); return; }
                 
-                doc.save('Lista_de_Compras_por_Fornecedor.pdf');
-                showMessage('PDF da lista de compras gerado com sucesso!', 'success');
-            } catch (error) {
-                console.error('Erro ao gerar PDF:', error);
-                showMessage('Erro ao gerar PDF. Tente novamente.', 'error');
-            }
-        };
+                const grouped = itemsForPdf.reduce((acc, i) => { 
+                    if (!acc[i.supplier]) acc[i.supplier] = []; 
+                    acc[i.supplier].push(i); return acc; 
+                }, {});
 
-        window.removeFromShoppingList = function(itemId) {
-            // Remover item da lista visual
-            const row = document.querySelector(`input[data-item-id="${itemId}"]`).closest('tr');
-            if (row) {
-                row.remove();
+                generateManualPdf('Lista de Compras', grouped);
             }
-        };
-
-        function generateProductionReport(type) {
-            try {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                const title = type === 'kitchen' ? 'Produção Cozinha' : 'Produção Parrilla';
-                const items = appState.productionItems;
-                
-                doc.setFontSize(18);
-                doc.text(title, 20, 20);
-                doc.setFontSize(12);
-                doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, 30);
-                
-                let yPosition = 50;
-                
-                items.forEach((item, index) => {
-                    if (yPosition > 270) {
-                        doc.addPage();
-                        yPosition = 20;
-                    }
-                    
-                    doc.text(`${index + 1}. ${item.name}`, 20, yPosition);
-                    doc.text(`Quantidade: ${item.quantity}`, 30, yPosition + 10);
-                    doc.text(`Fornecedor: ${item.supplier}`, 30, yPosition + 20);
-                    yPosition += 35;
-                });
-                
-                const filename = type === 'kitchen' ? 'producao_cozinha.pdf' : 'producao_parrilla.pdf';
-                doc.save(filename);
-                showMessage(`Relatório de ${title.toLowerCase()} gerado com sucesso!`, 'success');
-            } catch (error) {
-                console.error('Erro ao gerar relatório:', error);
-                showMessage('Erro ao gerar relatório. Tente novamente.', 'error');
-            }
+        });
+        
+        function createProductionReportContent(items) {
+             return `<h1>Relatório de Produção</h1><table><thead><tr><th>Produto</th><th>Quantidade</th><th>Unidade</th></tr></thead><tbody>
+                 ${items.map(item => `<tr><td>${escapeHtml(item.item)}</td><td>${item.quantidade}</td><td>${escapeHtml(item.unidade || '')}</td></tr>`).join('')}
+             </tbody></table>`;
         }
+        generateKitchenReportBtn.addEventListener('click', () => {
+            const kitchenItems = appState.productionItems.filter(item => item.setor === 'COZINHA');
+            let content = createProductionReportContent(kitchenItems);
+            generatePdfFromHtml('producao_cozinha', content);
+        });
+        generateParrillaReportBtn.addEventListener('click', () => {
+            const parrillaItems = appState.productionItems.filter(item => item.setor === 'PARRILLA');
+            let content = createProductionReportContent(parrillaItems);
+            generatePdfFromHtml('producao_parrilla', content);
+        });
 
-        // ===================================================================
-        // 9. LISTENERS DE DADOS DO FIRESTORE
-        // ===================================================================
-        function setupDataListeners() {
-            // Listener para itens de estoque
-            onSnapshot(collection(db, 'stockItems'), (snapshot) => {
-                appState.stockItems = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-            });
-            
-            // Listener para itens de produção
-            onSnapshot(collection(db, 'productionItems'), (snapshot) => {
-                appState.productionItems = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-            });
-        }
-
-        // ===================================================================
-        // 10. INICIALIZAÇÃO DA APLICAÇÃO
-        // ===================================================================
-        async function initApp() {
-            // Verificar conectividade periodicamente
-            setInterval(async () => {
-                const isConnected = await checkConnectivity();
-                updateConnectivityStatus(isConnected);
-            }, 30000); // Verificar a cada 30 segundos
-            
-            const firebaseInitialized = await initializeFirebase();
-            
-            if (!firebaseInitialized) {
-                showMessage('Falha ao conectar com o Firebase. Verifique sua conexão.', 'error');
-                return;
-            }
-
-            // Event listeners
-            document.getElementById('login-btn').addEventListener('click', handleLogin);
-            document.getElementById('register-btn').addEventListener('click', handleRegister);
-            document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
-            document.getElementById('add-product-btn').addEventListener('click', addProduct);
-            document.getElementById('generate-stock-report-btn').addEventListener('click', generateStockReport);
-            document.getElementById('generate-shopping-list-btn').addEventListener('click', generateShoppingList);
-            document.getElementById('generate-kitchen-report-btn').addEventListener('click', () => generateProductionReport('kitchen'));
-            document.getElementById('generate-parrilla-report-btn').addEventListener('click', () => generateProductionReport('parrilla'));
-
-            // Enter key para login
-            document.getElementById('password').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    handleLogin();
-                }
-            });
-
-            // Monitor de autenticação
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    appState.user = user;
-                    document.getElementById('user-email').textContent = user.email;
-                    showScreen('main-screen');
-                    setupDataListeners();
-                } else {
-                    appState.user = null;
-                    showScreen('login-screen');
-                }
-            });
-        }
-
-        // Inicializar quando a página carregar
-        document.addEventListener('DOMContentLoaded', initApp);
     </script>
-
-    <style>
-        .supplier-section {
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-        
-        .supplier-section .max-h-80 {
-            max-height: 20rem;
-        }
-        
-        .supplier-section .overflow-y-auto::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .supplier-section .overflow-y-auto::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        
-        .supplier-section .overflow-y-auto::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 3px;
-        }
-        
-        .supplier-section .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
-        }
-    </style>
 </body>
 </html>
-
