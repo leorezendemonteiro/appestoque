@@ -26,17 +26,38 @@
         }
         .print-area {
             font-family: Arial, sans-serif;
+            color: black;
         }
         .print-area h1 {
             font-size: 18px;
+            font-weight: bold;
             border-bottom: 1px solid #ccc;
             padding-bottom: 10px;
             margin-bottom: 20px;
         }
         .print-area h2 {
             font-size: 16px;
+            font-weight: bold;
             margin-top: 15px;
+            margin-bottom: 10px;
         }
+        .pdf-header, .pdf-list-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 2px;
+            font-size: 12px;
+        }
+        .pdf-header {
+            font-weight: bold;
+            border-bottom: 2px solid #333;
+        }
+        .pdf-list-item {
+            border-bottom: 1px solid #eee;
+        }
+        .col-product { width: 50%; text-align: left; }
+        .col-qty { width: 25%; text-align: center; }
+        
+        /* Estilos de tabela para outros relatórios */
         .print-area table {
             width: 100%;
             border-collapse: collapse;
@@ -357,10 +378,7 @@
         supplierFilter.addEventListener('change', (e) => { appState.currentSupplierFilter = e.target.value; renderStock(); });
         sectorFilter.addEventListener('change', (e) => { appState.currentSectorFilter = e.target.value; renderProduction(); });
         
-        // ===================================================================
-        // 7. LÓGICA DE RELATÓRIOS
-        // ===================================================================
-        function generatePdfFromHtml(title, content) {
+        function generateSimplePdf(title, content) {
             const pdfContent = document.getElementById('pdf-content');
             pdfContent.innerHTML = `<div class="print-area">${content}</div>`;
             const contentToPrint = pdfContent.firstElementChild;
@@ -391,53 +409,7 @@
                     console.error("PDF generation error:", err);
                     showMessage("Ocorreu um erro ao gerar o PDF. Tente novamente.", true);
                 });
-            }, 500);
-        }
-
-        function generateManualPdf(title, groupedData) {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF('p', 'mm', 'a4');
-
-            const pageHeight = pdf.internal.pageSize.getHeight();
-            const margin = 15;
-            const lineHeight = 7;
-            let y = margin;
-
-            function checkPageBreak(neededHeight = lineHeight) {
-                if (y + neededHeight > pageHeight - margin) {
-                    pdf.addPage();
-                    y = margin;
-                }
-            }
-
-            pdf.setFontSize(18);
-            pdf.setFont(undefined, 'bold');
-            pdf.text(title, margin, y);
-            y += lineHeight * 2;
-
-            Object.keys(groupedData).sort().forEach(supplier => {
-                checkPageBreak(lineHeight * 2); 
-                pdf.setFontSize(14);
-                pdf.setFont(undefined, 'bold');
-                pdf.text(escapeHtml(supplier), margin, y);
-                y += lineHeight * 1.5;
-
-                pdf.setFontSize(10);
-                pdf.setFont(undefined, 'normal');
-                const sortedItems = groupedData[supplier].sort((a,b) => (a.name || '').localeCompare(b.name || ''));
-                
-                sortedItems.forEach(item => {
-                    checkPageBreak();
-                    const itemText = escapeHtml(item.name);
-                    const quantityText = escapeHtml(item.quantity);
-                    pdf.text(itemText, margin, y, { maxWidth: 120 });
-                    pdf.text(quantityText, pdf.internal.pageSize.getWidth() - margin, y, { align: 'right' });
-                    y += lineHeight;
-                });
-                y += lineHeight; 
-            });
-
-            pdf.save(`${title.replace(/ /g, '_')}.pdf`);
+            }, 100);
         }
         
         generateStockReportBtn.addEventListener('click', () => {
@@ -451,7 +423,7 @@
                         <tr><td>${escapeHtml(item.item)}</td><td>${escapeHtml(item.atual)} ${escapeHtml(item.unidade || '')}</td></tr>`).join('')}
                 </tbody></table>`;
             });
-            generatePdfFromHtml('Relatorio_Geral_Estoque', content);
+            generateSimplePdf('Relatorio_Geral_Estoque', content);
         });
         
         generateShoppingListBtn.addEventListener('click', () => {
@@ -480,7 +452,8 @@
                 filtered.forEach(item => {
                     const div = document.createElement('div'); div.className = 'shopping-list-item flex items-center justify-between p-2 bg-gray-50 rounded';
                     div.dataset.itemName = item.item; div.dataset.itemUnit = item.unidade; div.dataset.supplier = item.fornecedor || 'Sem Fornecedor';
-                    div.innerHTML = `<span class="w-2/5 text-sm">${escapeHtml(item.item)}</span><span class="w-1/5 text-center text-sm">${escapeHtml(item.atual)} ${escapeHtml(item.unidade || '')}</span>
+                    div.dataset.currentQty = `${item.atual} ${escapeHtml(item.unidade || '')}`;
+                    div.innerHTML = `<span class="w-2/5 text-sm">${escapeHtml(item.item)}</span><span class="w-1/5 text-center text-sm">${div.dataset.currentQty}</span>
                         <input type="number" placeholder="Qtd." class="shopping-quantity-input w-1/5 p-1 border rounded text-sm text-center" step="any">
                         <button class="delete-shopping-item-btn w-1/5 text-red-500 hover:text-red-700 font-bold text-right text-sm">Excluir</button>`;
                     container.appendChild(div);
@@ -491,25 +464,60 @@
         });
         
         reportDisplayArea.addEventListener('click', e => {
-            if (e.target.matches('.delete-shopping-item-btn')) e.target.closest('.shopping-list-item').remove();
+            if (e.target.matches('.delete-shopping-item-btn')) { e.target.closest('.shopping-list-item').remove(); return; }
             if (e.target.matches('#generate-shopping-list-pdf-btn')) {
                 const itemsForPdf = [];
                 reportDisplayArea.querySelectorAll('.shopping-list-item').forEach(row => {
                     const quantity = parseFloat(row.querySelector('.shopping-quantity-input').value);
                     itemsForPdf.push({ 
                         name: row.dataset.itemName, 
-                        supplier: row.dataset.supplier || 'Sem Fornecedor', 
-                        quantity: (quantity > 0) ? `${quantity} ${row.dataset.itemUnit || ''}`.trim() : '_______' 
+                        supplier: row.dataset.supplier, 
+                        currentQuantity: row.dataset.currentQty,
+                        orderedQuantity: (quantity > 0) ? `${quantity} ${row.dataset.itemUnit || ''}`.trim() : '_______' 
                     });
                 });
                 if (itemsForPdf.length === 0) { showMessage("A lista de compras está vazia.", true); return; }
+                const grouped = itemsForPdf.reduce((acc, i) => { const s = i.supplier || 'Sem Fornecedor'; if (!acc[s]) acc[s] = []; acc[s].push(i); return acc; }, {});
                 
-                const grouped = itemsForPdf.reduce((acc, i) => { 
-                    if (!acc[i.supplier]) acc[i.supplier] = []; 
-                    acc[i.supplier].push(i); return acc; 
-                }, {});
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const sortedSuppliers = Object.keys(grouped).sort();
+                let pageIndex = 0;
+                
+                function addPageForSupplier() {
+                    if (pageIndex >= sortedSuppliers.length) { pdf.save('Lista_de_Compras.pdf'); return; }
+                    const supplier = sortedSuppliers[pageIndex];
+                    const items = grouped[supplier].sort((a,b) => (a.name || '').localeCompare(b.name || ''));
+                    if (pageIndex > 0) pdf.addPage();
 
-                generateManualPdf('Lista de Compras', grouped);
+                    let pdfHtml = `<h1>Lista de Compras</h1><h2>Fornecedor: ${escapeHtml(supplier)}</h2>`;
+                    pdfHtml += `<div class="pdf-header"><span class="col-product">Produto</span><span class="col-qty">Qtd. Atual</span><span class="col-qty">Qtd. Pedida</span></div>`;
+                     
+                    items.forEach(i => {
+                         pdfHtml += `<div class="pdf-list-item">
+                                         <span class="col-product">${escapeHtml(i.name)}</span>
+                                         <span class="col-qty">${escapeHtml(i.currentQuantity)}</span>
+                                         <span class="col-qty">${escapeHtml(i.orderedQuantity)}</span>
+                                     </div>`;
+                     });
+
+                    const pdfContent = document.getElementById('pdf-content');
+                    pdfContent.innerHTML = `<div class="print-area">${pdfHtml}</div>`;
+                    const contentToPrint = pdfContent.firstElementChild;
+
+                    setTimeout(() => {
+                        html2canvas(contentToPrint, { scale: 2, useCORS: true }).then(canvas => {
+                            const imgData = canvas.toDataURL('image/png');
+                            const pageMargin = 15;
+                            const pdfPageWidth = pdf.internal.pageSize.getWidth() - (2 * pageMargin);
+                            const imgHeight = canvas.height * pdfPageWidth / canvas.width;
+                            pdf.addImage(imgData, 'PNG', pageMargin, pageMargin, pdfPageWidth, imgHeight);
+                            pageIndex++;
+                            addPageForSupplier();
+                        }).catch(err => { console.error("PDF generation error for supplier:", supplier, err); showMessage("Ocorreu um erro ao gerar o PDF.", true); });
+                    }, 100);
+                }
+                addPageForSupplier();
             }
         });
         
@@ -521,12 +529,12 @@
         generateKitchenReportBtn.addEventListener('click', () => {
             const kitchenItems = appState.productionItems.filter(item => item.setor === 'COZINHA');
             let content = createProductionReportContent(kitchenItems);
-            generatePdfFromHtml('producao_cozinha', content);
+            generateSimplePdf('producao_cozinha', content);
         });
         generateParrillaReportBtn.addEventListener('click', () => {
             const parrillaItems = appState.productionItems.filter(item => item.setor === 'PARRILLA');
             let content = createProductionReportContent(parrillaItems);
-            generatePdfFromHtml('producao_parrilla', content);
+            generateSimplePdf('producao_parrilla', content);
         });
 
     </script>
