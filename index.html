@@ -6,7 +6,6 @@
     <title>App Estoque Cozinha</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         .tab-button.active {
             border-color: #3b82f6;
@@ -18,34 +17,6 @@
         }
         .tab-content.active {
             display: block;
-        }
-        /* Estilos para o conteúdo que será impresso/gerado em PDF */
-        .print-area {
-            font-family: Arial, sans-serif;
-        }
-        .print-area h1 {
-            font-size: 18px;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        .print-area h2 {
-            font-size: 16px;
-            margin-top: 15px;
-        }
-        .print-area table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-            margin-top: 10px;
-        }
-        .print-area th, .print-area td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        .print-area thead {
-            background-color: #f2f2f2;
         }
     </style>
 </head>
@@ -195,8 +166,6 @@
                 </div>
             </div>
         </div>
-        
-        <div id="pdf-content" class="hidden"></div>
 
         <div id="message-container" class="fixed top-5 right-5 text-sm font-bold z-50"></div>
 
@@ -262,142 +231,146 @@
         const generateParrillaReportBtn = document.getElementById('generate-parrilla-report-btn');
         const reportDisplayArea = document.getElementById('report-display-area');
 
-
         // ===================================================================
-        // 4. FUNÇÕES DE UI E RENDERIZAÇÃO
+        // 4. FUNÇÕES UTILITÁRIAS
         // ===================================================================
         function showMessage(message, isError = false) {
-            messageContainer.innerHTML = `<div class="p-3 rounded-lg shadow-lg ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${message}</div>`;
-            setTimeout(() => { messageContainer.innerHTML = ''; }, 4000);
+            messageContainer.textContent = message;
+            messageContainer.className = `fixed top-5 right-5 text-sm font-bold z-50 p-3 rounded ${isError ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`;
+            setTimeout(() => {
+                messageContainer.textContent = '';
+                messageContainer.className = 'fixed top-5 right-5 text-sm font-bold z-50';
+            }, 3000);
         }
 
-        function toggleViews(showView) {
-            loginView.classList.add('hidden');
-            signupView.classList.add('hidden');
-            mainAppView.classList.add('hidden');
-            const isAuthScreen = showView === 'login-view' || showView === 'signup-view';
-            document.body.classList.toggle('flex', isAuthScreen);
-            document.body.classList.toggle('items-center', isAuthScreen);
-            document.body.classList.toggle('min-h-screen', isAuthScreen);
-            if (showView) document.getElementById(showView).classList.remove('hidden');
+        function switchView(viewToShow) {
+            [loginView, signupView, mainAppView].forEach(view => view.classList.add('hidden'));
+            viewToShow.classList.remove('hidden');
         }
 
-        function switchTab(tabId) {
-            tabsContainer.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-            document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active');
-            document.getElementById(`tab-${tabId}`).classList.add('active');
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
         }
-        
+
+        // ===================================================================
+        // 5. RENDERIZAÇÃO
+        // ===================================================================
         function renderStock() {
             const filteredItems = appState.currentSupplierFilter === 'TODOS' 
                 ? appState.stockItems 
                 : appState.stockItems.filter(item => item.fornecedor === appState.currentSupplierFilter);
-            
-            renderList(stockListContainer, filteredItems, 'O estoque está vazio.', (item) => `
-                <div class="flex-1">
-                    <p class="font-semibold text-gray-800">${item.item}</p>
-                    <p class="text-sm text-gray-600">Qtd: ${item.atual} ${item.unidade} ${item.fornecedor ? `| Fornecedor: ${item.fornecedor}` : ''}</p>
+
+            stockListContainer.innerHTML = filteredItems.map(item => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                    <div class="flex-1">
+                        <div class="font-medium">${item.item}</div>
+                        <div class="text-sm text-gray-500">Fornecedor: ${item.fornecedor || 'N/A'}</div>
+                        <div class="text-sm text-gray-500">Atual: ${item.atual} ${item.unidade} | Mín: ${item.minima || 0} | Ideal: ${item.ideal || 0}</div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" placeholder="Nova qtd" class="w-20 p-1 border rounded text-sm">
+                        <button class="update-btn bg-blue-500 text-white px-2 py-1 rounded text-xs" data-id="${item.id}" data-type="stock">Atualizar</button>
+                        <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded text-xs" data-id="${item.id}" data-type="stock">Excluir</button>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <input type="number" step="any" placeholder="Nova Qtd." class="update-quantity-input w-24 text-sm p-1 border rounded">
-                    <button data-id="${item.id}" data-type="stock" class="update-btn text-xs bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-2 rounded">Atualizar</button>
-                    <button data-id="${item.id}" data-type="stock" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button>
-                </div>
-            `);
+            `).join('');
         }
-        
+
         function renderProduction() {
-            const filteredItems = appState.currentSectorFilter === 'TODOS'
-                ? appState.productionItems
+            const filteredItems = appState.currentSectorFilter === 'TODOS' 
+                ? appState.productionItems 
                 : appState.productionItems.filter(item => item.setor === appState.currentSectorFilter);
 
-            renderList(productionListContainer, filteredItems, 'Nenhum item em produção.', (item) => `
-                 <div class="flex-1">
-                    <p class="font-semibold text-gray-800">${item.item}</p>
-                    <p class="text-sm text-gray-600">Qtd: ${item.quantidade} ${item.unidade} | Setor: ${item.setor || 'N/A'}</p>
+            productionListContainer.innerHTML = filteredItems.map(item => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                    <div class="flex-1">
+                        <div class="font-medium">${item.item}</div>
+                        <div class="text-sm text-gray-500">Setor: ${item.setor}</div>
+                        <div class="text-sm text-gray-500">Quantidade: ${item.quantidade} ${item.unidade}</div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" placeholder="Nova qtd" class="w-20 p-1 border rounded text-sm">
+                        <button class="update-btn bg-blue-500 text-white px-2 py-1 rounded text-xs" data-id="${item.id}" data-type="production">Atualizar</button>
+                        <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded text-xs" data-id="${item.id}" data-type="production">Excluir</button>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <input type="number" step="any" placeholder="Nova Qtd." class="update-quantity-input w-24 text-sm p-1 border rounded">
-                    <button data-id="${item.id}" data-type="production" class="update-btn text-xs bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-2 rounded">Atualizar</button>
-                    <button data-id="${item.id}" data-type="production" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button>
-                </div>
-            `);
-        }
-        
-        function populateSupplierFilter() {
-            const suppliers = [...new Set(appState.stockItems.map(item => item.fornecedor).filter(Boolean))];
-            supplierFilter.innerHTML = '<option>TODOS</option>';
-            suppliers.sort().forEach(supplier => {
-                const option = document.createElement('option');
-                option.value = supplier;
-                option.textContent = supplier;
-                supplierFilter.appendChild(option);
-            });
-            supplierFilter.value = appState.currentSupplierFilter;
+            `).join('');
         }
 
-        function renderList(container, items, emptyMessage, itemTemplate) {
-            container.innerHTML = '';
-            if (!items || items.length === 0) {
-                container.innerHTML = `<p class="text-gray-500 text-center p-4 border-2 border-dashed rounded-lg">${emptyMessage}</p>`;
-                return;
-            }
-            items.forEach(item => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg gap-4';
-                itemDiv.innerHTML = itemTemplate(item);
-                container.appendChild(itemDiv);
-            });
+        function updateSupplierFilter() {
+            const suppliers = [...new Set(appState.stockItems.map(item => item.fornecedor || 'Sem Fornecedor'))];
+            supplierFilter.innerHTML = '<option value="TODOS">TODOS</option>' + 
+                suppliers.map(supplier => `<option value="${supplier}">${supplier}</option>`).join('');
         }
 
         // ===================================================================
-        // 5. LÓGICA DE AUTENTICAÇÃO
+        // 6. AUTENTICAÇÃO E LISTENERS
         // ===================================================================
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 document.getElementById('user-email').textContent = user.email;
-                toggleViews('main-app-view');
+                switchView(mainAppView);
                 switchTab('stock');
-                listenToDataChanges(); 
+                
+                // Configurar listeners do Firestore
+                const stockCollectionRef = collection(db, "estoque");
+                appState.unsubscribeStock = onSnapshot(stockCollectionRef, (snapshot) => {
+                    appState.stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderStock();
+                    updateSupplierFilter();
+                });
+
+                const productionCollectionRef = collection(db, "producao");
+                appState.unsubscribeProduction = onSnapshot(productionCollectionRef, (snapshot) => {
+                    appState.productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderProduction();
+                });
             } else {
+                switchView(loginView);
                 if (appState.unsubscribeStock) appState.unsubscribeStock();
                 if (appState.unsubscribeProduction) appState.unsubscribeProduction();
-                toggleViews('login-view');
             }
         });
 
-        function handleAuthError(error) {
-            console.error("Erro de Autenticação:", error.code);
-            if (error.code === 'auth/invalid-credential') showMessage("Email ou senha inválidos.", true);
-            else if (error.code === 'auth/email-already-in-use') showMessage("Este email já está cadastrado.", true);
-            else showMessage("Ocorreu um erro. Tente novamente.", true);
-        }
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showMessage("Login realizado com sucesso!");
+            } catch (error) {
+                console.error("Erro no login:", error);
+                showMessage("Erro no login. Verifique suas credenciais.", true);
+            }
+        });
 
-        signupForm.addEventListener('submit', (e) => { e.preventDefault(); createUserWithEmailAndPassword(auth, signupForm.email.value, signupForm.password.value).catch(handleAuthError); });
-        loginForm.addEventListener('submit', (e) => { e.preventDefault(); signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value).catch(handleAuthError); });
-        logoutBtn.addEventListener('click', () => signOut(auth).catch(handleAuthError));
-        showSignupBtn.addEventListener('click', () => toggleViews('signup-view'));
-        showLoginBtn.addEventListener('click', () => toggleViews('login-view'));
-        tabsContainer.addEventListener('click', (e) => { if(e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                showMessage("Conta criada com sucesso!");
+            } catch (error) {
+                console.error("Erro no cadastro:", error);
+                showMessage("Erro ao criar conta. Tente novamente.", true);
+            }
+        });
 
-        // ===================================================================
-        // 6. LÓGICA DO FIRESTORE (ESTRUTURA SIMPLIFICADA)
-        // ===================================================================
-        function listenToDataChanges() {
-            const stockCollectionRef = collection(db, "estoque");
-            appState.unsubscribeStock = onSnapshot(query(stockCollectionRef), (snapshot) => {
-                appState.stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                populateSupplierFilter();
-                renderStock();
-            }, (error) => console.error("Erro ao carregar estoque:", error));
+        showSignupBtn.addEventListener('click', () => switchView(signupView));
+        showLoginBtn.addEventListener('click', () => switchView(loginView));
+        logoutBtn.addEventListener('click', () => signOut(auth));
 
-            const productionCollectionRef = collection(db, "producao");
-            appState.unsubscribeProduction = onSnapshot(query(productionCollectionRef), (snapshot) => {
-                appState.productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderProduction();
-            }, (error) => console.error("Erro ao carregar produção:", error));
-        }
+        tabsContainer.addEventListener('click', (e) => {
+            if (e.target.matches('.tab-button')) {
+                switchTab(e.target.dataset.tab);
+            }
+        });
         
         addItemForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -487,60 +460,76 @@
         });
         
         // ===================================================================
-        // 7. LÓGICA DE RELATÓRIOS
+        // 7. LÓGICA DE RELATÓRIOS - VERSÃO SIMPLIFICADA SEM HTML2CANVAS
         // ===================================================================
 
-        function generatePdf(title, content) {
+        // Função simplificada para gerar PDF diretamente com jsPDF
+        function generateSimplePdf(title, data, columns) {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF();
             
-            const pdfContent = `<div class="print-area">${content}</div>`;
-            document.getElementById('pdf-content').innerHTML = pdfContent;
-
-            html2canvas(document.getElementById('pdf-content'), { scale: 2 }).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const imgWidth = 190; // A4 width in mm with margin
-                const pageHeight = 295; // A4 height in mm
-                const imgHeight = canvas.height * imgWidth / canvas.width;
-                let heightLeft = imgHeight;
-                let position = 0;
-
-                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-
-                while (heightLeft >= 0) {
-                    position = heightLeft - imgHeight + 10;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
-                }
-                pdf.save(`${title.replace(/ /g, '_')}.pdf`);
+            // Configurações
+            const pageWidth = pdf.internal.pageSize.width;
+            const pageHeight = pdf.internal.pageSize.height;
+            const margin = 20;
+            const lineHeight = 8;
+            let yPosition = margin;
+            
+            // Título
+            pdf.setFontSize(16);
+            pdf.setFont(undefined, 'bold');
+            pdf.text(title, margin, yPosition);
+            yPosition += lineHeight * 2;
+            
+            // Data atual
+            pdf.setFontSize(10);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, margin, yPosition);
+            yPosition += lineHeight * 2;
+            
+            // Cabeçalho da tabela
+            pdf.setFontSize(12);
+            pdf.setFont(undefined, 'bold');
+            
+            const colWidth = (pageWidth - 2 * margin) / columns.length;
+            columns.forEach((col, index) => {
+                pdf.text(col, margin + (index * colWidth), yPosition);
             });
+            yPosition += lineHeight;
+            
+            // Linha separadora
+            pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+            yPosition += lineHeight;
+            
+            // Dados
+            pdf.setFont(undefined, 'normal');
+            pdf.setFontSize(10);
+            
+            data.forEach(row => {
+                // Verificar se precisa de nova página
+                if (yPosition > pageHeight - margin) {
+                    pdf.addPage();
+                    yPosition = margin;
+                }
+                
+                row.forEach((cell, index) => {
+                    pdf.text(String(cell), margin + (index * colWidth), yPosition);
+                });
+                yPosition += lineHeight;
+            });
+            
+            // Salvar PDF
+            pdf.save(`${title.replace(/ /g, '_')}.pdf`);
         }
 
         generateStockReportBtn.addEventListener('click', () => {
-            const groupedBySupplier = appState.stockItems.reduce((acc, item) => {
-                const supplier = item.fornecedor || 'Sem Fornecedor';
-                if (!acc[supplier]) acc[supplier] = [];
-                acc[supplier].push(item);
-                return acc;
-            }, {});
-
-            let content = '<h1>Relatório Geral de Estoque</h1>';
-            for(const supplier in groupedBySupplier) {
-                content += `<h2>Fornecedor: ${supplier}</h2>
-                            <table>
-                                <thead>
-                                    <tr><th>Produto</th><th>Quantidade</th></tr>
-                                </thead>
-                                <tbody>
-                                    ${groupedBySupplier[supplier].map(item => `
-                                        <tr><td>${item.item}</td><td>${item.atual} ${item.unidade}</td></tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>`;
-            }
-            generatePdf('Relatorio_Geral_Estoque', content);
+            const data = appState.stockItems.map(item => [
+                item.item,
+                item.fornecedor || 'Sem Fornecedor',
+                `${item.atual} ${item.unidade}`
+            ]);
+            
+            generateSimplePdf('Relatório Geral de Estoque', data, ['Produto', 'Fornecedor', 'Quantidade']);
         });
         
         generateShoppingListBtn.addEventListener('click', () => {
@@ -568,7 +557,7 @@
                                 <div class="flex items-center justify-between p-2 bg-gray-50 rounded" data-item-id="${item.id}">
                                     <span class="w-2/5">${item.item}</span>
                                     <span class="w-1/5 text-center">${item.atual}</span>
-                                    <input type="number" placeholder="Qtd." class="w-1/5 p-1 border rounded text-sm text-center">
+                                    <input type="number" placeholder="Qtd." class="w-1/5 p-1 border rounded text-sm text-center qtd-pedida-input">
                                     <button class="delete-shopping-item-btn w-1/5 text-red-500 font-bold text-right">Excluir</button>
                                 </div>
                             `).join('')}
@@ -583,39 +572,46 @@
                 e.target.closest('div[data-item-id]').remove();
             }
             if (e.target.matches('#generate-shopping-list-pdf-btn')) {
-                  const listContent = reportDisplayArea.innerHTML;
-                  // Remove o botão de gerar PDF do conteúdo do PDF
-                  const pdfHtml = listContent.replace('<button id="generate-shopping-list-pdf-btn" class="w-full mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded">Gerar PDF da Lista</button>', '');
-                  generatePdf('Lista_de_Compras', pdfHtml);
+                // Coletar dados da lista atual na tela
+                const listItems = [];
+                const itemDivs = reportDisplayArea.querySelectorAll('div[data-item-id]');
+                
+                itemDivs.forEach(div => {
+                    const produto = div.querySelector('span').textContent;
+                    const qtdAtual = div.querySelectorAll('span')[1].textContent;
+                    const qtdPedidaInput = div.querySelector('.qtd-pedida-input');
+                    const qtdPedida = qtdPedidaInput.value || ''; // Deixa em branco se não preenchido
+                    
+                    listItems.push([produto, qtdAtual, qtdPedida]);
+                });
+                
+                generateSimplePdf('Lista de Compras', listItems, ['Produto', 'Qtd. Atual', 'Qtd. Pedida']);
             }
         });
         
         generateKitchenReportBtn.addEventListener('click', () => {
             const kitchenItems = appState.productionItems.filter(item => item.setor === 'COZINHA');
-            let content = createProductionReportContent(kitchenItems);
-            generatePdf('producao_cozinha', content);
+            const data = kitchenItems.map(item => [
+                item.item,
+                item.quantidade,
+                item.unidade
+            ]);
+            
+            generateSimplePdf('Relatório Produção Cozinha', data, ['Produto', 'Quantidade', 'Unidade']);
         });
         
         generateParrillaReportBtn.addEventListener('click', () => {
             const parrillaItems = appState.productionItems.filter(item => item.setor === 'PARRILLA');
-            let content = createProductionReportContent(parrillaItems);
-            generatePdf('producao_parrilla', content);
+            const data = parrillaItems.map(item => [
+                item.item,
+                item.quantidade,
+                item.unidade
+            ]);
+            
+            generateSimplePdf('Relatório Produção Parrilla', data, ['Produto', 'Quantidade', 'Unidade']);
         });
-
-        function createProductionReportContent(items) {
-             return `<h1>Relatório de Produção</h1>
-                     <table>
-                         <thead>
-                             <tr><th>Produto</th><th>Quantidade</th><th>Unidade</th></tr>
-                         </thead>
-                         <tbody>
-                             ${items.map(item => `
-                                 <tr><td>${item.item}</td><td>${item.quantidade}</td><td>${item.unidade}</td></tr>
-                             `).join('')}
-                         </tbody>
-                     </table>`;
-        }
 
     </script>
 </body>
 </html>
+
