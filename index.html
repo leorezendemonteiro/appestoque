@@ -19,13 +19,11 @@
         .tab-content.active {
             display: block;
         }
-        /* Estilos para a área de exibição da lista de compras com rolagem */
         #report-display-area.interactive-list {
-            max-height: 60vh; /* Define uma altura máxima (60% da altura da tela) */
-            overflow-y: auto; /* Adiciona uma barra de rolagem vertical quando o conteúdo excede a altura */
+            max-height: 60vh;
+            overflow-y: auto;
             border: 1px solid #e5e7eb;
         }
-        /* Estilos para o conteúdo que será impresso/gerado em PDF */
         .print-area {
             font-family: Arial, sans-serif;
         }
@@ -64,19 +62,15 @@
             <form id="login-form">
                 <div class="mb-4">
                     <label for="login-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                    <input type="email" id="login-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="email" id="login-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                 </div>
                 <div class="mb-6">
                     <label for="login-password" class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
-                    <input type="password" id="login-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="password" id="login-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                 </div>
                 <div class="flex flex-col space-y-4">
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        Entrar
-                    </button>
-                    <button type="button" id="show-signup-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">
-                        Não tenho conta, quero me cadastrar
-                    </button>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Entrar</button>
+                    <button type="button" id="show-signup-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">Não tenho conta</button>
                 </div>
             </form>
         </div>
@@ -86,19 +80,15 @@
             <form id="signup-form">
                 <div class="mb-4">
                     <label for="signup-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                    <input type="email" id="signup-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="email" id="signup-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                 </div>
                 <div class="mb-6">
                     <label for="signup-password" class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
-                    <input type="password" id="signup-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="password" id="signup-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                 </div>
                 <div class="flex flex-col space-y-4">
-                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        Cadastrar
-                    </button>
-                    <button type="button" id="show-login-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">
-                        Já tenho uma conta
-                    </button>
+                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Cadastrar</button>
+                    <button type="button" id="show-login-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">Já tenho uma conta</button>
                 </div>
             </form>
         </div>
@@ -110,9 +100,7 @@
                         <h1 class="text-xl font-bold text-gray-800">App de Gestão</h1>
                         <p id="user-email" class="text-xs text-gray-500"></p>
                     </div>
-                    <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm">
-                        Sair
-                    </button>
+                    <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm">Sair</button>
                 </div>
             </header>
             
@@ -135,7 +123,7 @@
                             <input type="text" id="product-supplier" placeholder="Fornecedor" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
                             <input type="number" id="product-quantity" placeholder="Qtd. Atual" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
                             <input type="number" id="product-min" placeholder="Qtd. Mínima" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any">
-                             <input type="number" id="product-ideal" placeholder="Qtd. Ideal" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any">
+                            <input type="number" id="product-ideal" placeholder="Qtd. Ideal" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any">
                             <select id="product-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
                                 <option>un</option> <option>kg</option> <option>g</option> <option>lt</option> <option>ml</option>
                             </select>
@@ -145,8 +133,7 @@
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-lg font-semibold text-gray-700">Itens no Estoque</h2>
-                            <select id="supplier-filter" class="shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm">
-                                </select>
+                            <select id="supplier-filter" class="shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm"></select>
                         </div>
                         <div id="stock-list" class="space-y-3"></div>
                     </div>
@@ -157,10 +144,10 @@
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Item à Produção</h2>
                         <form id="add-production-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input type="text" id="production-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                             <select id="production-sector" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
-                                 <option value="COZINHA">COZINHA</option> 
-                                 <option value="PARRILLA">PARRILLA</option> 
-                             </select>
+                            <select id="production-sector" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
+                                <option value="COZINHA">COZINHA</option> 
+                                <option value="PARRILLA">PARRILLA</option> 
+                            </select>
                             <input type="number" id="production-quantity" placeholder="Qtd" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
                             <select id="production-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
                                 <option>porção</option> <option>kg</option> <option>lt</option> <option>un</option>
@@ -185,7 +172,7 @@
                      <div class="bg-white p-6 rounded-xl shadow-lg">
                          <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios de Estoque</h2>
                          <div class="flex flex-col sm:flex-row gap-4">
-                              <button id="generate-stock-report-btn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Relatório Geral de Estoque (PDF)</button>
+                              <button id="generate-stock-report-btn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Relatório Geral (PDF)</button>
                               <button id="generate-shopping-list-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded">Gerar Lista de Compras</button>
                          </div>
                      </div>
@@ -196,8 +183,7 @@
                              <button id="generate-parrilla-report-btn" class="flex-1 bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded">Produção Parrilla (PDF)</button>
                          </div>
                      </div>
-                     <div id="report-display-area" class="bg-white rounded-xl shadow-lg hidden">
-                         </div>
+                     <div id="report-display-area" class="bg-white rounded-xl shadow-lg hidden"></div>
                 </div>
             </div>
         </div>
@@ -213,9 +199,6 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, query, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ===================================================================
-        // 1. CONFIGURAÇÃO DO FIREBASE
-        // ===================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
             authDomain: "appestoquecozinha.firebaseapp.com",
@@ -225,9 +208,6 @@
             appId: "1:705934517110:web:b4d5b79059feb7e6485057"
         };
 
-        // ===================================================================
-        // 2. INICIALIZAÇÃO E ESTADO
-        // ===================================================================
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -241,9 +221,6 @@
             unsubscribeProduction: null
         };
 
-        // ===================================================================
-        // 3. SELETORES DA DOM
-        // ===================================================================
         const loginView = document.getElementById('login-view');
         const signupView = document.getElementById('signup-view');
         const mainAppView = document.getElementById('main-app-view');
@@ -261,17 +238,12 @@
         const productionListContainer = document.getElementById('production-list');
         const supplierFilter = document.getElementById('supplier-filter');
         const sectorFilter = document.getElementById('sector-filter');
-        // Relatórios
         const generateStockReportBtn = document.getElementById('generate-stock-report-btn');
         const generateShoppingListBtn = document.getElementById('generate-shopping-list-btn');
         const generateKitchenReportBtn = document.getElementById('generate-kitchen-report-btn');
         const generateParrillaReportBtn = document.getElementById('generate-parrilla-report-btn');
         const reportDisplayArea = document.getElementById('report-display-area');
 
-
-        // ===================================================================
-        // 4. FUNÇÕES DE UI E RENDERIZAÇÃO
-        // ===================================================================
         function showMessage(message, isError = false) {
             messageContainer.innerHTML = `<div class="p-3 rounded-lg shadow-lg ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${message}</div>`;
             setTimeout(() => { messageContainer.innerHTML = ''; }, 4000);
@@ -293,7 +265,6 @@
             tabContents.forEach(content => content.classList.remove('active'));
             document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active');
             document.getElementById(`tab-${tabId}`).classList.add('active');
-            
             if (tabId !== 'reports') {
                 reportDisplayArea.classList.add('hidden');
                 reportDisplayArea.innerHTML = '';
@@ -362,9 +333,6 @@
             });
         }
 
-        // ===================================================================
-        // 5. LÓGICA DE AUTENTICAÇÃO
-        // ===================================================================
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 document.getElementById('user-email').textContent = user.email;
@@ -392,9 +360,6 @@
         showLoginBtn.addEventListener('click', () => toggleViews('login-view'));
         tabsContainer.addEventListener('click', (e) => { if(e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
 
-        // ===================================================================
-        // 6. LÓGICA DO FIRESTORE
-        // ===================================================================
         function listenToDataChanges() {
             const stockCollectionRef = collection(db, "estoque");
             appState.unsubscribeStock = onSnapshot(query(stockCollectionRef), (snapshot) => {
@@ -425,8 +390,8 @@
                 await addDoc(stockCollectionRef, newItem);
                 addItemForm.reset();
             } catch (error) {
-                console.error("Erro ao adicionar item de estoque:", error);
-                showMessage("Não foi possível salvar o item no estoque.", true);
+                console.error("Erro ao adicionar item:", error);
+                showMessage("Não foi possível salvar o item.", true);
             }
         });
 
@@ -443,8 +408,8 @@
                 await addDoc(productionCollectionRef, newItem);
                 addProductionForm.reset();
             } catch (error) {
-                console.error("Erro ao adicionar item de produção:", error);
-                showMessage("Não foi possível salvar o item na produção.", true);
+                console.error("Erro ao adicionar item:", error);
+                showMessage("Não foi possível salvar o item.", true);
             }
         });
 
@@ -453,13 +418,8 @@
                 const itemId = e.target.dataset.id;
                 const type = e.target.dataset.type;
                 const docRef = doc(db, type === 'stock' ? "estoque" : "producao", itemId);
-                try {
-                    await deleteDoc(docRef);
-                    showMessage("Item excluído com sucesso.");
-                } catch (error) {
-                    console.error("Erro ao excluir item:", error);
-                    showMessage("Não foi possível excluir o item.", true);
-                }
+                try { await deleteDoc(docRef); showMessage("Item excluído."); }
+                catch (error) { console.error("Erro ao excluir:", error); showMessage("Falha ao excluir.", true); }
             }
             
             if (e.target.matches('.update-btn')) {
@@ -468,10 +428,7 @@
                 const input = e.target.previousElementSibling;
                 const newQuantity = parseFloat(input.value);
 
-                if (isNaN(newQuantity)) {
-                    showMessage("Por favor, insira um número válido.", true);
-                    return;
-                }
+                if (isNaN(newQuantity)) { showMessage("Insira um número válido.", true); return; }
                 
                 const docRef = doc(db, type === 'stock' ? "estoque" : "producao", itemId);
                 const fieldToUpdate = type === 'stock' ? 'atual' : 'quantidade';
@@ -480,53 +437,44 @@
                     await updateDoc(docRef, { [fieldToUpdate]: newQuantity });
                     showMessage("Quantidade atualizada!");
                     input.value = '';
-                } catch (error) {
-                    console.error("Erro ao atualizar quantidade:", error);
-                    showMessage("Falha ao atualizar a quantidade.", true);
-                }
+                } catch (error) { console.error("Erro ao atualizar:", error); showMessage("Falha ao atualizar.", true); }
             }
         });
         
-        supplierFilter.addEventListener('change', (e) => {
-            appState.currentSupplierFilter = e.target.value;
-            renderStock();
-        });
-
-        sectorFilter.addEventListener('change', (e) => {
-            appState.currentSectorFilter = e.target.value;
-            renderProduction();
-        });
+        supplierFilter.addEventListener('change', (e) => { appState.currentSupplierFilter = e.target.value; renderStock(); });
+        sectorFilter.addEventListener('change', (e) => { appState.currentSectorFilter = e.target.value; renderProduction(); });
         
-        // ===================================================================
-        // 7. LÓGICA DE RELATÓRIOS
-        // ===================================================================
+        // --- LÓGICA DE RELATÓRIOS ---
 
+        // FUNÇÃO DE GERAR PDF COM TRATAMENTO DE ERRO
         function generatePdf(title, content) {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF();
             
-            const pdfContent = `<div class="print-area">${content}</div>`;
-            document.getElementById('pdf-content').innerHTML = pdfContent;
+            document.getElementById('pdf-content').innerHTML = `<div class="print-area">${content}</div>`;
 
-            html2canvas(document.getElementById('pdf-content'), { scale: 2 }).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const imgWidth = 190;
-                const pageHeight = 295;
-                const imgHeight = canvas.height * imgWidth / canvas.width;
-                let heightLeft = imgHeight;
-                let position = 0;
+            html2canvas(document.getElementById('pdf-content'), { scale: 2, useCORS: true })
+                .then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const imgWidth = 190, pageHeight = 295;
+                    const imgHeight = canvas.height * imgWidth / canvas.width;
+                    let heightLeft = imgHeight, position = 0;
 
-                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-
-                while (heightLeft >= 0) {
-                    position = heightLeft - imgHeight + 10;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
                     heightLeft -= pageHeight;
-                }
-                pdf.save(`${title.replace(/ /g, '_')}.pdf`);
-            });
+
+                    while (heightLeft >= 0) {
+                        position = heightLeft - imgHeight + 10;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                    }
+                    pdf.save(`${title.replace(/ /g, '_')}.pdf`);
+                })
+                .catch(err => {
+                    console.error("Erro na geração do PDF:", err);
+                    showMessage("Ocorreu um erro ao gerar o PDF. Tente novamente.", true);
+                });
         }
 
         generateStockReportBtn.addEventListener('click', () => {
@@ -539,13 +487,10 @@
             }, {});
 
             let content = '<h1>Relatório Geral de Estoque</h1>';
-            const sortedSuppliers = Object.keys(groupedBySupplier).sort();
-            sortedSuppliers.forEach(supplier => {
+            Object.keys(groupedBySupplier).sort().forEach(supplier => {
                 content += `<h2>Fornecedor: ${supplier}</h2>
                             <table>
-                                <thead>
-                                    <tr><th>Produto</th><th>Quantidade</th></tr>
-                                </thead>
+                                <thead><tr><th>Produto</th><th>Quantidade</th></tr></thead>
                                 <tbody>
                                     ${groupedBySupplier[supplier].map(item => `
                                         <tr><td>${item.item}</td><td>${item.atual} ${item.unidade}</td></tr>
@@ -558,7 +503,6 @@
         
         generateShoppingListBtn.addEventListener('click', () => {
             reportDisplayArea.classList.add('interactive-list', 'p-6');
-
             const itemsToBuy = appState.stockItems.filter(item => item.atual <= (item.minima || 0));
             
             if (itemsToBuy.length === 0) {
@@ -569,19 +513,16 @@
             }
 
             const suppliers = ['TODOS', ...new Set(itemsToBuy.map(item => item.fornecedor || 'Sem Fornecedor').sort())];
-
-            let filterHtml = `<div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                                <h3 class="text-lg font-bold">Lista de Compras</h3>
-                                <div class="flex items-center gap-2">
-                                    <label for="shopping-list-supplier-filter" class="text-sm font-medium">Fornecedor:</label>
-                                    <select id="shopping-list-supplier-filter" class="shadow-sm appearance-none border rounded py-1 px-3 text-gray-700 bg-white text-sm">
-                                        ${suppliers.map(s => `<option value="${s}">${s}</option>`).join('')}
-                                    </select>
-                                </div>
-                              </div>`;
-
             reportDisplayArea.innerHTML = `
-                ${filterHtml}
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                    <h3 class="text-lg font-bold">Lista de Compras</h3>
+                    <div class="flex items-center gap-2">
+                        <label for="shopping-list-supplier-filter" class="text-sm font-medium">Fornecedor:</label>
+                        <select id="shopping-list-supplier-filter" class="shadow-sm appearance-none border rounded py-1 px-3 text-gray-700 bg-white text-sm">
+                            ${suppliers.map(s => `<option value="${s}">${s}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
                 <div id="shopping-list-items-container" class="space-y-2"></div>
                 <button id="generate-shopping-list-pdf-btn" class="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">Gerar PDF da Lista</button>`;
             
@@ -593,7 +534,6 @@
                 container.innerHTML = '';
 
                 const sortedItemsToBuy = [...itemsToBuy].sort((a, b) => (a.item || '').localeCompare(b.item || ''));
-
                 const filteredItems = (selectedSupplier === 'TODOS'
                     ? sortedItemsToBuy
                     : sortedItemsToBuy.filter(item => (item.fornecedor || 'Sem Fornecedor') === selectedSupplier)
@@ -617,12 +557,11 @@
                     itemDiv.dataset.itemName = item.item;
                     itemDiv.dataset.itemUnit = item.unidade;
                     itemDiv.dataset.supplier = item.fornecedor || 'Sem Fornecedor';
-
                     itemDiv.innerHTML = `
                         <span class="w-2/5 text-sm">${item.item}</span>
                         <span class="w-1/5 text-center text-sm">${item.atual} ${item.unidade}</span>
                         <input type="number" placeholder="Qtd." class="shopping-quantity-input w-1/5 p-1 border rounded text-sm text-center" step="any">
-                        <button class="delete-shopping-item-btn w-1/p-5 text-red-500 hover:text-red-700 font-bold text-right text-sm">Excluir</button>
+                        <button class="delete-shopping-item-btn w-1/5 text-red-500 hover:text-red-700 font-bold text-right text-sm">Excluir</button>
                     `;
                     container.appendChild(itemDiv);
                 });
@@ -632,7 +571,6 @@
             renderFilteredShoppingList();
         });
         
-        // LÓGICA CORRIGIDA PARA GERAR PDF DA LISTA DE COMPRAS
         reportDisplayArea.addEventListener('click', e => {
             if (e.target.matches('.delete-shopping-item-btn')) {
                 e.target.closest('.shopping-list-item').remove();
@@ -643,13 +581,9 @@
                 document.querySelectorAll('.shopping-list-item').forEach(itemRow => {
                     const quantityInput = itemRow.querySelector('.shopping-quantity-input');
                     const quantity = parseFloat(quantityInput.value);
-                    let orderedQuantity;
-
-                    if (quantity > 0) {
-                        orderedQuantity = `${quantity} ${itemRow.dataset.itemUnit}`;
-                    } else {
-                        orderedQuantity = '_______'; // Placeholder para preenchimento manual
-                    }
+                    const orderedQuantity = (quantity > 0)
+                        ? `${quantity} ${itemRow.dataset.itemUnit || ''}`.trim()
+                        : '_______';
                     
                     itemsForPdf.push({
                         name: itemRow.dataset.itemName,
@@ -659,7 +593,7 @@
                 });
 
                 if (itemsForPdf.length === 0) {
-                    showMessage("A lista de compras está vazia. Não há itens para gerar o PDF.", true);
+                    showMessage("A lista de compras está vazia.", true);
                     return;
                 }
 
@@ -671,15 +605,11 @@
                 }, {});
 
                 let pdfHtml = '<h1>Lista de Compras</h1>';
-                const sortedSuppliers = Object.keys(groupedForPdf).sort();
-
-                sortedSuppliers.forEach(supplier => {
+                Object.keys(groupedForPdf).sort().forEach(supplier => {
                      const sortedItems = groupedForPdf[supplier].sort((a,b) => a.name.localeCompare(b.name));
                      pdfHtml += `<h2>Fornecedor: ${supplier}</h2>
                                  <table>
-                                     <thead>
-                                         <tr><th>Produto</th><th>Qtd. Pedida</th></tr>
-                                     </thead>
+                                     <thead><tr><th>Produto</th><th>Qtd. Pedida</th></tr></thead>
                                      <tbody>
                                          ${sortedItems.map(item => `
                                              <tr><td>${item.name}</td><td>${item.quantity}</td></tr>
@@ -708,9 +638,7 @@
              const sortedItems = [...items].sort((a, b) => (a.item || '').localeCompare(b.item || ''));
              return `<h1>${title}</h1>
                      <table>
-                         <thead>
-                             <tr><th>Produto</th><th>Quantidade</th><th>Unidade</th></tr>
-                         </thead>
+                         <thead><tr><th>Produto</th><th>Quantidade</th><th>Unidade</th></tr></thead>
                          <tbody>
                              ${sortedItems.map(item => `
                                  <tr><td>${item.item}</td><td>${item.quantidade}</td><td>${item.unidade}</td></tr>
@@ -718,7 +646,6 @@
                          </tbody>
                      </table>`;
         }
-
     </script>
 </body>
 </html>
