@@ -19,9 +19,17 @@
         .tab-content.active {
             display: block;
         }
+        /* Estilos para a área de exibição da lista de compras com rolagem */
+        #report-display-area {
+            max-height: 60vh; /* Define uma altura máxima (60% da altura da tela) */
+            overflow-y: auto; /* Adiciona uma barra de rolagem vertical quando o conteúdo excede a altura */
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+        }
         /* Estilos para o conteúdo que será impresso/gerado em PDF */
         .print-area {
             font-family: Arial, sans-serif;
+            padding: 10px;
         }
         .print-area h1 {
             font-size: 18px;
@@ -32,6 +40,7 @@
         .print-area h2 {
             font-size: 16px;
             margin-top: 15px;
+            margin-bottom: 5px;
         }
         .print-area table {
             width: 100%;
@@ -51,10 +60,8 @@
 </head>
 <body class="bg-gray-100">
 
-    <!-- Container Principal -->
     <div id="app-container" class="w-full max-w-2xl mx-auto py-8 px-4">
 
-        <!-- TELA DE LOGIN -->
         <div id="login-view" class="bg-white p-8 rounded-xl shadow-lg max-w-md mx-auto">
             <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Controle de Estoque</h1>
             <form id="login-form">
@@ -77,7 +84,6 @@
             </form>
         </div>
         
-        <!-- TELA DE CADASTRO -->
         <div id="signup-view" class="bg-white p-8 rounded-xl shadow-lg hidden max-w-md mx-auto">
             <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Criar Nova Conta</h1>
             <form id="signup-form">
@@ -100,7 +106,6 @@
             </form>
         </div>
 
-        <!-- TELA PRINCIPAL DO APP (PÓS-LOGIN) -->
         <div id="main-app-view" class="hidden">
             <header class="bg-white p-4 rounded-xl shadow-lg mb-8">
                 <div class="flex justify-between items-center">
@@ -114,7 +119,6 @@
                 </div>
             </header>
             
-            <!-- Navegação por Abas -->
             <div class="mb-8">
                 <div class="border-b border-gray-200">
                     <nav id="tabs-container" class="-mb-px flex space-x-4" aria-label="Tabs">
@@ -125,9 +129,7 @@
                 </div>
             </div>
 
-            <!-- Conteúdo das Abas -->
             <div id="app-content">
-                <!-- Aba de Estoque -->
                 <div id="tab-stock" class="tab-content space-y-8">
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Produto ao Estoque</h2>
@@ -147,23 +149,21 @@
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-lg font-semibold text-gray-700">Itens no Estoque</h2>
                             <select id="supplier-filter" class="shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm">
-                                <!-- Opções de filtro serão inseridas aqui -->
-                            </select>
+                                </select>
                         </div>
                         <div id="stock-list" class="space-y-3"></div>
                     </div>
                 </div>
 
-                <!-- Aba de Produção -->
                 <div id="tab-production" class="tab-content space-y-8">
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Item à Produção</h2>
                         <form id="add-production-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input type="text" id="production-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                              <select id="production-sector" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
-                                <option value="COZINHA">COZINHA</option> 
-                                <option value="PARRILLA">PARRILLA</option> 
-                            </select>
+                                 <option value="COZINHA">COZINHA</option> 
+                                 <option value="PARRILLA">PARRILLA</option> 
+                             </select>
                             <input type="number" id="production-quantity" placeholder="Qtd" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
                             <select id="production-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
                                 <option>porção</option> <option>kg</option> <option>lt</option> <option>un</option>
@@ -184,38 +184,33 @@
                     </div>
                 </div>
 
-                <!-- Aba de Relatórios -->
                 <div id="tab-reports" class="tab-content space-y-8">
                      <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios de Estoque</h2>
-                        <div class="flex flex-col sm:flex-row gap-4">
-                             <button id="generate-stock-report-btn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Relatório Geral de Estoque (PDF)</button>
-                             <button id="generate-shopping-list-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded">Gerar Lista de Compras</button>
-                        </div>
-                    </div>
+                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios de Estoque</h2>
+                         <div class="flex flex-col sm:flex-row gap-4">
+                              <button id="generate-stock-report-btn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Relatório Geral de Estoque (PDF)</button>
+                              <button id="generate-shopping-list-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded">Gerar Lista de Compras</button>
+                         </div>
+                     </div>
                      <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios de Produção</h2>
-                        <div class="flex flex-col sm:flex-row gap-4">
-                            <button id="generate-kitchen-report-btn" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded">Produção Cozinha (PDF)</button>
-                            <button id="generate-parrilla-report-btn" class="flex-1 bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded">Produção Parrilla (PDF)</button>
-                        </div>
-                    </div>
-                    <div id="report-display-area" class="bg-white p-6 rounded-xl shadow-lg hidden">
-                        <!-- A lista de compras interativa aparecerá aqui -->
-                    </div>
+                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios de Produção</h2>
+                         <div class="flex flex-col sm:flex-row gap-4">
+                             <button id="generate-kitchen-report-btn" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded">Produção Cozinha (PDF)</button>
+                             <button id="generate-parrilla-report-btn" class="flex-1 bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded">Produção Parrilla (PDF)</button>
+                         </div>
+                     </div>
+                     <div id="report-display-area" class="p-6 bg-white rounded-xl shadow-lg hidden">
+                         </div>
                 </div>
             </div>
         </div>
         
-        <!-- Conteúdo oculto para geração de PDF -->
         <div id="pdf-content" class="hidden"></div>
 
-        <!-- MENSAGENS DE ERRO/SUCESSO -->
         <div id="message-container" class="fixed top-5 right-5 text-sm font-bold z-50"></div>
 
     </div>
 
-    <!-- SCRIPTS DO FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -228,7 +223,7 @@
             apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
             authDomain: "appestoquecozinha.firebaseapp.com",
             projectId: "appestoquecozinha",
-            storageBucket: "appestoquecozinha.firebasestorage.app",
+            storageBucket: "appestoquecozinha.appspot.com",
             messagingSenderId: "705934517110",
             appId: "1:705934517110:web:b4d5b79059feb7e6485057"
         };
@@ -301,6 +296,11 @@
             tabContents.forEach(content => content.classList.remove('active'));
             document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active');
             document.getElementById(`tab-${tabId}`).classList.add('active');
+            // Esconde a área de relatório de compras ao trocar de aba
+            if (tabId !== 'reports') {
+                reportDisplayArea.classList.add('hidden');
+                reportDisplayArea.innerHTML = '';
+            }
         }
         
         function renderStock() {
@@ -308,7 +308,7 @@
                 ? appState.stockItems 
                 : appState.stockItems.filter(item => item.fornecedor === appState.currentSupplierFilter);
             
-            renderList(stockListContainer, filteredItems, 'O estoque está vazio.', (item) => `
+            renderList(stockListContainer, filteredItems.sort((a, b) => a.item.localeCompare(b.item)), 'O estoque está vazio.', (item) => `
                 <div class="flex-1">
                     <p class="font-semibold text-gray-800">${item.item}</p>
                     <p class="text-sm text-gray-600">Qtd: ${item.atual} ${item.unidade} ${item.fornecedor ? `| Fornecedor: ${item.fornecedor}` : ''}</p>
@@ -326,7 +326,7 @@
                 ? appState.productionItems
                 : appState.productionItems.filter(item => item.setor === appState.currentSectorFilter);
 
-            renderList(productionListContainer, filteredItems, 'Nenhum item em produção.', (item) => `
+            renderList(productionListContainer, filteredItems.sort((a, b) => a.item.localeCompare(b.item)), 'Nenhum item em produção.', (item) => `
                  <div class="flex-1">
                     <p class="font-semibold text-gray-800">${item.item}</p>
                     <p class="text-sm text-gray-600">Qtd: ${item.quantidade} ${item.unidade} | Setor: ${item.setor || 'N/A'}</p>
@@ -341,7 +341,7 @@
         
         function populateSupplierFilter() {
             const suppliers = [...new Set(appState.stockItems.map(item => item.fornecedor).filter(Boolean))];
-            supplierFilter.innerHTML = '<option>TODOS</option>';
+            supplierFilter.innerHTML = '<option value="TODOS">TODOS</option>';
             suppliers.sort().forEach(supplier => {
                 const option = document.createElement('option');
                 option.value = supplier;
@@ -391,245 +391,4 @@
         signupForm.addEventListener('submit', (e) => { e.preventDefault(); createUserWithEmailAndPassword(auth, signupForm.email.value, signupForm.password.value).catch(handleAuthError); });
         loginForm.addEventListener('submit', (e) => { e.preventDefault(); signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value).catch(handleAuthError); });
         logoutBtn.addEventListener('click', () => signOut(auth).catch(handleAuthError));
-        showSignupBtn.addEventListener('click', () => toggleViews('signup-view'));
-        showLoginBtn.addEventListener('click', () => toggleViews('login-view'));
-        tabsContainer.addEventListener('click', (e) => { if(e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
-
-        // ===================================================================
-        // 6. LÓGICA DO FIRESTORE (ESTRUTURA SIMPLIFICADA)
-        // ===================================================================
-        function listenToDataChanges() {
-            const stockCollectionRef = collection(db, "estoque");
-            appState.unsubscribeStock = onSnapshot(query(stockCollectionRef), (snapshot) => {
-                appState.stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                populateSupplierFilter();
-                renderStock();
-            }, (error) => console.error("Erro ao carregar estoque:", error));
-
-            const productionCollectionRef = collection(db, "producao");
-            appState.unsubscribeProduction = onSnapshot(query(productionCollectionRef), (snapshot) => {
-                appState.productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderProduction();
-            }, (error) => console.error("Erro ao carregar produção:", error));
-        }
-        
-        addItemForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const newItem = {
-                item: document.getElementById('product-name').value,
-                fornecedor: document.getElementById('product-supplier').value,
-                atual: parseFloat(document.getElementById('product-quantity').value || 0),
-                minima: parseFloat(document.getElementById('product-min').value || 0),
-                ideal: parseFloat(document.getElementById('product-ideal').value || 0),
-                unidade: document.getElementById('product-unit').value
-            };
-            const stockCollectionRef = collection(db, "estoque");
-            try {
-                await addDoc(stockCollectionRef, newItem);
-                addItemForm.reset();
-            } catch (error) {
-                console.error("Erro ao adicionar item de estoque:", error);
-                showMessage("Não foi possível salvar o item no estoque.", true);
-            }
-        });
-
-        addProductionForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const newItem = {
-                item: document.getElementById('production-name').value,
-                quantidade: parseFloat(document.getElementById('production-quantity').value),
-                unidade: document.getElementById('production-unit').value,
-                setor: document.getElementById('production-sector').value
-            };
-            const productionCollectionRef = collection(db, "producao");
-            try {
-                await addDoc(productionCollectionRef, newItem);
-                addProductionForm.reset();
-            } catch (error) {
-                console.error("Erro ao adicionar item de produção:", error);
-                showMessage("Não foi possível salvar o item na produção.", true);
-            }
-        });
-
-        document.getElementById('app-content').addEventListener('click', async (e) => {
-            if (e.target.matches('.delete-btn')) {
-                const itemId = e.target.dataset.id;
-                const type = e.target.dataset.type;
-                const docRef = doc(db, type === 'stock' ? "estoque" : "producao", itemId);
-                try {
-                    await deleteDoc(docRef);
-                    showMessage("Item excluído com sucesso.");
-                } catch (error) {
-                    console.error("Erro ao excluir item:", error);
-                    showMessage("Não foi possível excluir o item.", true);
-                }
-            }
-            
-            if (e.target.matches('.update-btn')) {
-                const itemId = e.target.dataset.id;
-                const type = e.target.dataset.type;
-                const input = e.target.previousElementSibling;
-                const newQuantity = parseFloat(input.value);
-
-                if (isNaN(newQuantity)) {
-                    showMessage("Por favor, insira um número válido.", true);
-                    return;
-                }
-                
-                const docRef = doc(db, type === 'stock' ? "estoque" : "producao", itemId);
-                const fieldToUpdate = type === 'stock' ? 'atual' : 'quantidade';
-
-                try {
-                    await updateDoc(docRef, { [fieldToUpdate]: newQuantity });
-                    showMessage("Quantidade atualizada!");
-                    input.value = '';
-                } catch (error) {
-                    console.error("Erro ao atualizar quantidade:", error);
-                    showMessage("Falha ao atualizar a quantidade.", true);
-                }
-            }
-        });
-        
-        supplierFilter.addEventListener('change', (e) => {
-            appState.currentSupplierFilter = e.target.value;
-            renderStock();
-        });
-
-        sectorFilter.addEventListener('change', (e) => {
-            appState.currentSectorFilter = e.target.value;
-            renderProduction();
-        });
-        
-        // ===================================================================
-        // 7. LÓGICA DE RELATÓRIOS
-        // ===================================================================
-
-        function generatePdf(title, content) {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF();
-            
-            const pdfContent = `<div class="print-area">${content}</div>`;
-            document.getElementById('pdf-content').innerHTML = pdfContent;
-
-            html2canvas(document.getElementById('pdf-content'), { scale: 2 }).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const imgWidth = 190; // A4 width in mm with margin
-                const pageHeight = 295; // A4 height in mm
-                const imgHeight = canvas.height * imgWidth / canvas.width;
-                let heightLeft = imgHeight;
-                let position = 0;
-
-                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-
-                while (heightLeft >= 0) {
-                    position = heightLeft - imgHeight + 10;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
-                }
-                pdf.save(`${title.replace(/ /g, '_')}.pdf`);
-            });
-        }
-
-        generateStockReportBtn.addEventListener('click', () => {
-            const groupedBySupplier = appState.stockItems.reduce((acc, item) => {
-                const supplier = item.fornecedor || 'Sem Fornecedor';
-                if (!acc[supplier]) acc[supplier] = [];
-                acc[supplier].push(item);
-                return acc;
-            }, {});
-
-            let content = '<h1>Relatório Geral de Estoque</h1>';
-            for(const supplier in groupedBySupplier) {
-                content += `<h2>Fornecedor: ${supplier}</h2>
-                            <table>
-                                <thead>
-                                    <tr><th>Produto</th><th>Quantidade</th></tr>
-                                </thead>
-                                <tbody>
-                                    ${groupedBySupplier[supplier].map(item => `
-                                        <tr><td>${item.item}</td><td>${item.atual} ${item.unidade}</td></tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>`;
-            }
-            generatePdf('Relatorio_Geral_Estoque', content);
-        });
-        
-        generateShoppingListBtn.addEventListener('click', () => {
-            const itemsToBuy = appState.stockItems.filter(item => item.atual <= (item.minima || 0));
-            const groupedBySupplier = itemsToBuy.reduce((acc, item) => {
-                const supplier = item.fornecedor || 'Sem Fornecedor';
-                if (!acc[supplier]) acc[supplier] = [];
-                acc[supplier].push(item);
-                return acc;
-            }, {});
-            
-            reportDisplayArea.classList.remove('hidden');
-            let content = `<h3 class="text-lg font-bold mb-4">Lista de Compras</h3>`;
-            
-            for(const supplier in groupedBySupplier) {
-                content += `<h4 class="font-semibold mt-4 mb-2 text-md">${supplier}</h4>
-                            <div class="space-y-2">
-                            <div class="flex items-center justify-between p-2 font-bold text-sm text-gray-600">
-                                <span class="w-2/5">Produto</span>
-                                <span class="w-1/5 text-center">Qtd. Atual</span>
-                                <span class="w-1/5 text-center">Qtd. Pedida</span>
-                                <span class="w-1/5 text-right">Ação</span>
-                            </div>
-                            ${groupedBySupplier[supplier].map(item => `
-                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded" data-item-id="${item.id}">
-                                    <span class="w-2/5">${item.item}</span>
-                                    <span class="w-1/5 text-center">${item.atual}</span>
-                                    <input type="number" placeholder="Qtd." class="w-1/5 p-1 border rounded text-sm text-center">
-                                    <button class="delete-shopping-item-btn w-1/5 text-red-500 font-bold text-right">Excluir</button>
-                                </div>
-                            `).join('')}
-                            </div>`;
-            }
-            content += `<button id="generate-shopping-list-pdf-btn" class="w-full mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded">Gerar PDF da Lista</button>`;
-            reportDisplayArea.innerHTML = content;
-        });
-        
-        reportDisplayArea.addEventListener('click', e => {
-            if (e.target.matches('.delete-shopping-item-btn')) {
-                e.target.closest('div[data-item-id]').remove();
-            }
-            if (e.target.matches('#generate-shopping-list-pdf-btn')) {
-                 const listContent = reportDisplayArea.innerHTML;
-                 // Remove o botão de gerar PDF do conteúdo do PDF
-                 const pdfHtml = listContent.replace('<button id="generate-shopping-list-pdf-btn" class="w-full mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded">Gerar PDF da Lista</button>', '');
-                 generatePdf('Lista_de_Compras', pdfHtml);
-            }
-        });
-        
-        generateKitchenReportBtn.addEventListener('click', () => {
-            const kitchenItems = appState.productionItems.filter(item => item.setor === 'COZINHA');
-            let content = createProductionReportContent(kitchenItems);
-            generatePdf('producao_cozinha', content);
-        });
-        
-        generateParrillaReportBtn.addEventListener('click', () => {
-            const parrillaItems = appState.productionItems.filter(item => item.setor === 'PARRILLA');
-            let content = createProductionReportContent(parrillaItems);
-            generatePdf('producao_parrilla', content);
-        });
-
-        function createProductionReportContent(items) {
-             return `<h1>Relatório de Produção</h1>
-                     <table>
-                        <thead>
-                            <tr><th>Produto</th><th>Quantidade</th><th>Unidade</th></tr>
-                        </thead>
-                        <tbody>
-                            ${items.map(item => `
-                                <tr><td>${item.item}</td><td>${item.quantidade}</td><td>${item.unidade}</td></tr>
-                            `).join('')}
-                        </tbody>
-                    </table>`;
-        }
-
-    </script>
-</body>
-</ht
+        showSignupBtn.addEventListener
