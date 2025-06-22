@@ -279,7 +279,7 @@ function renderStockList(items) {
   document.querySelectorAll('.delete-stock').forEach(btn => {
     btn.onclick = async () => {
       const user = auth.currentUser;
-      if (user) await deleteDoc(doc(db, "users", user.uid, "stock", btn.dataset.id));
+      if (user) await deleteDoc(doc(db, "estoque", btn.dataset.id));
     };
   });
 }
@@ -300,7 +300,7 @@ function renderProductionList(items) {
   document.querySelectorAll('.delete-prod').forEach(btn => {
     btn.onclick = async () => {
       const user = auth.currentUser;
-      if (user) await deleteDoc(doc(db, "users", user.uid, "production", btn.dataset.id));
+      if (user) await deleteDoc(doc(db, "producao", btn.dataset.id));
     };
   });
 }
@@ -320,7 +320,7 @@ addItemForm.onsubmit = async (e) => {
     unidade: addItemForm['product-unit'].value,
     timestamp: new Date()
   };
-  await addDoc(collection(db, "users", user.uid, "stock"), data);
+  await addDoc(collection(db, "estoque"), data);
   addItemForm.reset();
 };
 
@@ -337,7 +337,7 @@ addProductionForm.onsubmit = async (e) => {
     unidade: addProductionForm['production-unit'].value,
     timestamp: new Date()
   };
-  await addDoc(collection(db, "users", user.uid, "production"), data);
+  await addDoc(collection(db, "producao"), data);
   addProductionForm.reset();
 };
 
@@ -360,7 +360,7 @@ sectorFilter.onchange = () => {
 // LISTENERS FIRESTORE
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    const stockRef = collection(db, "users", user.uid, "stock");
+    const stockRef = collection(db, "estoque");
     onSnapshot(stockRef, (snapshot) => {
       appState.stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       const filtered = appState.stockItems.filter(item =>
@@ -370,7 +370,7 @@ onAuthStateChanged(auth, (user) => {
       supplierFilter.innerHTML = suppliers.map(s => `<option value='${s}'>${s}</option>`).join('');
     });
 
-    const prodRef = collection(db, "users", user.uid, "production");
+    const prodRef = collection(db, "producao");
     onSnapshot(prodRef, (snapshot) => {
       appState.productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       const filtered = appState.productionItems.filter(item =>
