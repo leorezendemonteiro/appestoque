@@ -222,7 +222,7 @@
         let appState = { stockItems: [], productionItems: [], currentSupplierFilter: 'TODOS', currentSectorFilter: 'TODOS', unsubscribeStock: null, unsubscribeProduction: null };
 
         // ===================================================================
-        // 3. SELETORES DA DOM (MÉTODO ORIGINAL VALIDADO)
+        // 3. SELETORES DA DOM (ESTRUTURA ORIGINAL VALIDADA)
         // ===================================================================
         const loginView = document.getElementById('login-view');
         const signupView = document.getElementById('signup-view');
@@ -307,6 +307,11 @@
                 const itemDiv = document.createElement('div'); itemDiv.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg gap-4'; itemDiv.innerHTML = itemTemplate(item); container.appendChild(itemDiv);
             });
         }
+        
+        function escapeHtml(text) {
+            if (typeof text !== 'string') return text;
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
 
         // ===================================================================
         // 5. LÓGICA DE AUTENTICAÇÃO (ESTRUTURA ORIGINAL VALIDADA)
@@ -339,7 +344,7 @@
         tabsContainer.addEventListener('click', (e) => { if(e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
 
         // ===================================================================
-        // 6. LÓGICA DO FIRESTORE
+        // 6. LÓGICA DO FIRESTORE (ESTRUTURA ORIGINAL VALIDADA)
         // ===================================================================
         function listenToDataChanges() {
             const stockCollectionRef = collection(db, "estoque");
@@ -360,3 +365,107 @@
             e.preventDefault();
             const newItem = { item: document.getElementById('product-name').value, fornecedor: document.getElementById('product-supplier').value, atual: parseFloat(document.getElementById('product-quantity').value || 0), minima: parseFloat(document.getElementById('product-min').value || 0), ideal: parseFloat(document.getElementById('product-ideal').value || 0), unidade: document.getElementById('product-unit').value };
             try { await addDoc(collection(db, "estoque"), newItem); addItemForm.reset(); } catch (error) { console.error("Erro ao adicionar item de estoque:", error); showMessage("Não foi possível salvar o item no estoque.", true); }
+        });
+
+        addProductionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newItem = { item: document.getElementById('production-name').value, quantidade: parseFloat(document.getElementById('production-quantity').value), unidade: document.getElementById('production-unit').value, setor: document.getElementById('production-sector').value };
+            try { await addDoc(collection(db, "producao"), newItem); addProductionForm.reset(); } catch (error) { console.error("Erro ao adicionar item de produção:", error); showMessage("Não foi possível salvar o item na produção.", true); }
+        });
+
+        document.getElementById('app-content').addEventListener('click', async (e) => {
+            if (e.target.matches('.delete-btn')) {
+                const itemId = e.target.dataset.id; const type = e.target.dataset.type; const docRef = doc(db, type === 'stock' ? "estoque" : "producao", itemId);
+                try { await deleteDoc(docRef); showMessage("Item excluído com sucesso."); } catch (error) { console.error("Erro ao excluir item:", error); showMessage("Não foi possível excluir o item.", true); }
+            }
+            if (e.target.matches('.update-btn')) {
+                const itemId = e.target.dataset.id; const type = e.target.dataset.type; const input = e.target.previousElementSibling; const newQuantity = parseFloat(input.value);
+                if (isNaN(newQuantity)) { showMessage("Por favor, insira um número válido.", true); return; }
+                const docRef = doc(db, type === 'stock' ? "estoque" : "producao", itemId); const fieldToUpdate = type === 'stock' ? 'atual' : 'quantidade';
+                try { await updateDoc(docRef, { [fieldToUpdate]: newQuantity }); showMessage("Quantidade atualizada!"); input.value = ''; } catch (error) { console.error("Erro ao atualizar quantidade:", error); showMessage("Falha ao atualizar a quantidade.", true); }
+            }
+        });
+        
+        supplierFilter.addEventListener('change', (e) => { appState.currentSupplierFilter = e.target.value; renderStock(); });
+        sectorFilter.addEventListener('change', (e) => { appState.currentSectorFilter = e.target.value; renderProduction(); });
+        
+        // ===================================================================
+        // 7. LÓGICA DE RELATÓRIOS (COM ALTERAÇÕES CIRÚRGICAS)
+        // ===================================================================
+
+        // FUNÇÃO DE PDF ATUALIZADA E ROBUSTA
+        function generatePdf(title, content) {
+            const pdfContent = document.getElementById('pdf-content');
+            pdfContent.innerHTML = `<div class="print-area">${content}</div>`;
+            const contentToPrint = pdfContent.firstElementChild;
+            html2canvas(contentToPrint, { scale: 2, useCORS: true }).then(canvas => {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgData = canvas.toDataURL('image/png');
+                const pageMargin = 15;
+                const pdfPageWidth = pdf.internal.pageSize.getWidth() - (2 * pageMargin);
+                const pdfPageHeight = pdf.internal.pageSize.getHeight() - (2 * pageMargin);
+                const canvasAspectRatio = canvas.width / canvas.height;
+                const imgWidthOnPdf = pdfPageWidth;
+                const imgHeightOnPdf = pdfPageWidth / canvasAspectRatio;
+                let totalHeightLeft = imgHeightOnPdf;
+                let currentPosition = 0;
+                pdf.addImage(imgData, 'PNG', pageMargin, pageMargin, imgWidthOnPdf, imgHeightOnPdf);
+                totalHeightLeft -= pdfPageHeight;
+                while (totalHeightLeft > 0) {
+                    currentPosition -= pdfPageHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', pageMargin, currentPosition + pageMargin, imgWidthOnPdf, imgHeightOnPdf);
+                    totalHeightLeft -= pdfPageHeight;
+                }
+                pdf.save(`${title.replace(/ /g, '_')}.pdf`);
+                pdfContent.innerHTML = '';
+            }).catch(err => {
+                console.error("PDF generation error:", err);
+                showMessage("Ocorreu um erro ao gerar o PDF. Tente novamente.", true);
+            });
+        }
+
+        // LÓGICA ORIGINAL DO BOTÃO (SEM ALTERAÇÃO)
+        generateStockReportBtn.addEventListener('click', () => {
+            const groupedBySupplier = appState.stockItems.reduce((acc, item) => {
+                const supplier = item.fornecedor || 'Sem Fornecedor';
+                if (!acc[supplier]) acc[supplier] = [];
+                acc[supplier].push(item);
+                return acc;
+            }, {});
+            let content = '<h1>Relatório Geral de Estoque</h1>';
+            for(const supplier in groupedBySupplier) {
+                content += `<h2>Fornecedor: ${supplier}</h2>
+                            <table>
+                                <thead><tr><th>Produto</th><th>Quantidade</th></tr></thead>
+                                <tbody>
+                                    ${groupedBySupplier[supplier].map(item => `
+                                        <tr><td>${item.item}</td><td>${item.atual} ${item.unidade}</td></tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>`;
+            }
+            generatePdf('Relatorio_Geral_Estoque', content);
+        });
+        
+        // BOTÃO DA LISTA DE COMPRAS - LÓGICA NOVA E ISOLADA
+        generateShoppingListBtn.addEventListener('click', () => {
+            reportDisplayArea.className = 'bg-white rounded-xl shadow-lg interactive-list p-6';
+            const itemsToBuy = appState.stockItems.filter(i => i.atual <= (i.minima || 0));
+            if (itemsToBuy.length === 0) { showMessage("Nenhum item na lista de compras."); reportDisplayArea.classList.add('hidden'); return; }
+            const suppliers = ['TODOS', ...new Set(itemsToBuy.map(i => i.fornecedor || 'Sem Fornecedor').sort())];
+            reportDisplayArea.innerHTML = `
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                    <h3 class="text-lg font-bold">Lista de Compras</h3>
+                    <div class="flex items-center gap-2">
+                        <label for="shopping-list-supplier-filter" class="text-sm font-medium">Fornecedor:</label>
+                        <select id="shopping-list-supplier-filter" class="shadow-sm appearance-none border rounded py-1 px-3 bg-white text-sm">${suppliers.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}</select>
+                    </div>
+                </div>
+                <div id="shopping-list-items-container" class="space-y-2"></div>
+                <button id="generate-shopping-list-pdf-btn" class="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">Gerar PDF da Lista</button>`;
+            
+            const renderFilteredShoppingList = () => {
+                const selected = reportDisplayArea.querySelector('#shopping-list-supplier-filter').value;
+                const container = reportDisplayArea.querySelector
