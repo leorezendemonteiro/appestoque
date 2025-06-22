@@ -256,7 +256,131 @@
     }
   });
 
-  // RELATÓRIOS EM PDF
+  let appState = { stockItems: [], productionItems: [], currentSupplierFilter: 'TODOS', currentSectorFilter: 'TODOS' };
+
+// FUNÇÕES DE ESCAPE E RENDERIZAÇÃO
+function escapeHtml(text) {
+  return text?.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;") || "";
+}
+
+function renderStockList(items) {
+  const container = document.getElementById('stock-list');
+  container.innerHTML = "";
+  if (items.length === 0) {
+    container.innerHTML = "<p class='text-gray-500 text-center p-4'>Nenhum item no estoque.</p>";
+    return;
+  }
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = "flex items-center justify-between bg-gray-50 p-3 rounded-lg";
+    div.innerHTML = `<div><p class='font-semibold'>${escapeHtml(item.item)}</p><p class='text-sm'>Fornecedor: ${escapeHtml(item.fornecedor || '')}</p><p class='text-sm'>Atual: ${item.atual} ${item.unidade}</p></div><button data-id='${item.id}' class='delete-stock bg-red-500 text-white px-2 py-1 rounded text-xs'>Excluir</button>`;
+    container.appendChild(div);
+  });
+  document.querySelectorAll('.delete-stock').forEach(btn => {
+    btn.onclick = async () => {
+      const user = auth.currentUser;
+      if (user) await deleteDoc(doc(db, "users", user.uid, "stock", btn.dataset.id));
+    };
+  });
+}
+
+function renderProductionList(items) {
+  const container = document.getElementById('production-list');
+  container.innerHTML = "";
+  if (items.length === 0) {
+    container.innerHTML = "<p class='text-gray-500 text-center p-4'>Nenhum item em produção.</p>";
+    return;
+  }
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = "flex items-center justify-between bg-gray-50 p-3 rounded-lg";
+    div.innerHTML = `<div><p class='font-semibold'>${escapeHtml(item.item)}</p><p class='text-sm'>Setor: ${escapeHtml(item.setor)}</p><p class='text-sm'>Qtd: ${item.quantidade} ${item.unidade}</p></div><button data-id='${item.id}' class='delete-prod bg-red-500 text-white px-2 py-1 rounded text-xs'>Excluir</button>`;
+    container.appendChild(div);
+  });
+  document.querySelectorAll('.delete-prod').forEach(btn => {
+    btn.onclick = async () => {
+      const user = auth.currentUser;
+      if (user) await deleteDoc(doc(db, "users", user.uid, "production", btn.dataset.id));
+    };
+  });
+}
+
+// FORM STOCK
+const addItemForm = document.getElementById('add-item-form');
+addItemForm.onsubmit = async (e) => {
+  e.preventDefault();
+  const user = auth.currentUser;
+  if (!user) return;
+  const data = {
+    item: addItemForm['product-name'].value,
+    fornecedor: addItemForm['product-supplier'].value,
+    atual: parseFloat(addItemForm['product-quantity'].value),
+    minima: parseFloat(addItemForm['product-min'].value),
+    ideal: parseFloat(addItemForm['product-ideal'].value),
+    unidade: addItemForm['product-unit'].value,
+    timestamp: new Date()
+  };
+  await addDoc(collection(db, "users", user.uid, "stock"), data);
+  addItemForm.reset();
+};
+
+// FORM PRODUCTION
+const addProductionForm = document.getElementById('add-production-form');
+addProductionForm.onsubmit = async (e) => {
+  e.preventDefault();
+  const user = auth.currentUser;
+  if (!user) return;
+  const data = {
+    item: addProductionForm['production-name'].value,
+    setor: addProductionForm['production-sector'].value,
+    quantidade: parseFloat(addProductionForm['production-quantity'].value),
+    unidade: addProductionForm['production-unit'].value,
+    timestamp: new Date()
+  };
+  await addDoc(collection(db, "users", user.uid, "production"), data);
+  addProductionForm.reset();
+};
+
+// FILTROS
+const supplierFilter = document.getElementById('supplier-filter');
+const sectorFilter = document.getElementById('sector-filter');
+supplierFilter.onchange = () => {
+  appState.currentSupplierFilter = supplierFilter.value;
+  const filtered = appState.stockItems.filter(item =>
+    appState.currentSupplierFilter === 'TODOS' || item.fornecedor === appState.currentSupplierFilter);
+  renderStockList(filtered);
+};
+sectorFilter.onchange = () => {
+  appState.currentSectorFilter = sectorFilter.value;
+  const filtered = appState.productionItems.filter(item =>
+    appState.currentSectorFilter === 'TODOS' || item.setor === appState.currentSectorFilter);
+  renderProductionList(filtered);
+};
+
+// LISTENERS FIRESTORE
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    const stockRef = collection(db, "users", user.uid, "stock");
+    onSnapshot(stockRef, (snapshot) => {
+      appState.stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const filtered = appState.stockItems.filter(item =>
+        appState.currentSupplierFilter === 'TODOS' || item.fornecedor === appState.currentSupplierFilter);
+      renderStockList(filtered);
+      const suppliers = ['TODOS', ...new Set(appState.stockItems.map(i => i.fornecedor || ''))];
+      supplierFilter.innerHTML = suppliers.map(s => `<option value='${s}'>${s}</option>`).join('');
+    });
+
+    const prodRef = collection(db, "users", user.uid, "production");
+    onSnapshot(prodRef, (snapshot) => {
+      appState.productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const filtered = appState.productionItems.filter(item =>
+        appState.currentSectorFilter === 'TODOS' || item.setor === appState.currentSectorFilter);
+      renderProductionList(filtered);
+    });
+  }
+});
+
+// RELATÓRIOS EM PDF
   const reportDisplayArea = document.getElementById('report-display-area');
   const generateStockReportBtn = document.getElementById('generate-stock-report-btn');
   const generateKitchenReportBtn = document.getElementById('generate-kitchen-report-btn');
