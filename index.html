@@ -394,32 +394,36 @@
             const pdfContent = document.getElementById('pdf-content');
             pdfContent.innerHTML = `<div class="print-area">${content}</div>`;
             const contentToPrint = pdfContent.firstElementChild;
-            html2canvas(contentToPrint, { scale: 2, useCORS: true }).then(canvas => {
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgData = canvas.toDataURL('image/png');
-                const pageMargin = 15;
-                const pdfPageWidth = pdf.internal.pageSize.getWidth() - (2 * pageMargin);
-                const pdfPageHeight = pdf.internal.pageSize.getHeight() - (2 * pageMargin);
-                const canvasAspectRatio = canvas.width / canvas.height;
-                const imgWidthOnPdf = pdfPageWidth;
-                const imgHeightOnPdf = pdfPageWidth / canvasAspectRatio;
-                let totalHeightLeft = imgHeightOnPdf;
-                let currentPosition = 0;
-                pdf.addImage(imgData, 'PNG', pageMargin, pageMargin, imgWidthOnPdf, imgHeightOnPdf);
-                totalHeightLeft -= pdfPageHeight;
-                while (totalHeightLeft > 0) {
-                    currentPosition -= pdfPageHeight;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', pageMargin, currentPosition + pageMargin, imgWidthOnPdf, imgHeightOnPdf);
+
+            // Adiciona a pausa para garantir a renderização
+            setTimeout(() => {
+                html2canvas(contentToPrint, { scale: 2, useCORS: true }).then(canvas => {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const imgData = canvas.toDataURL('image/png');
+                    const pageMargin = 15;
+                    const pdfPageWidth = pdf.internal.pageSize.getWidth() - (2 * pageMargin);
+                    const pdfPageHeight = pdf.internal.pageSize.getHeight() - (2 * pageMargin);
+                    const canvasAspectRatio = canvas.width / canvas.height;
+                    const imgWidthOnPdf = pdfPageWidth;
+                    const imgHeightOnPdf = pdfPageWidth / canvasAspectRatio;
+                    let totalHeightLeft = imgHeightOnPdf;
+                    let currentPosition = 0;
+                    pdf.addImage(imgData, 'PNG', pageMargin, pageMargin, imgWidthOnPdf, imgHeightOnPdf);
                     totalHeightLeft -= pdfPageHeight;
-                }
-                pdf.save(`${title.replace(/ /g, '_')}.pdf`);
-                pdfContent.innerHTML = '';
-            }).catch(err => {
-                console.error("PDF generation error:", err);
-                showMessage("Ocorreu um erro ao gerar o PDF. Tente novamente.", true);
-            });
+                    while (totalHeightLeft > 0) {
+                        currentPosition -= pdfPageHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', pageMargin, currentPosition + pageMargin, imgWidthOnPdf, imgHeightOnPdf);
+                        totalHeightLeft -= pdfPageHeight;
+                    }
+                    pdf.save(`${title.replace(/ /g, '_')}.pdf`);
+                    pdfContent.innerHTML = '';
+                }).catch(err => {
+                    console.error("PDF generation error:", err);
+                    showMessage("Ocorreu um erro ao gerar o PDF. Tente novamente.", true);
+                });
+            }, 100); // Pausa de 100ms
         }
         
         generateStockReportBtn.addEventListener('click', () => {
