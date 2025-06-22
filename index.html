@@ -294,14 +294,12 @@
             document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active');
             document.getElementById(`tab-${tabId}`).classList.add('active');
             
-            // Esconde a área de relatório de compras ao trocar de aba
             if (tabId !== 'reports') {
                 reportDisplayArea.classList.add('hidden');
                 reportDisplayArea.innerHTML = '';
             }
         }
         
-        // FUNÇÃO ORIGINAL RESTAURADA - SEM SORTING
         function renderStock() {
             const filteredItems = appState.currentSupplierFilter === 'TODOS' 
                 ? appState.stockItems 
@@ -320,7 +318,6 @@
             `);
         }
         
-        // FUNÇÃO ORIGINAL RESTAURADA - SEM SORTING
         function renderProduction() {
             const filteredItems = appState.currentSectorFilter === 'TODOS'
                 ? appState.productionItems
@@ -504,7 +501,6 @@
         // 7. LÓGICA DE RELATÓRIOS
         // ===================================================================
 
-        // FUNÇÃO ORIGINAL RESTAURADA
         function generatePdf(title, content) {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF();
@@ -514,8 +510,8 @@
 
             html2canvas(document.getElementById('pdf-content'), { scale: 2 }).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
-                const imgWidth = 190; // A4 width in mm with margin
-                const pageHeight = 295; // A4 height in mm
+                const imgWidth = 190;
+                const pageHeight = 295;
                 const imgHeight = canvas.height * imgWidth / canvas.width;
                 let heightLeft = imgHeight;
                 let position = 0;
@@ -533,7 +529,6 @@
             });
         }
 
-        // LÓGICA COM ORDENAÇÃO SEGURA
         generateStockReportBtn.addEventListener('click', () => {
             const sortedItems = [...appState.stockItems].sort((a, b) => (a.item || '').localeCompare(b.item || ''));
             const groupedBySupplier = sortedItems.reduce((acc, item) => {
@@ -544,7 +539,8 @@
             }, {});
 
             let content = '<h1>Relatório Geral de Estoque</h1>';
-            for(const supplier in groupedBySupplier) {
+            const sortedSuppliers = Object.keys(groupedBySupplier).sort();
+            sortedSuppliers.forEach(supplier => {
                 content += `<h2>Fornecedor: ${supplier}</h2>
                             <table>
                                 <thead>
@@ -556,13 +552,12 @@
                                     `).join('')}
                                 </tbody>
                             </table>`;
-            }
+            });
             generatePdf('Relatorio_Geral_Estoque', content);
         });
         
-        // LÓGICA NOVA E ISOLADA PARA LISTA DE COMPRAS
         generateShoppingListBtn.addEventListener('click', () => {
-            reportDisplayArea.classList.add('interactive-list', 'p-6'); // Adiciona classes para estilo
+            reportDisplayArea.classList.add('interactive-list', 'p-6');
 
             const itemsToBuy = appState.stockItems.filter(item => item.atual <= (item.minima || 0));
             
@@ -595,7 +590,7 @@
             const renderFilteredShoppingList = () => {
                 const selectedSupplier = document.getElementById('shopping-list-supplier-filter').value;
                 const container = document.getElementById('shopping-list-items-container');
-                container.innerHTML = ''; // Limpa a lista atual
+                container.innerHTML = '';
 
                 const sortedItemsToBuy = [...itemsToBuy].sort((a, b) => (a.item || '').localeCompare(b.item || ''));
 
@@ -619,7 +614,6 @@
                 filteredItems.forEach(item => {
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'shopping-list-item flex items-center justify-between p-2 bg-gray-50 rounded';
-                    itemDiv.dataset.itemId = item.id;
                     itemDiv.dataset.itemName = item.item;
                     itemDiv.dataset.itemUnit = item.unidade;
                     itemDiv.dataset.supplier = item.fornecedor || 'Sem Fornecedor';
@@ -628,16 +622,17 @@
                         <span class="w-2/5 text-sm">${item.item}</span>
                         <span class="w-1/5 text-center text-sm">${item.atual} ${item.unidade}</span>
                         <input type="number" placeholder="Qtd." class="shopping-quantity-input w-1/5 p-1 border rounded text-sm text-center" step="any">
-                        <button class="delete-shopping-item-btn w-1/5 text-red-500 hover:text-red-700 font-bold text-right text-sm">Excluir</button>
+                        <button class="delete-shopping-item-btn w-1/p-5 text-red-500 hover:text-red-700 font-bold text-right text-sm">Excluir</button>
                     `;
                     container.appendChild(itemDiv);
                 });
             };
 
             document.getElementById('shopping-list-supplier-filter').addEventListener('change', renderFilteredShoppingList);
-            renderFilteredShoppingList(); // Renderização inicial
+            renderFilteredShoppingList();
         });
         
+        // LÓGICA CORRIGIDA PARA GERAR PDF DA LISTA DE COMPRAS
         reportDisplayArea.addEventListener('click', e => {
             if (e.target.matches('.delete-shopping-item-btn')) {
                 e.target.closest('.shopping-list-item').remove();
@@ -648,23 +643,30 @@
                 document.querySelectorAll('.shopping-list-item').forEach(itemRow => {
                     const quantityInput = itemRow.querySelector('.shopping-quantity-input');
                     const quantity = parseFloat(quantityInput.value);
+                    let orderedQuantity;
+
                     if (quantity > 0) {
-                        itemsForPdf.push({
-                            name: itemRow.dataset.itemName,
-                            supplier: itemRow.dataset.supplier,
-                            quantity: `${quantity} ${itemRow.dataset.itemUnit}`
-                        });
+                        orderedQuantity = `${quantity} ${itemRow.dataset.itemUnit}`;
+                    } else {
+                        orderedQuantity = '_______'; // Placeholder para preenchimento manual
                     }
+                    
+                    itemsForPdf.push({
+                        name: itemRow.dataset.itemName,
+                        supplier: itemRow.dataset.supplier,
+                        quantity: orderedQuantity
+                    });
                 });
 
                 if (itemsForPdf.length === 0) {
-                    showMessage("Nenhum item com quantidade pedida para gerar o PDF.", true);
+                    showMessage("A lista de compras está vazia. Não há itens para gerar o PDF.", true);
                     return;
                 }
 
                 const groupedForPdf = itemsForPdf.reduce((acc, item) => {
-                    if (!acc[item.supplier]) acc[item.supplier] = [];
-                    acc[item.supplier].push(item);
+                    const supplier = item.supplier || 'Sem Fornecedor';
+                    if (!acc[supplier]) acc[supplier] = [];
+                    acc[supplier].push(item);
                     return acc;
                 }, {});
 
@@ -694,7 +696,7 @@
             const kitchenItems = appState.productionItems.filter(item => item.setor === 'COZINHA');
             let content = createProductionReportContent('Relatório de Produção - Cozinha', kitchenItems);
             generatePdf('producao_cozinha', content);
-});
+        });
 
         generateParrillaReportBtn.addEventListener('click', () => {
             const parrillaItems = appState.productionItems.filter(item => item.setor === 'PARRILLA');
@@ -702,7 +704,6 @@
             generatePdf('producao_parrilla', content);
         });
 
-        // LÓGICA COM ORDENAÇÃO SEGURA
         function createProductionReportContent(title, items) {
              const sortedItems = [...items].sort((a, b) => (a.item || '').localeCompare(b.item || ''));
              return `<h1>${title}</h1>
