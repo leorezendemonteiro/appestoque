@@ -19,6 +19,12 @@
         .tab-content.active {
             display: block;
         }
+        /* Estilo para a lista de compras com rolagem */
+        #report-display-area.interactive-list {
+            max-height: 60vh;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+        }
         /* Estilos para o conteúdo que será impresso/gerado em PDF */
         .print-area {
             font-family: Arial, sans-serif;
@@ -58,19 +64,15 @@
             <form id="login-form">
                 <div class="mb-4">
                     <label for="login-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                    <input type="email" id="login-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="email" id="login-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                 </div>
                 <div class="mb-6">
                     <label for="login-password" class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
-                    <input type="password" id="login-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="password" id="login-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                 </div>
                 <div class="flex flex-col space-y-4">
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        Entrar
-                    </button>
-                    <button type="button" id="show-signup-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">
-                        Não tenho conta, quero me cadastrar
-                    </button>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Entrar</button>
+                    <button type="button" id="show-signup-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">Não tenho conta, quero me cadastrar</button>
                 </div>
             </form>
         </div>
@@ -80,19 +82,15 @@
             <form id="signup-form">
                 <div class="mb-4">
                     <label for="signup-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                    <input type="email" id="signup-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="email" id="signup-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                 </div>
                 <div class="mb-6">
                     <label for="signup-password" class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
-                    <input type="password" id="signup-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <input type="password" id="signup-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                 </div>
                 <div class="flex flex-col space-y-4">
-                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        Cadastrar
-                    </button>
-                    <button type="button" id="show-login-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">
-                        Já tenho uma conta
-                    </button>
+                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Cadastrar</button>
+                    <button type="button" id="show-login-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">Já tenho uma conta</button>
                 </div>
             </form>
         </div>
@@ -104,9 +102,7 @@
                         <h1 class="text-xl font-bold text-gray-800">App de Gestão</h1>
                         <p id="user-email" class="text-xs text-gray-500"></p>
                     </div>
-                    <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm">
-                        Sair
-                    </button>
+                    <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm">Sair</button>
                 </div>
             </header>
             
@@ -139,8 +135,7 @@
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-lg font-semibold text-gray-700">Itens no Estoque</h2>
-                            <select id="supplier-filter" class="shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm">
-                                </select>
+                            <select id="supplier-filter" class="shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm"></select>
                         </div>
                         <div id="stock-list" class="space-y-3"></div>
                     </div>
@@ -190,14 +185,12 @@
                              <button id="generate-parrilla-report-btn" class="flex-1 bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded">Produção Parrilla (PDF)</button>
                          </div>
                      </div>
-                     <div id="report-display-area" class="bg-white p-6 rounded-xl shadow-lg hidden">
-                         </div>
+                     <div id="report-display-area" class="bg-white rounded-xl shadow-lg hidden"></div>
                 </div>
             </div>
         </div>
         
         <div id="pdf-content" class="hidden"></div>
-
         <div id="message-container" class="fixed top-5 right-5 text-sm font-bold z-50"></div>
 
     </div>
@@ -226,14 +219,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        let appState = {
-            stockItems: [],
-            productionItems: [],
-            currentSupplierFilter: 'TODOS',
-            currentSectorFilter: 'TODOS',
-            unsubscribeStock: null,
-            unsubscribeProduction: null
-        };
+        let appState = { stockItems: [], productionItems: [], currentSupplierFilter: 'TODOS', currentSectorFilter: 'TODOS', unsubscribeStock: null, unsubscribeProduction: null };
 
         // ===================================================================
         // 3. SELETORES DA DOM
@@ -255,13 +241,11 @@
         const productionListContainer = document.getElementById('production-list');
         const supplierFilter = document.getElementById('supplier-filter');
         const sectorFilter = document.getElementById('sector-filter');
-        // Relatórios
         const generateStockReportBtn = document.getElementById('generate-stock-report-btn');
         const generateShoppingListBtn = document.getElementById('generate-shopping-list-btn');
         const generateKitchenReportBtn = document.getElementById('generate-kitchen-report-btn');
         const generateParrillaReportBtn = document.getElementById('generate-parrilla-report-btn');
         const reportDisplayArea = document.getElementById('report-display-area');
-
 
         // ===================================================================
         // 4. FUNÇÕES DE UI E RENDERIZAÇÃO
@@ -287,68 +271,46 @@
             tabContents.forEach(content => content.classList.remove('active'));
             document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active');
             document.getElementById(`tab-${tabId}`).classList.add('active');
+            if (tabId !== 'reports') {
+                reportDisplayArea.classList.add('hidden');
+                reportDisplayArea.innerHTML = '';
+            }
         }
         
         function renderStock() {
-            const filteredItems = appState.currentSupplierFilter === 'TODOS' 
-                ? appState.stockItems 
-                : appState.stockItems.filter(item => item.fornecedor === appState.currentSupplierFilter);
-            
+            const filteredItems = appState.currentSupplierFilter === 'TODOS' ? appState.stockItems : appState.stockItems.filter(item => item.fornecedor === appState.currentSupplierFilter);
             renderList(stockListContainer, filteredItems, 'O estoque está vazio.', (item) => `
-                <div class="flex-1">
-                    <p class="font-semibold text-gray-800">${item.item}</p>
-                    <p class="text-sm text-gray-600">Qtd: ${item.atual} ${item.unidade} ${item.fornecedor ? `| Fornecedor: ${item.fornecedor}` : ''}</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <input type="number" step="any" placeholder="Nova Qtd." class="update-quantity-input w-24 text-sm p-1 border rounded">
-                    <button data-id="${item.id}" data-type="stock" class="update-btn text-xs bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-2 rounded">Atualizar</button>
-                    <button data-id="${item.id}" data-type="stock" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button>
-                </div>
-            `);
+                <div class="flex-1"><p class="font-semibold text-gray-800">${item.item}</p><p class="text-sm text-gray-600">Qtd: ${item.atual} ${item.unidade} ${item.fornecedor ? `| Fornecedor: ${item.fornecedor}` : ''}</p></div>
+                <div class="flex items-center gap-2"><input type="number" step="any" placeholder="Nova Qtd." class="update-quantity-input w-24 text-sm p-1 border rounded"><button data-id="${item.id}" data-type="stock" class="update-btn text-xs bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-2 rounded">Atualizar</button><button data-id="${item.id}" data-type="stock" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button></div>`);
         }
         
         function renderProduction() {
-            const filteredItems = appState.currentSectorFilter === 'TODOS'
-                ? appState.productionItems
-                : appState.productionItems.filter(item => item.setor === appState.currentSectorFilter);
-
+            const filteredItems = appState.currentSectorFilter === 'TODOS' ? appState.productionItems : appState.productionItems.filter(item => item.setor === appState.currentSectorFilter);
             renderList(productionListContainer, filteredItems, 'Nenhum item em produção.', (item) => `
-                 <div class="flex-1">
-                    <p class="font-semibold text-gray-800">${item.item}</p>
-                    <p class="text-sm text-gray-600">Qtd: ${item.quantidade} ${item.unidade} | Setor: ${item.setor || 'N/A'}</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <input type="number" step="any" placeholder="Nova Qtd." class="update-quantity-input w-24 text-sm p-1 border rounded">
-                    <button data-id="${item.id}" data-type="production" class="update-btn text-xs bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-2 rounded">Atualizar</button>
-                    <button data-id="${item.id}" data-type="production" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button>
-                </div>
-            `);
+                <div class="flex-1"><p class="font-semibold text-gray-800">${item.item}</p><p class="text-sm text-gray-600">Qtd: ${item.quantidade} ${item.unidade} | Setor: ${item.setor || 'N/A'}</p></div>
+                <div class="flex items-center gap-2"><input type="number" step="any" placeholder="Nova Qtd." class="update-quantity-input w-24 text-sm p-1 border rounded"><button data-id="${item.id}" data-type="production" class="update-btn text-xs bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-2 rounded">Atualizar</button><button data-id="${item.id}" data-type="production" class="delete-btn text-red-500 hover:text-red-700 font-bold">Excluir</button></div>`);
         }
         
         function populateSupplierFilter() {
             const suppliers = [...new Set(appState.stockItems.map(item => item.fornecedor).filter(Boolean))];
             supplierFilter.innerHTML = '<option>TODOS</option>';
             suppliers.sort().forEach(supplier => {
-                const option = document.createElement('option');
-                option.value = supplier;
-                option.textContent = supplier;
-                supplierFilter.appendChild(option);
+                const option = document.createElement('option'); option.value = supplier; option.textContent = supplier; supplierFilter.appendChild(option);
             });
             supplierFilter.value = appState.currentSupplierFilter;
         }
 
         function renderList(container, items, emptyMessage, itemTemplate) {
             container.innerHTML = '';
-            if (!items || items.length === 0) {
-                container.innerHTML = `<p class="text-gray-500 text-center p-4 border-2 border-dashed rounded-lg">${emptyMessage}</p>`;
-                return;
-            }
+            if (!items || items.length === 0) { container.innerHTML = `<p class="text-gray-500 text-center p-4 border-2 border-dashed rounded-lg">${emptyMessage}</p>`; return; }
             items.forEach(item => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg gap-4';
-                itemDiv.innerHTML = itemTemplate(item);
-                container.appendChild(itemDiv);
+                const itemDiv = document.createElement('div'); itemDiv.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg gap-4'; itemDiv.innerHTML = itemTemplate(item); container.appendChild(itemDiv);
             });
+        }
+        
+        function escapeHtml(text) {
+            if (typeof text !== 'string') return text;
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
         // ===================================================================
@@ -382,7 +344,7 @@
         tabsContainer.addEventListener('click', (e) => { if(e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
 
         // ===================================================================
-        // 6. LÓGICA DO FIRESTORE (ESTRUTURA SIMPLIFICADA)
+        // 6. LÓGICA DO FIRESTORE
         // ===================================================================
         function listenToDataChanges() {
             const stockCollectionRef = collection(db, "estoque");
@@ -401,220 +363,152 @@
         
         addItemForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const newItem = {
-                item: document.getElementById('product-name').value,
-                fornecedor: document.getElementById('product-supplier').value,
-                atual: parseFloat(document.getElementById('product-quantity').value || 0),
-                minima: parseFloat(document.getElementById('product-min').value || 0),
-                ideal: parseFloat(document.getElementById('product-ideal').value || 0),
-                unidade: document.getElementById('product-unit').value
-            };
-            const stockCollectionRef = collection(db, "estoque");
-            try {
-                await addDoc(stockCollectionRef, newItem);
-                addItemForm.reset();
-            } catch (error) {
-                console.error("Erro ao adicionar item de estoque:", error);
-                showMessage("Não foi possível salvar o item no estoque.", true);
-            }
+            const newItem = { item: document.getElementById('product-name').value, fornecedor: document.getElementById('product-supplier').value, atual: parseFloat(document.getElementById('product-quantity').value || 0), minima: parseFloat(document.getElementById('product-min').value || 0), ideal: parseFloat(document.getElementById('product-ideal').value || 0), unidade: document.getElementById('product-unit').value };
+            try { await addDoc(collection(db, "estoque"), newItem); addItemForm.reset(); } catch (error) { console.error("Erro ao adicionar item de estoque:", error); showMessage("Não foi possível salvar o item no estoque.", true); }
         });
 
         addProductionForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const newItem = {
-                item: document.getElementById('production-name').value,
-                quantidade: parseFloat(document.getElementById('production-quantity').value),
-                unidade: document.getElementById('production-unit').value,
-                setor: document.getElementById('production-sector').value
-            };
-            const productionCollectionRef = collection(db, "producao");
-            try {
-                await addDoc(productionCollectionRef, newItem);
-                addProductionForm.reset();
-            } catch (error) {
-                console.error("Erro ao adicionar item de produção:", error);
-                showMessage("Não foi possível salvar o item na produção.", true);
-            }
+            const newItem = { item: document.getElementById('production-name').value, quantidade: parseFloat(document.getElementById('production-quantity').value), unidade: document.getElementById('production-unit').value, setor: document.getElementById('production-sector').value };
+            try { await addDoc(collection(db, "producao"), newItem); addProductionForm.reset(); } catch (error) { console.error("Erro ao adicionar item de produção:", error); showMessage("Não foi possível salvar o item na produção.", true); }
         });
 
         document.getElementById('app-content').addEventListener('click', async (e) => {
             if (e.target.matches('.delete-btn')) {
-                const itemId = e.target.dataset.id;
-                const type = e.target.dataset.type;
-                const docRef = doc(db, type === 'stock' ? "estoque" : "producao", itemId);
-                try {
-                    await deleteDoc(docRef);
-                    showMessage("Item excluído com sucesso.");
-                } catch (error) {
-                    console.error("Erro ao excluir item:", error);
-                    showMessage("Não foi possível excluir o item.", true);
-                }
+                const itemId = e.target.dataset.id; const type = e.target.dataset.type; const docRef = doc(db, type === 'stock' ? "estoque" : "producao", itemId);
+                try { await deleteDoc(docRef); showMessage("Item excluído com sucesso."); } catch (error) { console.error("Erro ao excluir item:", error); showMessage("Não foi possível excluir o item.", true); }
             }
-            
             if (e.target.matches('.update-btn')) {
-                const itemId = e.target.dataset.id;
-                const type = e.target.dataset.type;
-                const input = e.target.previousElementSibling;
-                const newQuantity = parseFloat(input.value);
-
-                if (isNaN(newQuantity)) {
-                    showMessage("Por favor, insira um número válido.", true);
-                    return;
-                }
-                
-                const docRef = doc(db, type === 'stock' ? "estoque" : "producao", itemId);
-                const fieldToUpdate = type === 'stock' ? 'atual' : 'quantidade';
-
-                try {
-                    await updateDoc(docRef, { [fieldToUpdate]: newQuantity });
-                    showMessage("Quantidade atualizada!");
-                    input.value = '';
-                } catch (error) {
-                    console.error("Erro ao atualizar quantidade:", error);
-                    showMessage("Falha ao atualizar a quantidade.", true);
-                }
+                const itemId = e.target.dataset.id; const type = e.target.dataset.type; const input = e.target.previousElementSibling; const newQuantity = parseFloat(input.value);
+                if (isNaN(newQuantity)) { showMessage("Por favor, insira um número válido.", true); return; }
+                const docRef = doc(db, type === 'stock' ? "estoque" : "producao", itemId); const fieldToUpdate = type === 'stock' ? 'atual' : 'quantidade';
+                try { await updateDoc(docRef, { [fieldToUpdate]: newQuantity }); showMessage("Quantidade atualizada!"); input.value = ''; } catch (error) { console.error("Erro ao atualizar quantidade:", error); showMessage("Falha ao atualizar a quantidade.", true); }
             }
         });
         
-        supplierFilter.addEventListener('change', (e) => {
-            appState.currentSupplierFilter = e.target.value;
-            renderStock();
-        });
-
-        sectorFilter.addEventListener('change', (e) => {
-            appState.currentSectorFilter = e.target.value;
-            renderProduction();
-        });
+        supplierFilter.addEventListener('change', (e) => { appState.currentSupplierFilter = e.target.value; renderStock(); });
+        sectorFilter.addEventListener('change', (e) => { appState.currentSectorFilter = e.target.value; renderProduction(); });
         
         // ===================================================================
-        // 7. LÓGICA DE RELATÓRIOS
+        // 7. LÓGICA DE RELATÓRIOS (COM ALTERAÇÕES CIRÚRGICAS)
         // ===================================================================
-
         function generatePdf(title, content) {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF();
-            
-            const pdfContent = `<div class="print-area">${content}</div>`;
-            document.getElementById('pdf-content').innerHTML = pdfContent;
-
-            html2canvas(document.getElementById('pdf-content'), { scale: 2 }).then(canvas => {
+            const pdfContent = document.getElementById('pdf-content');
+            pdfContent.innerHTML = `<div class="print-area">${content}</div>`;
+            const contentToPrint = pdfContent.firstElementChild;
+            html2canvas(contentToPrint, { scale: 2, useCORS: true }).then(canvas => {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
                 const imgData = canvas.toDataURL('image/png');
-                const imgWidth = 190; // A4 width in mm with margin
-                const pageHeight = 295; // A4 height in mm
-                const imgHeight = canvas.height * imgWidth / canvas.width;
-                let heightLeft = imgHeight;
-                let position = 0;
-
-                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-
-                while (heightLeft >= 0) {
-                    position = heightLeft - imgHeight + 10;
+                const pageMargin = 15;
+                const pdfPageWidth = pdf.internal.pageSize.getWidth() - (2 * pageMargin);
+                const pdfPageHeight = pdf.internal.pageSize.getHeight() - (2 * pageMargin);
+                const canvasAspectRatio = canvas.width / canvas.height;
+                const imgWidthOnPdf = pdfPageWidth;
+                const imgHeightOnPdf = pdfPageWidth / canvasAspectRatio;
+                let totalHeightLeft = imgHeightOnPdf;
+                let currentPosition = 0;
+                pdf.addImage(imgData, 'PNG', pageMargin, pageMargin, imgWidthOnPdf, imgHeightOnPdf);
+                totalHeightLeft -= pdfPageHeight;
+                while (totalHeightLeft > 0) {
+                    currentPosition -= pdfPageHeight;
                     pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
+                    pdf.addImage(imgData, 'PNG', pageMargin, currentPosition + pageMargin, imgWidthOnPdf, imgHeightOnPdf);
+                    totalHeightLeft -= pdfPageHeight;
                 }
                 pdf.save(`${title.replace(/ /g, '_')}.pdf`);
+                pdfContent.innerHTML = '';
+            }).catch(err => {
+                console.error("PDF generation error:", err);
+                showMessage("Ocorreu um erro ao gerar o PDF. Tente novamente.", true);
             });
         }
-
+        
         generateStockReportBtn.addEventListener('click', () => {
             const groupedBySupplier = appState.stockItems.reduce((acc, item) => {
-                const supplier = item.fornecedor || 'Sem Fornecedor';
-                if (!acc[supplier]) acc[supplier] = [];
-                acc[supplier].push(item);
-                return acc;
+                const supplier = item.fornecedor || 'Sem Fornecedor'; if (!acc[supplier]) acc[supplier] = []; acc[supplier].push(item); return acc;
             }, {});
-
             let content = '<h1>Relatório Geral de Estoque</h1>';
-            for(const supplier in groupedBySupplier) {
-                content += `<h2>Fornecedor: ${supplier}</h2>
-                            <table>
-                                <thead>
-                                    <tr><th>Produto</th><th>Quantidade</th></tr>
-                                </thead>
-                                <tbody>
-                                    ${groupedBySupplier[supplier].map(item => `
-                                        <tr><td>${item.item}</td><td>${item.atual} ${item.unidade}</td></tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>`;
-            }
+            Object.keys(groupedBySupplier).sort().forEach(supplier => {
+                content += `<h2>Fornecedor: ${escapeHtml(supplier)}</h2><table><thead><tr><th>Produto</th><th>Quantidade</th></tr></thead><tbody>
+                    ${groupedBySupplier[supplier].sort((a,b) => (a.item||'').localeCompare(b.item||'')).map(item => `
+                        <tr><td>${escapeHtml(item.item)}</td><td>${escapeHtml(item.atual)} ${escapeHtml(item.unidade)}</td></tr>`).join('')}
+                </tbody></table>`;
+            });
             generatePdf('Relatorio_Geral_Estoque', content);
         });
         
         generateShoppingListBtn.addEventListener('click', () => {
-            const itemsToBuy = appState.stockItems.filter(item => item.atual <= (item.minima || 0));
-            const groupedBySupplier = itemsToBuy.reduce((acc, item) => {
-                const supplier = item.fornecedor || 'Sem Fornecedor';
-                if (!acc[supplier]) acc[supplier] = [];
-                acc[supplier].push(item);
-                return acc;
-            }, {});
+            reportDisplayArea.className = 'bg-white rounded-xl shadow-lg interactive-list p-6';
+            const itemsToBuy = appState.stockItems.filter(i => i.atual <= (i.minima || 0));
+            if (itemsToBuy.length === 0) { showMessage("Nenhum item na lista de compras."); reportDisplayArea.classList.add('hidden'); return; }
+            const suppliers = ['TODOS', ...new Set(itemsToBuy.map(i => i.fornecedor || 'Sem Fornecedor').sort())];
+            reportDisplayArea.innerHTML = `
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                    <h3 class="text-lg font-bold">Lista de Compras</h3>
+                    <div class="flex items-center gap-2">
+                        <label for="shopping-list-supplier-filter" class="text-sm font-medium">Fornecedor:</label>
+                        <select id="shopping-list-supplier-filter" class="shadow-sm appearance-none border rounded py-1 px-3 bg-white text-sm">${suppliers.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}</select>
+                    </div>
+                </div>
+                <div id="shopping-list-items-container" class="space-y-2"></div>
+                <button id="generate-shopping-list-pdf-btn" class="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">Gerar PDF da Lista</button>`;
             
-            reportDisplayArea.classList.remove('hidden');
-            let content = `<h3 class="text-lg font-bold mb-4">Lista de Compras</h3>`;
-            
-            for(const supplier in groupedBySupplier) {
-                content += `<h4 class="font-semibold mt-4 mb-2 text-md">${supplier}</h4>
-                            <div class="space-y-2">
-                            <div class="flex items-center justify-between p-2 font-bold text-sm text-gray-600">
-                                <span class="w-2/5">Produto</span>
-                                <span class="w-1/5 text-center">Qtd. Atual</span>
-                                <span class="w-1/5 text-center">Qtd. Pedida</span>
-                                <span class="w-1/5 text-right">Ação</span>
-                            </div>
-                            ${groupedBySupplier[supplier].map(item => `
-                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded" data-item-id="${item.id}">
-                                    <span class="w-2/5">${item.item}</span>
-                                    <span class="w-1/5 text-center">${item.atual}</span>
-                                    <input type="number" placeholder="Qtd." class="w-1/5 p-1 border rounded text-sm text-center">
-                                    <button class="delete-shopping-item-btn w-1/5 text-red-500 font-bold text-right">Excluir</button>
-                                </div>
-                            `).join('')}
-                            </div>`;
-            }
-            content += `<button id="generate-shopping-list-pdf-btn" class="w-full mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded">Gerar PDF da Lista</button>`;
-            reportDisplayArea.innerHTML = content;
+            const renderFilteredShoppingList = () => {
+                const selected = reportDisplayArea.querySelector('#shopping-list-supplier-filter').value;
+                const container = reportDisplayArea.querySelector('#shopping-list-items-container'); container.innerHTML = '';
+                const sorted = [...itemsToBuy].sort((a, b) => (a.item || '').localeCompare(b.item || ''));
+                const filtered = (selected === 'TODOS') ? sorted : sorted.filter(i => (i.fornecedor || 'Sem Fornecedor') === selected);
+                if (filtered.length === 0) { container.innerHTML = `<p class="text-gray-500 text-center p-4">Nenhum item para este fornecedor.</p>`; return; }
+                container.innerHTML += `<div class="flex items-center justify-between p-2 font-bold text-sm text-gray-600 bg-gray-100 rounded-t-md"><span class="w-2/5">Produto</span><span class="w-1/5 text-center">Qtd. Atual</span><span class="w-1/5 text-center">Qtd. Pedida</span><span class="w-1/5 text-right pr-2">Ação</span></div>`;
+                filtered.forEach(item => {
+                    const div = document.createElement('div'); div.className = 'shopping-list-item flex items-center justify-between p-2 bg-gray-50 rounded';
+                    div.dataset.itemName = item.item; div.dataset.itemUnit = item.unidade; div.dataset.supplier = item.fornecedor || 'Sem Fornecedor';
+                    div.innerHTML = `<span class="w-2/5 text-sm">${escapeHtml(item.item)}</span><span class="w-1/5 text-center text-sm">${item.atual} ${item.unidade}</span>
+                        <input type="number" placeholder="Qtd." class="shopping-quantity-input w-1/5 p-1 border rounded text-sm text-center" step="any">
+                        <button class="delete-shopping-item-btn w-1/5 text-red-500 hover:text-red-700 font-bold text-right text-sm">Excluir</button>`;
+                    container.appendChild(div);
+                });
+            };
+            reportDisplayArea.querySelector('#shopping-list-supplier-filter').addEventListener('change', renderFilteredShoppingList);
+            renderFilteredShoppingList();
         });
         
         reportDisplayArea.addEventListener('click', e => {
-            if (e.target.matches('.delete-shopping-item-btn')) {
-                e.target.closest('div[data-item-id]').remove();
-            }
+            if (e.target.matches('.delete-shopping-item-btn')) e.target.closest('.shopping-list-item').remove();
             if (e.target.matches('#generate-shopping-list-pdf-btn')) {
-                  const listContent = reportDisplayArea.innerHTML;
-                  // Remove o botão de gerar PDF do conteúdo do PDF
-                  const pdfHtml = listContent.replace('<button id="generate-shopping-list-pdf-btn" class="w-full mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded">Gerar PDF da Lista</button>', '');
-                  generatePdf('Lista_de_Compras', pdfHtml);
+                const itemsForPdf = [];
+                reportDisplayArea.querySelectorAll('.shopping-list-item').forEach(row => {
+                    const quantity = parseFloat(row.querySelector('.shopping-quantity-input').value);
+                    itemsForPdf.push({ name: row.dataset.itemName, supplier: row.dataset.supplier, quantity: (quantity > 0) ? `${quantity} ${row.dataset.itemUnit || ''}`.trim() : '_______' });
+                });
+                if (itemsForPdf.length === 0) { showMessage("A lista de compras está vazia.", true); return; }
+                const grouped = itemsForPdf.reduce((acc, i) => { const s = i.supplier || 'Sem Fornecedor'; if (!acc[s]) acc[s] = []; acc[s].push(i); return acc; }, {});
+                let pdfHtml = '<h1>Lista de Compras</h1>';
+                Object.keys(grouped).sort().forEach(s => {
+                     const sorted = grouped[s].sort((a,b) => (a.name || '').localeCompare(b.name || ''));
+                     pdfHtml += `<h2>Fornecedor: ${escapeHtml(s)}</h2><table><thead><tr><th>Produto</th><th>Qtd. Pedida</th></tr></thead><tbody>
+                         ${sorted.map(i => `<tr><td>${escapeHtml(i.name)}</td><td>${escapeHtml(i.quantity)}</td></tr>`).join('')}
+                         </tbody></table>`;
+                });
+                generatePdf('Lista_de_Compras', pdfHtml);
             }
         });
         
+        function createProductionReportContent(items) {
+             return `<h1>Relatório de Produção</h1><table><thead><tr><th>Produto</th><th>Quantidade</th><th>Unidade</th></tr></thead><tbody>
+                 ${items.map(item => `<tr><td>${item.item}</td><td>${item.quantidade}</td><td>${item.unidade}</td></tr>`).join('')}
+             </tbody></table>`;
+        }
         generateKitchenReportBtn.addEventListener('click', () => {
             const kitchenItems = appState.productionItems.filter(item => item.setor === 'COZINHA');
             let content = createProductionReportContent(kitchenItems);
             generatePdf('producao_cozinha', content);
         });
-        
         generateParrillaReportBtn.addEventListener('click', () => {
             const parrillaItems = appState.productionItems.filter(item => item.setor === 'PARRILLA');
             let content = createProductionReportContent(parrillaItems);
             generatePdf('producao_parrilla', content);
         });
-
-        function createProductionReportContent(items) {
-             return `<h1>Relatório de Produção</h1>
-                     <table>
-                         <thead>
-                             <tr><th>Produto</th><th>Quantidade</th><th>Unidade</th></tr>
-                         </thead>
-                         <tbody>
-                             ${items.map(item => `
-                                 <tr><td>${item.item}</td><td>${item.quantidade}</td><td>${item.unidade}</td></tr>
-                             `).join('')}
-                         </tbody>
-                     </table>`;
-        }
 
     </script>
 </body>
