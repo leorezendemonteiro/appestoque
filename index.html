@@ -143,6 +143,20 @@
                         </div>
                         <div id="stock-list" class="space-y-3"></div>
                     </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Gerenciar Fornecedores</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <div class="flex gap-2">
+                                <input type="text" id="new-supplier-name" placeholder="Nome do Fornecedor" class="flex-1 shadow appearance-none border rounded py-2 px-3 text-gray-700">
+                                <button id="add-supplier-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">Adicionar</button>
+                            </div>
+                        </div>
+                        <div class="border-t pt-4">
+                            <h3 class="text-md font-medium mb-3 text-gray-600">Fornecedores Cadastrados</h3>
+                            <div id="suppliers-list" class="space-y-2"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="tab-production" class="tab-content space-y-8">
@@ -217,7 +231,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        let appState = { stockItems: [], productionItems: [], currentSupplierFilter: 'TODOS', currentSectorFilter: 'TODOS', unsubscribeStock: null, unsubscribeProduction: null };
+        let appState = { stockItems: [], productionItems: [], suppliers: [], currentSupplierFilter: 'TODOS', currentSectorFilter: 'TODOS', unsubscribeStock: null, unsubscribeProduction: null, unsubscribeSuppliers: null };
 
         const loginView = document.getElementById("login-view");
         const signupView = document.getElementById("signup-view");
@@ -241,6 +255,9 @@
         const generateKitchenReportBtn = document.getElementById("generate-kitchen-report-btn");
         const generateParrillaReportBtn = document.getElementById("generate-parrilla-report-btn");
         const reportDisplayArea = document.getElementById("report-display-area");
+        const addSupplierBtn = document.getElementById("add-supplier-btn");
+        const newSupplierNameInput = document.getElementById("new-supplier-name");
+        const suppliersListContainer = document.getElementById("suppliers-list");
 
         function showMessage(message, isError = false) {
             messageContainer.innerHTML = `<div class="p-3 rounded-lg shadow-lg ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${message}</div>`;
@@ -519,7 +536,42 @@
                 appState.productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderProductionList();
             }, (error) => console.error("Erro ao carregar produção:", error));
+
+            const suppliersCollectionRef = collection(db, "fornecedores");
+            appState.unsubscribeSuppliers = onSnapshot(suppliersCollectionRef, (snapshot) => {
+                appState.suppliers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderSuppliersList();
+            }, (error) => console.error("Erro ao carregar fornecedores:", error));
         }
+
+        // Funções de gerenciamento de fornecedores
+        function renderSuppliersList() {
+            if (!suppliersListContainer) return;
+            
+            const sortedSuppliers = [...appState.suppliers].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+            
+            if (sortedSuppliers.length === 0) {
+                suppliersListContainer.innerHTML = '<p class="text-gray-500 text-sm">Nenhum fornecedor cadastrado.</p>';
+                return;
+            }
+            
+            suppliersListContainer.innerHTML = sortedSuppliers.map(supplier => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span class="font-medium text-gray-800">${escapeHtml(supplier.nome)}</span>
+                    <button onclick="deleteSupplier('${supplier.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium">Excluir</button>
+                </div>
+            `).join('');
+        }
+
+        window.deleteSupplier = async (id) => {
+            try {
+                await deleteDoc(doc(db, 'fornecedores', id));
+                showMessage('Fornecedor removido com sucesso!');
+            } catch (error) {
+                console.error('Erro ao remover fornecedor:', error);
+                showMessage('Erro ao remover fornecedor.', true);
+            }
+        };
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -531,6 +583,7 @@
             } else {
                 if (appState.unsubscribeStock) { appState.unsubscribeStock(); appState.unsubscribeStock = null; }
                 if (appState.unsubscribeProduction) { appState.unsubscribeProduction(); appState.unsubscribeProduction = null; }
+                if (appState.unsubscribeSuppliers) { appState.unsubscribeSuppliers(); appState.unsubscribeSuppliers = null; }
                 toggleViews('login-view');
             }
         });
@@ -589,6 +642,31 @@
         tabsContainer.addEventListener('click', (e) => { if (e.target.matches('.tab-button')) switchTab(e.target.dataset.tab); });
         supplierFilter.addEventListener('change', (e) => { appState.currentSupplierFilter = e.target.value; renderStockList(); });
         sectorFilter.addEventListener('change', (e) => { appState.currentSectorFilter = e.target.value; renderProductionList(); });
+
+        // Event listener para adicionar fornecedor
+        addSupplierBtn.addEventListener('click', async () => {
+            const nome = newSupplierNameInput.value.trim();
+            if (!nome) {
+                showMessage('Por favor, digite o nome do fornecedor.', true);
+                return;
+            }
+            
+            // Verificar se o fornecedor já existe
+            const existingSupplier = appState.suppliers.find(s => s.nome.toLowerCase() === nome.toLowerCase());
+            if (existingSupplier) {
+                showMessage('Este fornecedor já está cadastrado.', true);
+                return;
+            }
+            
+            try {
+                await addDoc(collection(db, 'fornecedores'), { nome, createdAt: new Date() });
+                newSupplierNameInput.value = '';
+                showMessage('Fornecedor adicionado com sucesso!');
+            } catch (error) {
+                console.error('Erro ao adicionar fornecedor:', error);
+                showMessage('Erro ao adicionar fornecedor.', true);
+            }
+        });
 
         generateStockReportBtn.addEventListener('click', () => {
             generatePdfByGroup('Relatorio_Geral_Estoque', appState.stockItems, 'fornecedor', 'Relatório Geral de Estoque');
@@ -714,11 +792,19 @@
         
         generateKitchenReportBtn.addEventListener('click', () => {
             const kitchenItems = appState.productionItems.filter(item => item.setor === 'COZINHA');
+            if (kitchenItems.length === 0) {
+                showMessage('Nenhum item de produção encontrado para COZINHA.', true);
+                return;
+            }
             generatePdfByGroup('producao_cozinha', kitchenItems, 'setor', 'Relatório de Produção');
         });
         
         generateParrillaReportBtn.addEventListener('click', () => {
             const parrillaItems = appState.productionItems.filter(item => item.setor === 'PARRILLA');
+            if (parrillaItems.length === 0) {
+                showMessage('Nenhum item de produção encontrado para PARRILLA.', true);
+                return;
+            }
             generatePdfByGroup('producao_parrilla', parrillaItems, 'setor', 'Relatório de Produção');
         });
 
