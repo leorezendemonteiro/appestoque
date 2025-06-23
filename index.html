@@ -266,20 +266,45 @@
         function renderStockList() {
             const filtered = appState.currentSupplierFilter === 'TODOS' ? appState.stockItems : appState.stockItems.filter(item => (item.fornecedor || 'Sem Fornecedor') === appState.currentSupplierFilter);
             stockListContainer.innerHTML = filtered.length === 0 ? '<p class="text-gray-500 text-center p-4">Nenhum item no estoque.</p>' : filtered.map(item => `
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div class="flex-1"><div class="font-medium">${escapeHtml(item.item)}</div><div class="text-sm text-gray-500">${escapeHtml(item.fornecedor || 'Sem Fornecedor')}</div></div>
-                    <div class="text-right"><div class="font-medium">${item.atual} ${escapeHtml(item.unidade || '')}</div><div class="text-sm text-gray-500">Min: ${item.minima || 0}</div></div>
-                    <button onclick="deleteStockItem('${item.id}')" class="ml-4 text-red-500 hover:text-red-700 font-bold">×</button>
+                <div class="bg-gray-50 rounded-lg p-4 border">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-900">${escapeHtml(item.item)}</div>
+                            <div class="text-sm text-gray-500">${escapeHtml(item.fornecedor || 'Sem Fornecedor')}</div>
+                            <div class="text-sm text-gray-500">Min: ${item.minima || 0} | Ideal: ${item.ideal || 0}</div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-right">
+                                <div class="font-medium">${item.atual} ${escapeHtml(item.unidade || '')}</div>
+                                <div class="text-xs text-gray-500">Atual</div>
+                            </div>
+                            <input type="number" value="${item.atual}" step="any" class="w-20 px-2 py-1 border rounded text-sm text-center" data-item-id="${item.id}" data-update-type="stock">
+                            <button onclick="updateStockItem('${item.id}')" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-sm font-medium">Atualizar</button>
+                            <button onclick="deleteStockItem('${item.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium">Excluir</button>
+                        </div>
+                    </div>
                 </div>`).join('');
         }
 
         function renderProductionList() {
             const filtered = appState.currentSectorFilter === 'TODOS' ? appState.productionItems : appState.productionItems.filter(item => item.setor === appState.currentSectorFilter);
             productionListContainer.innerHTML = filtered.length === 0 ? '<p class="text-gray-500 text-center p-4">Nenhum item em produção.</p>' : filtered.map(item => `
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div class="flex-1"><div class="font-medium">${escapeHtml(item.item)}</div><div class="text-sm text-gray-500">${escapeHtml(item.setor)}</div></div>
-                    <div class="text-right"><div class="font-medium">${item.quantidade} ${escapeHtml(item.unidade || '')}</div></div>
-                    <button onclick="deleteProductionItem('${item.id}')" class="ml-4 text-red-500 hover:text-red-700 font-bold">×</button>
+                <div class="bg-gray-50 rounded-lg p-4 border">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-900">${escapeHtml(item.item)}</div>
+                            <div class="text-sm text-gray-500">${escapeHtml(item.setor)}</div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-right">
+                                <div class="font-medium">${item.quantidade} ${escapeHtml(item.unidade || '')}</div>
+                                <div class="text-xs text-gray-500">Quantidade</div>
+                            </div>
+                            <input type="number" value="${item.quantidade}" step="any" class="w-20 px-2 py-1 border rounded text-sm text-center" data-item-id="${item.id}" data-update-type="production">
+                            <button onclick="updateProductionItem('${item.id}')" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-sm font-medium">Atualizar</button>
+                            <button onclick="deleteProductionItem('${item.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium">Excluir</button>
+                        </div>
+                    </div>
                 </div>`).join('');
         }
 
@@ -360,8 +385,119 @@
             }
         }
 
-        window.deleteStockItem = async (id) => { try { await deleteDoc(doc(db, 'estoque', id)); showMessage('Item removido com sucesso!'); } catch (error) { console.error('Erro ao remover item:', error); showMessage('Erro ao remover item.', true); } };
-        window.deleteProductionItem = async (id) => { try { await deleteDoc(doc(db, 'producao', id)); showMessage('Item removido com sucesso!'); } catch (error) { console.error('Erro ao remover item:', error); showMessage('Erro ao remover item.', true); } };
+        // Função para gerar PDF separado por fornecedor/setor
+        function generatePdfByGroup(filename, items, groupBy, title) {
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                // Agrupar itens
+                const grouped = items.reduce((acc, item) => {
+                    const group = item[groupBy] || 'Sem ' + (groupBy === 'fornecedor' ? 'Fornecedor' : 'Setor');
+                    if (!acc[group]) acc[group] = [];
+                    acc[group].push(item);
+                    return acc;
+                }, {});
+                
+                const sortedGroups = Object.keys(grouped).sort();
+                
+                sortedGroups.forEach((group, index) => {
+                    if (index > 0) pdf.addPage();
+                    
+                    const groupItems = grouped[group].sort((a,b) => (a.item || '').localeCompare(b.item || ''));
+                    
+                    // Cabeçalho
+                    pdf.setFontSize(18);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text(title, 20, 20);
+                    
+                    pdf.setFontSize(14);
+                    pdf.text(`${groupBy === 'fornecedor' ? 'Fornecedor' : 'Setor'}: ${group}`, 20, 35);
+                    
+                    pdf.setFontSize(12);
+                    pdf.setFont(undefined, 'normal');
+                    pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, 45);
+                    
+                    // Cabeçalho da tabela
+                    let yPosition = 65;
+                    pdf.setFontSize(10);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text('Produto', 20, yPosition);
+                    pdf.text('Qtd. Atual', 120, yPosition);
+                    
+                    // Linha separadora
+                    pdf.line(20, yPosition + 2, 180, yPosition + 2);
+                    yPosition += 10;
+                    
+                    // Itens
+                    pdf.setFont(undefined, 'normal');
+                    groupItems.forEach(item => {
+                        if (yPosition > 270) {
+                            pdf.addPage();
+                            yPosition = 20;
+                        }
+                        
+                        pdf.text(item.item, 20, yPosition);
+                        const quantity = groupBy === 'fornecedor' ? `${item.atual} ${item.unidade || ''}` : `${item.quantidade} ${item.unidade || ''}`;
+                        pdf.text(quantity, 120, yPosition);
+                        yPosition += 8;
+                    });
+                });
+                
+                pdf.save(`${filename}.pdf`);
+                showMessage('PDF gerado com sucesso!');
+            } catch (error) {
+                console.error('Erro ao gerar PDF:', error);
+                showMessage('Erro ao gerar PDF. Tente novamente.', true);
+            }
+        }
+
+        // Funções de atualização e exclusão
+        window.updateStockItem = async (id) => {
+            const input = document.querySelector(`input[data-item-id="${id}"][data-update-type="stock"]`);
+            const newQuantity = parseFloat(input.value) || 0;
+            
+            try {
+                await updateDoc(doc(db, 'estoque', id), { atual: newQuantity });
+                showMessage('Quantidade atualizada com sucesso!');
+            } catch (error) {
+                console.error('Erro ao atualizar item:', error);
+                showMessage('Erro ao atualizar item.', true);
+            }
+        };
+
+        window.updateProductionItem = async (id) => {
+            const input = document.querySelector(`input[data-item-id="${id}"][data-update-type="production"]`);
+            const newQuantity = parseFloat(input.value) || 0;
+            
+            try {
+                await updateDoc(doc(db, 'producao', id), { quantidade: newQuantity });
+                showMessage('Quantidade atualizada com sucesso!');
+            } catch (error) {
+                console.error('Erro ao atualizar item:', error);
+                showMessage('Erro ao atualizar item.', true);
+            }
+        };
+
+        window.deleteStockItem = async (id) => { 
+            try { 
+                await deleteDoc(doc(db, 'estoque', id)); 
+                showMessage('Item removido com sucesso!'); 
+            } catch (error) { 
+                console.error('Erro ao remover item:', error); 
+                showMessage('Erro ao remover item.', true); 
+            } 
+        };
+
+        window.deleteProductionItem = async (id) => { 
+            try { 
+                await deleteDoc(doc(db, 'producao', id)); 
+                showMessage('Item removido com sucesso!'); 
+            } catch (error) { 
+                console.error('Erro ao remover item:', error); 
+                showMessage('Erro ao remover item.', true); 
+            } 
+        };
 
         // Função para escutar mudanças nos dados do Firebase
         function listenToDataChanges() {
@@ -443,17 +579,7 @@
         sectorFilter.addEventListener('change', (e) => { appState.currentSectorFilter = e.target.value; renderProductionList(); });
 
         generateStockReportBtn.addEventListener('click', () => {
-            const groupedBySupplier = appState.stockItems.reduce((acc, item) => {
-                const supplier = item.fornecedor || 'Sem Fornecedor'; if (!acc[supplier]) acc[supplier] = []; acc[supplier].push(item); return acc;
-            }, {});
-            let content = '<h1>Relatório Geral de Estoque</h1>';
-            Object.keys(groupedBySupplier).sort().forEach(supplier => {
-                content += `<h2>Fornecedor: ${escapeHtml(supplier)}</h2><table><thead><tr><th>Produto</th><th>Quantidade</th></tr></thead><tbody>
-                    ${groupedBySupplier[supplier].sort((a,b) => (a.item||'').localeCompare(b.item||'')).map(item => `
-                        <tr><td>${escapeHtml(item.item)}</td><td>${escapeHtml(item.atual)} ${escapeHtml(item.unidade || '')}</td></tr>`).join('')}
-                </tbody></table>`;
-            });
-            generateSimplePdf('Relatorio_Geral_Estoque', content);
+            generatePdfByGroup('Relatorio_Geral_Estoque', appState.stockItems, 'fornecedor', 'Relatório Geral de Estoque');
         });
         
         generateShoppingListBtn.addEventListener('click', () => {
@@ -481,7 +607,7 @@
                 container.innerHTML += `<div class="flex items-center justify-between p-2 font-bold text-sm text-gray-600 bg-gray-100 rounded-t-md"><span class="w-2/5">Produto</span><span class="w-1/5 text-center">Qtd. Atual</span><span class="w-1/5 text-center">Qtd. Pedida</span><span class="w-1/5 text-right pr-2">Ação</span></div>`;
                 filtered.forEach(item => {
                     const div = document.createElement('div'); div.className = 'shopping-list-item flex items-center justify-between p-2 bg-gray-50 rounded';
-                    div.dataset.itemName = item.item; div.dataset.itemUnit = item.unidade; div.dataset.supplier = item.fornecedor || 'Sem Fornecedor';
+                    div.dataset.itemName = item.item; div.dataset.itemUnit = item.unidade; div.dataset.supplier = item.fornecedor || 'Sem Fornecedor'; div.dataset.currentQty = item.atual;
                     div.innerHTML = `<span class="w-2/5 text-sm">${escapeHtml(item.item)}</span><span class="w-1/5 text-center text-sm">${item.atual} ${escapeHtml(item.unidade || '')}</span>
                         <input type="number" placeholder="Qtd." class="shopping-quantity-input w-1/5 p-1 border rounded text-sm text-center" step="any">
                         <button class="delete-shopping-item-btn w-1/5 text-red-500 hover:text-red-700 font-bold text-right text-sm">Excluir</button>`;
@@ -501,6 +627,8 @@
                     itemsForPdf.push({ 
                         name: row.dataset.itemName, 
                         supplier: row.dataset.supplier, 
+                        currentQty: row.dataset.currentQty,
+                        unit: row.dataset.itemUnit,
                         quantity: (quantity > 0) ? `${quantity} ${row.dataset.itemUnit || ''}`.trim() : '_______' 
                     });
                 });
@@ -541,7 +669,8 @@
                         pdf.setFontSize(10);
                         pdf.setFont(undefined, 'bold');
                         pdf.text('Produto', 20, yPosition);
-                        pdf.text('Qtd. Pedida', 120, yPosition);
+                        pdf.text('Qtd. Atual', 90, yPosition);
+                        pdf.text('Qtd. Pedida', 140, yPosition);
                         
                         // Linha separadora
                         pdf.line(20, yPosition + 2, 180, yPosition + 2);
@@ -556,7 +685,8 @@
                             }
                             
                             pdf.text(item.name, 20, yPosition);
-                            pdf.text(item.quantity, 120, yPosition);
+                            pdf.text(`${item.currentQty} ${item.unit || ''}`, 90, yPosition);
+                            pdf.text(item.quantity, 140, yPosition);
                             yPosition += 8;
                         });
                     });
@@ -570,20 +700,14 @@
             }
         });
         
-        function createProductionReportContent(items) {
-             return `<h1>Relatório de Produção</h1><table><thead><tr><th>Produto</th><th>Quantidade</th><th>Unidade</th></tr></thead><tbody>
-                 ${items.map(item => `<tr><td>${escapeHtml(item.item)}</td><td>${item.quantidade}</td><td>${escapeHtml(item.unidade || '')}</td></tr>`).join('')}
-             </tbody></table>`;
-        }
         generateKitchenReportBtn.addEventListener('click', () => {
             const kitchenItems = appState.productionItems.filter(item => item.setor === 'COZINHA');
-            let content = createProductionReportContent(kitchenItems);
-            generateSimplePdf('producao_cozinha', content);
+            generatePdfByGroup('producao_cozinha', kitchenItems, 'setor', 'Relatório de Produção');
         });
+        
         generateParrillaReportBtn.addEventListener('click', () => {
             const parrillaItems = appState.productionItems.filter(item => item.setor === 'PARRILLA');
-            let content = createProductionReportContent(parrillaItems);
-            generateSimplePdf('producao_parrilla', content);
+            generatePdfByGroup('producao_parrilla', parrillaItems, 'setor', 'Relatório de Produção');
         });
 
     </script>
