@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Estoque Cozinha - Compartilhado</title>
+    <title>App Estoque Cozinha</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -108,7 +108,7 @@
             <header class="bg-white p-4 rounded-xl shadow-lg mb-8">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h1 class="text-xl font-bold text-gray-800">App de Gestão - Estoque Compartilhado</h1>
+                        <h1 class="text-xl font-bold text-gray-800">App de Gestão</h1>
                         <p id="user-email" class="text-xs text-gray-500"></p>
                     </div>
                     <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm">Sair</button>
@@ -266,9 +266,14 @@
         const newSupplierNameInput = document.getElementById("new-supplier-name");
         const suppliersListContainer = document.getElementById("suppliers-list");
 
-        function showMessage(message, type = 'info') {
-            messageContainer.innerHTML = `<div class="p-3 rounded ${type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-blue-500'} text-white">${message}</div>`;
+        function showMessage(message, isError = false) {
+            messageContainer.innerHTML = `<div class="p-3 rounded ${isError ? 'bg-red-500' : 'bg-green-500'} text-white">${message}</div>`;
             setTimeout(() => messageContainer.innerHTML = '', 3000);
+        }
+
+        function toggleViews(activeView) {
+            [loginView, signupView, mainAppView].forEach(view => view.classList.add('hidden'));
+            document.getElementById(activeView).classList.remove('hidden');
         }
 
         function switchTab(tabName) {
@@ -278,68 +283,76 @@
             document.getElementById(`tab-${tabName}`).classList.add('active');
         }
 
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         function renderStockList() {
-            const filteredItems = appState.currentSupplierFilter === 'TODOS' 
-                ? appState.stockItems 
-                : appState.stockItems.filter(item => item.supplier === appState.currentSupplierFilter);
-            
-            stockListContainer.innerHTML = filteredItems.map(item => `
-                <div class="border rounded-lg p-4 flex justify-between items-center">
-                    <div class="flex-1">
-                        <h3 class="font-semibold text-gray-800">${item.name}</h3>
-                        <p class="text-sm text-gray-600">${item.supplier}</p>
-                        <p class="text-xs text-gray-500">Min: ${item.min} | Ideal: ${item.ideal}</p>
+            const filtered = appState.currentSupplierFilter === 'TODOS' ? appState.stockItems : appState.stockItems.filter(item => (item.fornecedor || 'Sem Fornecedor') === appState.currentSupplierFilter);
+            stockListContainer.innerHTML = filtered.length === 0 ? '<p class="text-gray-500 text-center p-4">Nenhum item no estoque.</p>' : filtered.map(item => `
+                <div class="bg-gray-50 rounded-lg p-4 border">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-900">${escapeHtml(item.item || item.name || '')}</div>
+                            <div class="text-sm text-gray-500">${escapeHtml(item.fornecedor || 'Sem Fornecedor')}</div>
+                            <div class="text-xs text-gray-400">Min: ${item.minimo || item.min || 0} | Ideal: ${item.ideal || 0}</div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-right">
+                                <div class="font-medium">${item.atual || item.quantity || 0} ${escapeHtml(item.unidade || item.unit || '')}</div>
+                                <div class="text-xs text-gray-500">Atual</div>
+                            </div>
+                            <input type="number" value="${item.atual || item.quantity || 0}" step="any" class="w-20 px-2 py-1 border rounded text-sm text-center" data-item-id="${item.id}" data-update-type="stock">
+                            <button onclick="updateStockItem('${item.id}')" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-sm font-medium">Atualizar</button>
+                            <button onclick="deleteStockItem('${item.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium">Excluir</button>
+                        </div>
                     </div>
-                    <div class="text-center mr-4">
-                        <div class="text-lg font-bold">${item.quantity} ${item.unit}</div>
-                        <div class="text-xs text-gray-500">Atual</div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <input type="number" value="${item.quantity}" step="any" class="w-16 text-center border rounded py-1 px-2 text-sm" onchange="updateStockQuantity('${item.id}', this.value)">
-                        <button onclick="updateStock('${item.id}')" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-sm">Atualizar</button>
-                        <button onclick="deleteStock('${item.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">Excluir</button>
-                    </div>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
         function renderProductionList() {
-            const filteredItems = appState.currentSectorFilter === 'TODOS' 
-                ? appState.productionItems 
-                : appState.productionItems.filter(item => item.sector === appState.currentSectorFilter);
-            
-            productionListContainer.innerHTML = filteredItems.map(item => `
-                <div class="border rounded-lg p-4 flex justify-between items-center">
-                    <div class="flex-1">
-                        <h3 class="font-semibold text-gray-800">${item.name}</h3>
-                        <p class="text-sm text-gray-600">${item.sector}</p>
+            const filtered = appState.currentSectorFilter === 'TODOS' ? appState.productionItems : appState.productionItems.filter(item => (item.setor || item.sector) === appState.currentSectorFilter);
+            productionListContainer.innerHTML = filtered.length === 0 ? '<p class="text-gray-500 text-center p-4">Nenhum item em produção.</p>' : filtered.map(item => `
+                <div class="bg-gray-50 rounded-lg p-4 border">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-900">${escapeHtml(item.item || item.name || '')}</div>
+                            <div class="text-sm text-gray-500">${escapeHtml(item.setor || item.sector || '')}</div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-right">
+                                <div class="font-medium">${item.quantidade || item.quantity || 0} ${escapeHtml(item.unidade || item.unit || '')}</div>
+                                <div class="text-xs text-gray-500">Quantidade</div>
+                            </div>
+                            <input type="number" value="${item.quantidade || item.quantity || 0}" step="any" class="w-20 px-2 py-1 border rounded text-sm text-center" data-item-id="${item.id}" data-update-type="production">
+                            <button onclick="updateProductionItem('${item.id}')" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-sm font-medium">Atualizar</button>
+                            <button onclick="deleteProductionItem('${item.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium">Excluir</button>
+                        </div>
                     </div>
-                    <div class="text-center mr-4">
-                        <div class="text-lg font-bold">${item.quantity} ${item.unit}</div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <input type="number" value="${item.quantity}" step="any" class="w-16 text-center border rounded py-1 px-2 text-sm" onchange="updateProductionQuantity('${item.id}', this.value)">
-                        <button onclick="updateProduction('${item.id}')" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-sm">Atualizar</button>
-                        <button onclick="deleteProduction('${item.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">Excluir</button>
-                    </div>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
-        function renderSupplierFilter() {
-            const uniqueSuppliers = [...new Set(appState.stockItems.map(item => item.supplier).filter(Boolean))];
-            supplierFilter.innerHTML = `
-                <option value="TODOS">TODOS</option>
-                ${uniqueSuppliers.map(supplier => `<option value="${supplier}">${supplier}</option>`).join('')}
-            `;
-            supplierFilter.value = appState.currentSupplierFilter;
+        function updateSupplierFilter() {
+            const suppliers = ['TODOS', ...new Set(appState.stockItems.map(item => item.fornecedor || 'Sem Fornecedor').sort())];
+            supplierFilter.innerHTML = suppliers.map(supplier => `<option value="${escapeHtml(supplier)}" ${supplier === appState.currentSupplierFilter ? 'selected' : ''}>${escapeHtml(supplier)}</option>`).join('');
         }
 
         function renderSuppliersList() {
-            suppliersListContainer.innerHTML = appState.suppliers.map(supplier => `
-                <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <span class="text-sm">${supplier.name}</span>
-                    <button onclick="deleteSupplier('${supplier.id}')" class="text-red-500 hover:text-red-700 text-xs">Excluir</button>
+            if (!suppliersListContainer) return;
+            
+            const sortedSuppliers = [...appState.suppliers].sort((a, b) => (a.nome || a.name || '').localeCompare(b.nome || b.name || ''));
+            
+            if (sortedSuppliers.length === 0) {
+                suppliersListContainer.innerHTML = '<p class="text-gray-500 text-sm">Nenhum fornecedor cadastrado.</p>';
+                return;
+            }
+            
+            suppliersListContainer.innerHTML = sortedSuppliers.map(supplier => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span class="font-medium text-gray-800">${escapeHtml(supplier.nome || supplier.name || '')}</span>
+                    <button onclick="deleteSupplier('${supplier.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium">Excluir</button>
                 </div>
             `).join('');
             
@@ -351,22 +364,44 @@
             const productSupplierSelect = document.getElementById('product-supplier');
             productSupplierSelect.innerHTML = `
                 <option value="">Selecione um fornecedor</option>
-                ${appState.suppliers.map(supplier => `<option value="${supplier.name}">${supplier.name}</option>`).join('')}
+                ${appState.suppliers.map(supplier => `<option value="${escapeHtml(supplier.nome || supplier.name || '')}">${escapeHtml(supplier.nome || supplier.name || '')}</option>`).join('')}
             `;
+        }
+
+        // Função para escutar mudanças nos dados do Firebase
+        function listenToDataChanges() {
+            const stockCollectionRef = collection(db, "estoque");
+            appState.unsubscribeStock = onSnapshot(stockCollectionRef, (snapshot) => {
+                appState.stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                updateSupplierFilter();
+                renderStockList();
+            }, (error) => console.error("Erro ao carregar estoque:", error));
+
+            const productionCollectionRef = collection(db, "producao");
+            appState.unsubscribeProduction = onSnapshot(productionCollectionRef, (snapshot) => {
+                appState.productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderProductionList();
+            }, (error) => console.error("Erro ao carregar produção:", error));
+
+            const suppliersCollectionRef = collection(db, "fornecedores");
+            appState.unsubscribeSuppliers = onSnapshot(suppliersCollectionRef, (snapshot) => {
+                appState.suppliers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderSuppliersList();
+            }, (error) => console.error("Erro ao carregar fornecedores:", error));
         }
 
         function generateShoppingList() {
             const itemsToRestock = appState.stockItems.filter(item => 
-                parseFloat(item.quantity) < parseFloat(item.min)
+                parseFloat(item.atual || item.quantity || 0) < parseFloat(item.minimo || item.min || 0)
             );
 
             if (itemsToRestock.length === 0) {
-                showMessage('Nenhum item precisa ser reabastecido!', 'info');
+                showMessage('Nenhum item precisa ser reabastecido!');
                 return;
             }
 
             const supplierGroups = itemsToRestock.reduce((groups, item) => {
-                const supplier = item.supplier || 'Sem fornecedor';
+                const supplier = item.fornecedor || 'Sem fornecedor';
                 if (!groups[supplier]) groups[supplier] = [];
                 groups[supplier].push(item);
                 return groups;
@@ -375,7 +410,7 @@
             let content = `
                 <div class="p-6">
                     <h2 class="text-xl font-bold mb-4">Lista de Compras</h2>
-                    <p class="text-sm text-gray-600 mb-6">Gerado em: ${new Date().toLocaleDateString('pt-BR')}</p>
+                    <p class="text-sm text-gray-600 mb-6">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
             `;
 
             Object.entries(supplierGroups).forEach(([supplier, items]) => {
@@ -399,11 +434,15 @@
                 `;
 
                 items.forEach(item => {
-                    const quantityToBuy = Math.max(0, parseFloat(item.ideal || 0) - parseFloat(item.quantity || 0));
+                    const currentQty = parseFloat(item.atual || item.quantity || 0);
+                    const idealQty = parseFloat(item.ideal || 0);
+                    const quantityToBuy = Math.max(0, idealQty - currentQty);
+                    const unit = item.unidade || item.unit || '';
+                    
                     content += `
                         <tr>
-                            <td class="border border-gray-300 px-4 py-2">${item.name}</td>
-                            <td class="border border-gray-300 px-4 py-2 text-center">${parseFloat(item.quantity || 0).toFixed(2)} ${item.unit}</td>
+                            <td class="border border-gray-300 px-4 py-2">${escapeHtml(item.item || item.name || '')}</td>
+                            <td class="border border-gray-300 px-4 py-2 text-center">${currentQty.toFixed(2)} ${escapeHtml(unit)}</td>
                             <td class="border border-gray-300 px-4 py-2 text-center">
                                 <input type="number" value="${quantityToBuy.toFixed(2)}" step="any" class="w-20 text-center border rounded py-1 px-2">
                             </td>
@@ -450,16 +489,23 @@
                         yPosition = 20;
                     }
                     
+                    const itemName = item.item || item.name || 'Item sem nome';
+                    const supplier = item.fornecedor || 'Não informado';
+                    const currentQty = parseFloat(item.atual || item.quantity || 0);
+                    const minQty = parseFloat(item.minimo || item.min || 0);
+                    const idealQty = parseFloat(item.ideal || 0);
+                    const unit = item.unidade || item.unit || '';
+                    
                     doc.setFontSize(12);
-                    doc.text(`${index + 1}. ${item.name}`, 20, yPosition);
+                    doc.text(`${index + 1}. ${itemName}`, 20, yPosition);
                     doc.setFontSize(10);
-                    doc.text(`Fornecedor: ${item.supplier || 'Não informado'}`, 25, yPosition + 8);
-                    doc.text(`Quantidade Atual: ${parseFloat(item.quantity || 0).toFixed(2)} ${item.unit}`, 25, yPosition + 16);
-                    doc.text(`Quantidade Mínima: ${parseFloat(item.min || 0).toFixed(2)} ${item.unit}`, 25, yPosition + 24);
-                    doc.text(`Quantidade Ideal: ${parseFloat(item.ideal || 0).toFixed(2)} ${item.unit}`, 25, yPosition + 32);
+                    doc.text(`Fornecedor: ${supplier}`, 25, yPosition + 8);
+                    doc.text(`Quantidade Atual: ${currentQty.toFixed(2)} ${unit}`, 25, yPosition + 16);
+                    doc.text(`Quantidade Mínima: ${minQty.toFixed(2)} ${unit}`, 25, yPosition + 24);
+                    doc.text(`Quantidade Ideal: ${idealQty.toFixed(2)} ${unit}`, 25, yPosition + 32);
                     
                     // Indicar se precisa reposição
-                    if (parseFloat(item.quantity || 0) < parseFloat(item.min || 0)) {
+                    if (currentQty < minQty) {
                         doc.setTextColor(255, 0, 0); // Vermelho
                         doc.text('⚠ NECESSITA REPOSIÇÃO', 25, yPosition + 40);
                         doc.setTextColor(0, 0, 0); // Voltar ao preto
@@ -470,13 +516,14 @@
             }
             
             doc.save('relatorio-estoque.pdf');
+            showMessage('Relatório de estoque gerado com sucesso!');
         }
 
         function generateProductionReport(sector) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            const filteredItems = appState.productionItems.filter(item => item.sector === sector);
+            const filteredItems = appState.productionItems.filter(item => (item.setor || item.sector) === sector);
             
             doc.setFontSize(16);
             doc.text(`Relatório de Produção - ${sector}`, 20, 20);
@@ -499,98 +546,105 @@
                         yPosition = 20;
                     }
                     
+                    const itemName = item.item || item.name || 'Item sem nome';
+                    const sectorName = item.setor || item.sector || '';
+                    const quantity = parseFloat(item.quantidade || item.quantity || 0);
+                    const unit = item.unidade || item.unit || '';
+                    
                     doc.setFontSize(12);
-                    doc.text(`${index + 1}. ${item.name}`, 20, yPosition);
+                    doc.text(`${index + 1}. ${itemName}`, 20, yPosition);
                     doc.setFontSize(10);
-                    doc.text(`Setor: ${item.sector}`, 25, yPosition + 8);
-                    doc.text(`Quantidade: ${parseFloat(item.quantity || 0).toFixed(2)} ${item.unit}`, 25, yPosition + 16);
-                    doc.text(`Criado em: ${item.createdAt ? new Date(item.createdAt.seconds * 1000).toLocaleDateString('pt-BR') : 'Data não disponível'}`, 25, yPosition + 24);
+                    doc.text(`Setor: ${sectorName}`, 25, yPosition + 8);
+                    doc.text(`Quantidade: ${quantity.toFixed(2)} ${unit}`, 25, yPosition + 16);
                     
                     yPosition += 35;
                 });
             }
             
             doc.save(`relatorio-producao-${sector.toLowerCase()}.pdf`);
+            showMessage(`Relatório de produção ${sector} gerado com sucesso!`);
         }
 
         // Global functions for inline event handlers
-        window.updateStockQuantity = function(id, newQuantity) {
-            const item = appState.stockItems.find(item => item.id === id);
-            if (item) {
-                item.tempQuantity = newQuantity;
+        window.updateStockItem = async (id) => {
+            const input = document.querySelector(`input[data-item-id="${id}"][data-update-type="stock"]`);
+            if (!input) return;
+            
+            const newQuantity = parseFloat(input.value);
+            if (isNaN(newQuantity)) {
+                showMessage('Quantidade inválida', true);
+                return;
+            }
+            
+            try {
+                await updateDoc(doc(db, 'estoque', id), {
+                    atual: newQuantity
+                });
+                showMessage('Quantidade atualizada com sucesso!');
+            } catch (error) {
+                console.error('Erro ao atualizar item:', error);
+                showMessage('Erro ao atualizar quantidade', true);
             }
         };
 
-        window.updateStock = async function(id) {
-            const item = appState.stockItems.find(item => item.id === id);
-            if (item && item.tempQuantity !== undefined) {
-                try {
-                    await updateDoc(doc(db, 'stock', id), {
-                        quantity: parseFloat(item.tempQuantity)
-                    });
-                    showMessage('Quantidade atualizada!', 'success');
-                } catch (error) {
-                    showMessage('Erro ao atualizar quantidade', 'error');
-                }
-            }
-        };
-
-        window.deleteStock = async function(id) {
+        window.deleteStockItem = async (id) => {
             if (confirm('Tem certeza que deseja excluir este item?')) {
                 try {
-                    await deleteDoc(doc(db, 'stock', id));
-                    showMessage('Item excluído!', 'success');
+                    await deleteDoc(doc(db, 'estoque', id));
+                    showMessage('Item excluído com sucesso!');
                 } catch (error) {
-                    showMessage('Erro ao excluir item', 'error');
+                    console.error('Erro ao excluir item:', error);
+                    showMessage('Erro ao excluir item', true);
                 }
             }
         };
 
-        window.updateProductionQuantity = function(id, newQuantity) {
-            const item = appState.productionItems.find(item => item.id === id);
-            if (item) {
-                item.tempQuantity = newQuantity;
+        window.updateProductionItem = async (id) => {
+            const input = document.querySelector(`input[data-item-id="${id}"][data-update-type="production"]`);
+            if (!input) return;
+            
+            const newQuantity = parseFloat(input.value);
+            if (isNaN(newQuantity)) {
+                showMessage('Quantidade inválida', true);
+                return;
+            }
+            
+            try {
+                await updateDoc(doc(db, 'producao', id), {
+                    quantidade: newQuantity
+                });
+                showMessage('Quantidade atualizada com sucesso!');
+            } catch (error) {
+                console.error('Erro ao atualizar item:', error);
+                showMessage('Erro ao atualizar quantidade', true);
             }
         };
 
-        window.updateProduction = async function(id) {
-            const item = appState.productionItems.find(item => item.id === id);
-            if (item && item.tempQuantity !== undefined) {
-                try {
-                    await updateDoc(doc(db, 'production', id), {
-                        quantity: parseFloat(item.tempQuantity)
-                    });
-                    showMessage('Quantidade atualizada!', 'success');
-                } catch (error) {
-                    showMessage('Erro ao atualizar quantidade', 'error');
-                }
-            }
-        };
-
-        window.deleteProduction = async function(id) {
+        window.deleteProductionItem = async (id) => {
             if (confirm('Tem certeza que deseja excluir este item?')) {
                 try {
-                    await deleteDoc(doc(db, 'production', id));
-                    showMessage('Item excluído!', 'success');
+                    await deleteDoc(doc(db, 'producao', id));
+                    showMessage('Item excluído com sucesso!');
                 } catch (error) {
-                    showMessage('Erro ao excluir item', 'error');
+                    console.error('Erro ao excluir item:', error);
+                    showMessage('Erro ao excluir item', true);
                 }
             }
         };
 
-        window.deleteSupplier = async function(id) {
+        window.deleteSupplier = async (id) => {
             if (confirm('Tem certeza que deseja excluir este fornecedor?')) {
                 try {
-                    await deleteDoc(doc(db, 'suppliers', id));
-                    showMessage('Fornecedor excluído!', 'success');
+                    await deleteDoc(doc(db, 'fornecedores', id));
+                    showMessage('Fornecedor excluído com sucesso!');
                 } catch (error) {
-                    showMessage('Erro ao excluir fornecedor', 'error');
+                    console.error('Erro ao excluir fornecedor:', error);
+                    showMessage('Erro ao excluir fornecedor', true);
                 }
             }
         };
 
         window.removeFromShoppingList = function(id) {
-            // Remove item from the shopping list display
             const row = event.target.closest('tr');
             if (row) {
                 row.remove();
@@ -608,16 +662,32 @@
             loginView.classList.remove('hidden');
         });
 
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('user-email').textContent = user.email;
+                toggleViews('main-app-view');
+                switchTab('stock');
+                // Chamar listenToDataChanges() aqui para iniciar o carregamento dos dados
+                listenToDataChanges();
+            } else {
+                if (appState.unsubscribeStock) { appState.unsubscribeStock(); appState.unsubscribeStock = null; }
+                if (appState.unsubscribeProduction) { appState.unsubscribeProduction(); appState.unsubscribeProduction = null; }
+                if (appState.unsubscribeSuppliers) { appState.unsubscribeSuppliers(); appState.unsubscribeSuppliers = null; }
+                toggleViews('login-view');
+            }
+        });
+
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
-            
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                showMessage('Login realizado com sucesso!', 'success');
-            } catch (error) {
-                showMessage('Erro no login: ' + error.message, 'error');
+            try { 
+                await signInWithEmailAndPassword(auth, email, password); 
+                showMessage('Login realizado com sucesso!'); 
+            }
+            catch (error) { 
+                console.error('Erro no login:', error); 
+                showMessage('Erro no login. Verifique suas credenciais.', true); 
             }
         });
 
@@ -625,21 +695,23 @@
             e.preventDefault();
             const email = document.getElementById('signup-email').value;
             const password = document.getElementById('signup-password').value;
-            
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                showMessage('Conta criada com sucesso!', 'success');
-            } catch (error) {
-                showMessage('Erro ao criar conta: ' + error.message, 'error');
+            try { 
+                await createUserWithEmailAndPassword(auth, email, password); 
+                showMessage('Conta criada com sucesso!'); 
+            }
+            catch (error) { 
+                console.error('Erro ao criar conta:', error); 
+                showMessage('Erro ao criar conta.', true); 
             }
         });
 
         logoutBtn.addEventListener('click', async () => {
             try {
                 await signOut(auth);
-                showMessage('Logout realizado!', 'success');
+                showMessage('Logout realizado com sucesso!');
             } catch (error) {
-                showMessage('Erro no logout', 'error');
+                console.error('Erro no logout:', error);
+                showMessage('Erro no logout', true);
             }
         });
 
@@ -653,14 +725,20 @@
             const unit = document.getElementById('product-unit').value;
             
             try {
-                await addDoc(collection(db, 'stock'), {
-                    name, supplier, quantity, min, ideal, unit,
+                await addDoc(collection(db, 'estoque'), {
+                    item: name,
+                    fornecedor: supplier,
+                    atual: quantity,
+                    minimo: min,
+                    ideal: ideal,
+                    unidade: unit,
                     createdAt: new Date()
                 });
-                showMessage('Item adicionado ao estoque!', 'success');
+                showMessage('Item adicionado ao estoque com sucesso!');
                 addItemForm.reset();
             } catch (error) {
-                showMessage('Erro ao adicionar item', 'error');
+                console.error('Erro ao adicionar item:', error);
+                showMessage('Erro ao adicionar item', true);
             }
         });
 
@@ -672,33 +750,38 @@
             const unit = document.getElementById('production-unit').value;
             
             try {
-                await addDoc(collection(db, 'production'), {
-                    name, sector, quantity, unit,
+                await addDoc(collection(db, 'producao'), {
+                    item: name,
+                    setor: sector,
+                    quantidade: quantity,
+                    unidade: unit,
                     createdAt: new Date()
                 });
-                showMessage('Item adicionado à produção!', 'success');
+                showMessage('Item adicionado à produção com sucesso!');
                 addProductionForm.reset();
             } catch (error) {
-                showMessage('Erro ao adicionar item', 'error');
+                console.error('Erro ao adicionar item:', error);
+                showMessage('Erro ao adicionar item', true);
             }
         });
 
         addSupplierBtn.addEventListener('click', async () => {
             const name = newSupplierNameInput.value.trim();
             if (!name) {
-                showMessage('Digite o nome do fornecedor', 'error');
+                showMessage('Digite o nome do fornecedor', true);
                 return;
             }
             
             try {
-                await addDoc(collection(db, 'suppliers'), {
-                    name,
+                await addDoc(collection(db, 'fornecedores'), {
+                    nome: name,
                     createdAt: new Date()
                 });
-                showMessage('Fornecedor adicionado!', 'success');
+                showMessage('Fornecedor adicionado com sucesso!');
                 newSupplierNameInput.value = '';
             } catch (error) {
-                showMessage('Erro ao adicionar fornecedor', 'error');
+                console.error('Erro ao adicionar fornecedor:', error);
+                showMessage('Erro ao adicionar fornecedor', true);
             }
         });
 
@@ -724,63 +807,6 @@
         generateKitchenReportBtn.addEventListener('click', () => generateProductionReport('COZINHA'));
         generateParrillaReportBtn.addEventListener('click', () => generateProductionReport('PARRILLA'));
 
-        // Auth state observer
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('user-email').textContent = user.email;
-                loginView.classList.add('hidden');
-                signupView.classList.add('hidden');
-                mainAppView.classList.remove('hidden');
-                
-                // Set up real-time listeners para coleções compartilhadas
-                appState.unsubscribeStock = onSnapshot(
-                    collection(db, 'stock'),
-                    (snapshot) => {
-                        appState.stockItems = snapshot.docs.map(doc => ({
-                            id: doc.id,
-                            ...doc.data()
-                        }));
-                        renderStockList();
-                        renderSupplierFilter();
-                    }
-                );
-                
-                appState.unsubscribeProduction = onSnapshot(
-                    collection(db, 'production'),
-                    (snapshot) => {
-                        appState.productionItems = snapshot.docs.map(doc => ({
-                            id: doc.id,
-                            ...doc.data()
-                        }));
-                        renderProductionList();
-                    }
-                );
-                
-                appState.unsubscribeSuppliers = onSnapshot(
-                    collection(db, 'suppliers'),
-                    (snapshot) => {
-                        appState.suppliers = snapshot.docs.map(doc => ({
-                            id: doc.id,
-                            ...doc.data()
-                        }));
-                        renderSuppliersList();
-                    }
-                );
-                
-                // Set default tab
-                switchTab('stock');
-            } else {
-                mainAppView.classList.add('hidden');
-                loginView.classList.remove('hidden');
-                signupView.classList.add('hidden');
-                
-                // Clean up listeners
-                if (appState.unsubscribeStock) appState.unsubscribeStock();
-                if (appState.unsubscribeProduction) appState.unsubscribeProduction();
-                if (appState.unsubscribeSuppliers) appState.unsubscribeSuppliers();
-            }
-        });
     </script>
 </body>
 </html>
-
