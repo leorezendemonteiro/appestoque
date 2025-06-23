@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Estoque Cozinha</title>
+    <title>App Estoque Cozinha - Compartilhado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -108,7 +108,7 @@
             <header class="bg-white p-4 rounded-xl shadow-lg mb-8">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h1 class="text-xl font-bold text-gray-800">App de Gestão</h1>
+                        <h1 class="text-xl font-bold text-gray-800">App de Gestão - Estoque Compartilhado</h1>
                         <p id="user-email" class="text-xs text-gray-500"></p>
                     </div>
                     <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm">Sair</button>
@@ -525,7 +525,7 @@
             const item = appState.stockItems.find(item => item.id === id);
             if (item && item.tempQuantity !== undefined) {
                 try {
-                    await updateDoc(doc(db, `users/${auth.currentUser.uid}/stock`, id), {
+                    await updateDoc(doc(db, 'stock', id), {
                         quantity: parseFloat(item.tempQuantity)
                     });
                     showMessage('Quantidade atualizada!', 'success');
@@ -538,7 +538,7 @@
         window.deleteStock = async function(id) {
             if (confirm('Tem certeza que deseja excluir este item?')) {
                 try {
-                    await deleteDoc(doc(db, `users/${auth.currentUser.uid}/stock`, id));
+                    await deleteDoc(doc(db, 'stock', id));
                     showMessage('Item excluído!', 'success');
                 } catch (error) {
                     showMessage('Erro ao excluir item', 'error');
@@ -557,7 +557,7 @@
             const item = appState.productionItems.find(item => item.id === id);
             if (item && item.tempQuantity !== undefined) {
                 try {
-                    await updateDoc(doc(db, `users/${auth.currentUser.uid}/production`, id), {
+                    await updateDoc(doc(db, 'production', id), {
                         quantity: parseFloat(item.tempQuantity)
                     });
                     showMessage('Quantidade atualizada!', 'success');
@@ -570,7 +570,7 @@
         window.deleteProduction = async function(id) {
             if (confirm('Tem certeza que deseja excluir este item?')) {
                 try {
-                    await deleteDoc(doc(db, `users/${auth.currentUser.uid}/production`, id));
+                    await deleteDoc(doc(db, 'production', id));
                     showMessage('Item excluído!', 'success');
                 } catch (error) {
                     showMessage('Erro ao excluir item', 'error');
@@ -581,7 +581,7 @@
         window.deleteSupplier = async function(id) {
             if (confirm('Tem certeza que deseja excluir este fornecedor?')) {
                 try {
-                    await deleteDoc(doc(db, `users/${auth.currentUser.uid}/suppliers`, id));
+                    await deleteDoc(doc(db, 'suppliers', id));
                     showMessage('Fornecedor excluído!', 'success');
                 } catch (error) {
                     showMessage('Erro ao excluir fornecedor', 'error');
@@ -653,7 +653,7 @@
             const unit = document.getElementById('product-unit').value;
             
             try {
-                await addDoc(collection(db, `users/${auth.currentUser.uid}/stock`), {
+                await addDoc(collection(db, 'stock'), {
                     name, supplier, quantity, min, ideal, unit,
                     createdAt: new Date()
                 });
@@ -672,7 +672,7 @@
             const unit = document.getElementById('production-unit').value;
             
             try {
-                await addDoc(collection(db, `users/${auth.currentUser.uid}/production`), {
+                await addDoc(collection(db, 'production'), {
                     name, sector, quantity, unit,
                     createdAt: new Date()
                 });
@@ -691,7 +691,7 @@
             }
             
             try {
-                await addDoc(collection(db, `users/${auth.currentUser.uid}/suppliers`), {
+                await addDoc(collection(db, 'suppliers'), {
                     name,
                     createdAt: new Date()
                 });
@@ -732,9 +732,9 @@
                 signupView.classList.add('hidden');
                 mainAppView.classList.remove('hidden');
                 
-                // Set up real-time listeners
+                // Set up real-time listeners para coleções compartilhadas
                 appState.unsubscribeStock = onSnapshot(
-                    collection(db, `users/${user.uid}/stock`),
+                    collection(db, 'stock'),
                     (snapshot) => {
                         appState.stockItems = snapshot.docs.map(doc => ({
                             id: doc.id,
@@ -746,7 +746,7 @@
                 );
                 
                 appState.unsubscribeProduction = onSnapshot(
-                    collection(db, `users/${user.uid}/production`),
+                    collection(db, 'production'),
                     (snapshot) => {
                         appState.productionItems = snapshot.docs.map(doc => ({
                             id: doc.id,
@@ -757,7 +757,7 @@
                 );
                 
                 appState.unsubscribeSuppliers = onSnapshot(
-                    collection(db, `users/${user.uid}/suppliers`),
+                    collection(db, 'suppliers'),
                     (snapshot) => {
                         appState.suppliers = snapshot.docs.map(doc => ({
                             id: doc.id,
