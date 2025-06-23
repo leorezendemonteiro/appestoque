@@ -544,24 +544,26 @@
             }, (error) => console.error("Erro ao carregar fornecedores:", error));
         }
 
-        // Funções de gerencia        function renderSuppliersList() {
+        // Funções de gerenciamento de fornecedores
+        function renderSuppliersList() {
             if (!suppliersListContainer) return;
             
-            const sortedSuppliers = [...appState.suppliers].sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
+            const sortedSuppliers = [...appState.suppliers].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
             
             if (sortedSuppliers.length === 0) {
-                suppliersListContainer.innerHTML = 
-                    `<p class="text-gray-500 text-sm">Nenhum fornecedor cadastrado.</p>`;
+                suppliersListContainer.innerHTML = '<p class="text-gray-500 text-sm">Nenhum fornecedor cadastrado.</p>';
                 return;
             }
             
             suppliersListContainer.innerHTML = sortedSuppliers.map(supplier => `
                 <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <span class="font-medium text-gray-800">${escapeHtml(supplier.nome)}</span>
-                    <button onclick="deleteSupplier(\"${supplier.id}\")" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium">Excluir</button>
+                    <button onclick="deleteSupplier('${supplier.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium">Excluir</button>
                 </div>
-            `).join("");
-        }eSupplier = async (id) => {
+            `).join('');
+        }
+
+        window.deleteSupplier = async (id) => {
             try {
                 await deleteDoc(doc(db, 'fornecedores', id));
                 showMessage('Fornecedor removido com sucesso!');
@@ -788,18 +790,25 @@
             }
         });
         
-        generateKitchenReportBtn.addEventListener(\'click\', () => {
-            if (appState.productionItems.filter(item => item.setor === \'Cozinha\').length === 0) {
-                showMessage("Nenhum item de produção encontrado para COZINHA.", true);
+        generateKitchenReportBtn.addEventListener('click', () => {
+            const kitchenItems = appState.productionItems.filter(item => item.setor === 'COZINHA');
+            if (kitchenItems.length === 0) {
+                showMessage('Nenhum item de produção encontrado para COZINHA.', true);
                 return;
             }
-            generatePdfByGroup(\'Relatorio_Producao_Cozinha\', appState.productionItems.filter(item => item.setor === \'Cozinha\'), \'setor\', \'Relatório de Produção - Cozinha\');
+            generatePdfByGroup('producao_cozinha', kitchenItems, 'setor', 'Relatório de Produção');
+        });
+        
+        generateParrillaReportBtn.addEventListener('click', () => {
+            const parrillaItems = appState.productionItems.filter(item => item.setor === 'PARRILLA');
+            if (parrillaItems.length === 0) {
+                showMessage('Nenhum item de produção encontrado para PARRILLA.', true);
+                return;
+            }
+            generatePdfByGroup('producao_parrilla', parrillaItems, 'setor', 'Relatório de Produção');
         });
 
-        generateParrillaReportBtn.addEventListener(\'click\', () => {
-            if (appState.productionItems.filter(item => item.setor === \'Parrilla\').length === 0) {
-                showMessage("Nenhum item de produção encontrado para PARRILLA.", true);
-                return;
-            }
-            generatePdfByGroup(\'Relatorio_Producao_Parrilla\', appState.productionItems.filter(item => item.setor === \'Parrilla\'), \'setor\', \'Relatório de Produção - Parrilla\');
-        });
+    </script>
+</body>
+</html>
+
