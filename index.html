@@ -248,10 +248,10 @@
         }
 
         function toggleViews(showView) {
-            loginView.classList.add('hidden'); signupView.classList.add('hidden'); mainAppView.classList.add('hidden');
-            const isAuthScreen = showView === 'login-view' || showView === 'signup-view';
-            document.body.classList.toggle('flex', isAuthScreen); document.body.classList.toggle('items-center', isAuthScreen); document.body.classList.toggle('min-h-screen', isAuthScreen);
-            document.getElementById(showView).classList.remove('hidden');
+            loginView.classList.add(\'hidden\'); signupView.classList.add(\'hidden\'); mainAppView.classList.add(\'hidden\');
+            const isAuthScreen = showView === \'login-view\' || showView === \'signup-view\';
+            document.body.classList.toggle(\'flex\', isAuthScreen); document.body.classList.toggle(\'items-center\', isAuthScreen); document.body.classList.toggle(\'min-h-screen\', isAuthScreen);
+            document.getElementById(showView).classList.remove(\'hidden\');
         }
 
         function escapeHtml(text) { return (text || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
@@ -556,7 +556,10 @@
             try {
                 await addDoc(collection(db, 'estoque'), { item, fornecedor, atual, minima, ideal, unidade, createdAt: new Date() });
                 addItemForm.reset(); showMessage('Item adicionado com sucesso!');
-            } catch (error) { console.error('Erro ao adicionar item:', error); showMessage('Erro ao adicionar item.', true); }
+            } catch (error) {
+                console.error('Erro ao adicionar item:', error);
+                showMessage('Erro ao adicionar item.', true);
+            }
         });
 
         addProductionForm.addEventListener('submit', async (e) => {
@@ -568,7 +571,10 @@
             try {
                 await addDoc(collection(db, 'producao'), { item, setor, quantidade, unidade, createdAt: new Date() });
                 addProductionForm.reset(); showMessage('Item adicionado com sucesso!');
-            } catch (error) { console.error('Erro ao adicionar item de produção:', error); showMessage('Erro ao adicionar item.', true); }
+            } catch (error) {
+                console.error('Erro ao adicionar item de produção:', error);
+                showMessage('Erro ao adicionar item.', true);
+            }
         });
 
         showSignupBtn.addEventListener('click', () => toggleViews('signup-view'));
