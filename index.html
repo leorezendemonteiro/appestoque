@@ -238,7 +238,17 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        let appState = { stockItems: [], productionItems: [], suppliers: [], currentSupplierFilter: 'TODOS', currentSectorFilter: 'TODOS', unsubscribeStock: null, unsubscribeProduction: null, unsubscribeSuppliers: null };
+        let appState = { 
+            stockItems: [], 
+            productionItems: [], 
+            suppliers: [], 
+            currentSupplierFilter: 'TODOS', 
+            currentSectorFilter: 'TODOS', 
+            unsubscribeStock: null, 
+            unsubscribeProduction: null, 
+            unsubscribeSuppliers: null,
+            shoppingListItems: []
+        };
 
         const loginView = document.getElementById("login-view");
         const signupView = document.getElementById("signup-view");
@@ -395,16 +405,16 @@
         }
 
         function generateShoppingList() {
-            const itemsToRestock = appState.stockItems.filter(item => 
-                parseFloat(item.atual || item.quantity || 0) < parseFloat(item.minimo || item.min || 0)
-            );
-
-            if (itemsToRestock.length === 0) {
-                showMessage('Nenhum item precisa ser reabastecido!');
+            // Mostrar todos os itens do estoque para edição
+            const allItems = [...appState.stockItems];
+            
+            if (allItems.length === 0) {
+                showMessage('Nenhum item encontrado no estoque!');
                 return;
             }
 
-            const supplierGroups = itemsToRestock.reduce((groups, item) => {
+            // Agrupar por fornecedor
+            const supplierGroups = allItems.reduce((groups, item) => {
                 const supplier = item.fornecedor || 'Sem fornecedor';
                 if (!groups[supplier]) groups[supplier] = [];
                 groups[supplier].push(item);
@@ -423,7 +433,7 @@
                         </select>
                     </div>
                     <div class="mb-4">
-                        <button id="generate-shopping-list-pdf-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Gerar PDF</button>
+                        <button id="generate-shopping-list-pdf-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Gerar Lista de Compras PDF</button>
                     </div>
                     <div id="shopping-list-container">
             `;
@@ -437,8 +447,6 @@
 
                 items.forEach(item => {
                     const currentQty = parseFloat(item.atual || item.quantity || 0);
-                    const idealQty = parseFloat(item.ideal || 0);
-                    const quantityToBuy = Math.max(0, idealQty - currentQty);
                     const unit = item.unidade || item.unit || '';
                     
                     content += `
@@ -449,7 +457,7 @@
                              data-item-unit="${escapeHtml(unit)}">
                             <span class="w-2/5 text-sm">${escapeHtml(item.item || item.name || '')}</span>
                             <span class="w-1/5 text-center text-sm">${currentQty.toFixed(2)} ${escapeHtml(unit)}</span>
-                            <input type="number" placeholder="Qtd." class="shopping-quantity-input w-1/5 p-1 border rounded text-sm text-center" step="any" value="${quantityToBuy.toFixed(2)}">
+                            <input type="number" placeholder="Qtd. Pedida" class="shopping-quantity-input w-1/5 p-1 border rounded text-sm text-center" step="any" value="0">
                             <button class="delete-shopping-item-btn w-1/5 text-red-500 hover:text-red-700 font-bold text-right text-sm">Excluir</button>
                         </div>
                     `;
@@ -470,9 +478,15 @@
             reportDisplayArea.classList.remove('hidden');
             reportDisplayArea.classList.add('interactive-list');
 
+            // Event listeners para a lista de compras
+            const supplierFilterSelect = reportDisplayArea.querySelector('#shopping-list-supplier-filter');
+            const generatePdfBtn = reportDisplayArea.querySelector('#generate-shopping-list-pdf-btn');
+            const deleteButtons = reportDisplayArea.querySelectorAll('.delete-shopping-item-btn');
+            const quantityInputs = reportDisplayArea.querySelectorAll('.shopping-quantity-input');
+
             // Função para filtrar por fornecedor
             const renderFilteredShoppingList = () => {
-                const selectedSupplier = reportDisplayArea.querySelector('#shopping-list-supplier-filter').value;
+                const selectedSupplier = supplierFilterSelect.value;
                 const supplierGroups = reportDisplayArea.querySelectorAll('.supplier-group');
                 
                 supplierGroups.forEach(group => {
@@ -484,8 +498,149 @@
                 });
             };
 
-            reportDisplayArea.querySelector('#shopping-list-supplier-filter').addEventListener('change', renderFilteredShoppingList);
+            supplierFilterSelect.addEventListener('change', renderFilteredShoppingList);
+
+            // Event listener para gerar PDF
+            generatePdfBtn.addEventListener('click', () => {
+                generateShoppingListPDF();
+            });
+
+            // Event listeners para excluir itens
+            deleteButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const item = e.target.closest('.shopping-list-item');
+                    if (item) {
+                        item.remove();
+                    }
+                });
+            });
+
+            // Event listeners para zerar quantidade quando digitar 0
+            quantityInputs.forEach(input => {
+                input.addEventListener('input', (e) => {
+                    if (e.target.value === '0') {
+                        e.target.value = '';
+                    }
+                });
+            });
+
             renderFilteredShoppingList();
+        }
+
+        function generateShoppingListPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const selectedSupplier = reportDisplayArea.querySelector('#shopping-list-supplier-filter').value;
+            const visibleItems = Array.from(reportDisplayArea.querySelectorAll('.shopping-list-item'))
+                .filter(item => {
+                    const itemSupplier = item.dataset.supplier;
+                    const quantityInput = item.querySelector('.shopping-quantity-input');
+                    const quantity = parseFloat(quantityInput.value) || 0;
+                    
+                    // Incluir apenas itens visíveis (filtro) e com quantidade > 0
+                    const isVisible = selectedSupplier === 'TODOS' || itemSupplier === selectedSupplier;
+                    return isVisible && quantity > 0;
+                });
+
+            if (visibleItems.length === 0) {
+                showMessage('Nenhum item com quantidade pedida encontrado!', true);
+                return;
+            }
+
+            // Agrupar itens por fornecedor
+            const supplierGroups = {};
+            visibleItems.forEach(item => {
+                const supplier = item.dataset.supplier;
+                if (!supplierGroups[supplier]) {
+                    supplierGroups[supplier] = [];
+                }
+                
+                const itemName = item.dataset.itemName;
+                const currentQty = parseFloat(item.dataset.currentQty);
+                const requestedQty = parseFloat(item.querySelector('.shopping-quantity-input').value) || 0;
+                const unit = item.dataset.itemUnit;
+                
+                supplierGroups[supplier].push({
+                    name: itemName,
+                    currentQty: currentQty,
+                    requestedQty: requestedQty,
+                    unit: unit
+                });
+            });
+
+            const sortedSuppliers = Object.keys(supplierGroups).sort();
+            
+            sortedSuppliers.forEach((supplier, supplierIndex) => {
+                if (supplierIndex > 0) {
+                    doc.addPage();
+                }
+                
+                const items = supplierGroups[supplier].sort((a, b) => a.name.localeCompare(b.name));
+                
+                // Cabeçalho da página
+                doc.setFontSize(18);
+                doc.setFont(undefined, 'bold');
+                doc.text('Lista de Compras', 20, 20);
+                
+                doc.setFontSize(14);
+                doc.text(`Fornecedor: ${supplier}`, 20, 35);
+                
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'normal');
+                doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, 45);
+                doc.text(`Hora: ${new Date().toLocaleTimeString('pt-BR')}`, 20, 55);
+                
+                // Cabeçalho da tabela
+                let yPosition = 75;
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.text('Item', 20, yPosition);
+                doc.text('Qtd. Atual', 90, yPosition);
+                doc.text('Qtd. Pedida', 140, yPosition);
+                
+                // Linha separadora
+                doc.line(20, yPosition + 2, 190, yPosition + 2);
+                yPosition += 10;
+                
+                // Itens
+                doc.setFont(undefined, 'normal');
+                items.forEach(item => {
+                    if (yPosition > 270) {
+                        doc.addPage();
+                        yPosition = 20;
+                        
+                        // Repetir cabeçalho na nova página
+                        doc.setFontSize(10);
+                        doc.setFont(undefined, 'bold');
+                        doc.text('Item', 20, yPosition);
+                        doc.text('Qtd. Atual', 90, yPosition);
+                        doc.text('Qtd. Pedida', 140, yPosition);
+                        doc.line(20, yPosition + 2, 190, yPosition + 2);
+                        yPosition += 10;
+                        doc.setFont(undefined, 'normal');
+                    }
+                    
+                    doc.text(item.name.substring(0, 25), 20, yPosition);
+                    doc.text(`${item.currentQty.toFixed(2)} ${item.unit}`, 90, yPosition);
+                    doc.text(`${item.requestedQty.toFixed(2)} ${item.unit}`, 140, yPosition);
+                    
+                    yPosition += 8;
+                });
+                
+                // Resumo no final da página do fornecedor
+                yPosition += 10;
+                if (yPosition > 260) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                doc.setFont(undefined, 'bold');
+                doc.text(`Total de itens: ${items.length}`, 20, yPosition);
+            });
+            
+            doc.save('lista-de-compras.pdf');
+            showMessage('Lista de compras gerada com sucesso!');
         }
 
         function generateStockReportBySupplier() {
@@ -531,14 +686,12 @@
                 doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, 45);
                 doc.text(`Hora: ${new Date().toLocaleTimeString('pt-BR')}`, 20, 55);
                 
-                // Cabeçalho da tabela
+                // Cabeçalho da tabela - APENAS QUANTIDADE ATUAL
                 let yPosition = 75;
                 doc.setFontSize(10);
                 doc.setFont(undefined, 'bold');
                 doc.text('Produto', 20, yPosition);
-                doc.text('Qtd. Atual', 90, yPosition);
-                doc.text('Qtd. Mínima', 130, yPosition);
-                doc.text('Qtd. Ideal', 170, yPosition);
+                doc.text('Qtd. Atual', 120, yPosition);
                 
                 // Linha separadora
                 doc.line(20, yPosition + 2, 190, yPosition + 2);
@@ -555,9 +708,7 @@
                         doc.setFontSize(10);
                         doc.setFont(undefined, 'bold');
                         doc.text('Produto', 20, yPosition);
-                        doc.text('Qtd. Atual', 90, yPosition);
-                        doc.text('Qtd. Mínima', 130, yPosition);
-                        doc.text('Qtd. Ideal', 170, yPosition);
+                        doc.text('Qtd. Atual', 120, yPosition);
                         doc.line(20, yPosition + 2, 190, yPosition + 2);
                         yPosition += 10;
                         doc.setFont(undefined, 'normal');
@@ -565,21 +716,10 @@
                     
                     const itemName = item.item || item.name || 'Item sem nome';
                     const currentQty = parseFloat(item.atual || item.quantity || 0);
-                    const minQty = parseFloat(item.minimo || item.min || 0);
-                    const idealQty = parseFloat(item.ideal || 0);
                     const unit = item.unidade || item.unit || '';
                     
-                    doc.text(itemName.substring(0, 25), 20, yPosition);
-                    doc.text(`${currentQty.toFixed(2)} ${unit}`, 90, yPosition);
-                    doc.text(`${minQty.toFixed(2)} ${unit}`, 130, yPosition);
-                    doc.text(`${idealQty.toFixed(2)} ${unit}`, 170, yPosition);
-                    
-                    // Indicar se precisa reposição
-                    if (currentQty < minQty) {
-                        doc.setTextColor(255, 0, 0); // Vermelho
-                        doc.text('⚠', 200, yPosition);
-                        doc.setTextColor(0, 0, 0); // Voltar ao preto
-                    }
+                    doc.text(itemName.substring(0, 35), 20, yPosition);
+                    doc.text(`${currentQty.toFixed(2)} ${unit}`, 120, yPosition);
                     
                     yPosition += 8;
                 });
@@ -593,16 +733,6 @@
                 
                 doc.setFont(undefined, 'bold');
                 doc.text(`Total de itens: ${items.length}`, 20, yPosition);
-                
-                const itemsNeedingRestock = items.filter(item => 
-                    parseFloat(item.atual || item.quantity || 0) < parseFloat(item.minimo || item.min || 0)
-                );
-                
-                if (itemsNeedingRestock.length > 0) {
-                    doc.setTextColor(255, 0, 0);
-                    doc.text(`Itens que precisam reposição: ${itemsNeedingRestock.length}`, 20, yPosition + 10);
-                    doc.setTextColor(0, 0, 0);
-                }
             });
             
             doc.save('relatorio-estoque.pdf');
@@ -734,13 +864,6 @@
             }
         };
 
-        window.removeFromShoppingList = function(id) {
-            const row = event.target.closest('.shopping-list-item');
-            if (row) {
-                row.remove();
-            }
-        };
-
         // Event Listeners
         showSignupBtn.addEventListener('click', () => {
             loginView.classList.add('hidden');
@@ -757,13 +880,13 @@
                 document.getElementById('user-email').textContent = user.email;
                 toggleViews('main-app-view');
                 switchTab('stock');
-                // Chamar listenToDataChanges() aqui para iniciar o carregamento dos dados
                 listenToDataChanges();
             } else {
-                if (appState.unsubscribeStock) { appState.unsubscribeStock(); appState.unsubscribeStock = null; }
-                if (appState.unsubscribeProduction) { appState.unsubscribeProduction(); appState.unsubscribeProduction = null; }
-                if (appState.unsubscribeSuppliers) { appState.unsubscribeSuppliers(); appState.unsubscribeSuppliers = null; }
                 toggleViews('login-view');
+                // Limpar listeners quando usuário faz logout
+                if (appState.unsubscribeStock) appState.unsubscribeStock();
+                if (appState.unsubscribeProduction) appState.unsubscribeProduction();
+                if (appState.unsubscribeSuppliers) appState.unsubscribeSuppliers();
             }
         });
 
@@ -771,13 +894,13 @@
             e.preventDefault();
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
-            try { 
-                await signInWithEmailAndPassword(auth, email, password); 
-                showMessage('Login realizado com sucesso!'); 
-            }
-            catch (error) { 
-                console.error('Erro no login:', error); 
-                showMessage('Erro no login. Verifique suas credenciais.', true); 
+            
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showMessage('Login realizado com sucesso!');
+            } catch (error) {
+                console.error('Erro no login:', error);
+                showMessage('Erro no login: ' + error.message, true);
             }
         });
 
@@ -785,13 +908,13 @@
             e.preventDefault();
             const email = document.getElementById('signup-email').value;
             const password = document.getElementById('signup-password').value;
-            try { 
-                await createUserWithEmailAndPassword(auth, email, password); 
-                showMessage('Conta criada com sucesso!'); 
-            }
-            catch (error) { 
-                console.error('Erro ao criar conta:', error); 
-                showMessage('Erro ao criar conta.', true); 
+            
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                showMessage('Conta criada com sucesso!');
+            } catch (error) {
+                console.error('Erro no cadastro:', error);
+                showMessage('Erro no cadastro: ' + error.message, true);
             }
         });
 
@@ -822,9 +945,9 @@
                     minimo: min,
                     ideal: ideal,
                     unidade: unit,
-                    createdAt: new Date()
+                    timestamp: new Date()
                 });
-                showMessage('Item adicionado ao estoque com sucesso!');
+                showMessage('Item adicionado com sucesso!');
                 addItemForm.reset();
             } catch (error) {
                 console.error('Erro ao adicionar item:', error);
@@ -845,40 +968,33 @@
                     setor: sector,
                     quantidade: quantity,
                     unidade: unit,
-                    createdAt: new Date()
+                    timestamp: new Date()
                 });
-                showMessage('Item adicionado à produção com sucesso!');
+                showMessage('Item de produção adicionado com sucesso!');
                 addProductionForm.reset();
             } catch (error) {
-                console.error('Erro ao adicionar item:', error);
-                showMessage('Erro ao adicionar item', true);
+                console.error('Erro ao adicionar item de produção:', error);
+                showMessage('Erro ao adicionar item de produção', true);
             }
         });
 
         addSupplierBtn.addEventListener('click', async () => {
             const name = newSupplierNameInput.value.trim();
             if (!name) {
-                showMessage('Digite o nome do fornecedor', true);
+                showMessage('Nome do fornecedor é obrigatório', true);
                 return;
             }
             
             try {
                 await addDoc(collection(db, 'fornecedores'), {
                     nome: name,
-                    createdAt: new Date()
+                    timestamp: new Date()
                 });
                 showMessage('Fornecedor adicionado com sucesso!');
                 newSupplierNameInput.value = '';
             } catch (error) {
                 console.error('Erro ao adicionar fornecedor:', error);
                 showMessage('Erro ao adicionar fornecedor', true);
-            }
-        });
-
-        tabsContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('tab-button')) {
-                const tabName = e.target.getAttribute('data-tab');
-                switchTab(tabName);
             }
         });
 
@@ -892,100 +1008,23 @@
             renderProductionList();
         });
 
+        tabsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('tab-button')) {
+                const tabName = e.target.getAttribute('data-tab');
+                switchTab(tabName);
+                
+                // Esconder área de relatórios quando mudar de aba
+                if (tabName !== 'reports') {
+                    reportDisplayArea.classList.add('hidden');
+                    reportDisplayArea.classList.remove('interactive-list');
+                }
+            }
+        });
+
         generateStockReportBtn.addEventListener('click', generateStockReportBySupplier);
         generateShoppingListBtn.addEventListener('click', generateShoppingList);
         generateKitchenReportBtn.addEventListener('click', () => generateProductionReport('COZINHA'));
         generateParrillaReportBtn.addEventListener('click', () => generateProductionReport('PARRILLA'));
-
-        // Event delegation para botões da lista de compras
-        reportDisplayArea.addEventListener('click', e => {
-            if (e.target.matches('.delete-shopping-item-btn')) { 
-                e.target.closest('.shopping-list-item').remove(); 
-                return; 
-            }
-            if (e.target.matches('#generate-shopping-list-pdf-btn')) {
-                const itemsForPdf = [];
-                reportDisplayArea.querySelectorAll('.shopping-list-item').forEach(row => {
-                    const quantity = parseFloat(row.querySelector('.shopping-quantity-input').value);
-                    itemsForPdf.push({ 
-                        name: row.dataset.itemName, 
-                        supplier: row.dataset.supplier, 
-                        currentQty: row.dataset.currentQty,
-                        unit: row.dataset.itemUnit,
-                        quantity: (quantity > 0) ? `${quantity} ${row.dataset.itemUnit || ''}`.trim() : '_______' 
-                    });
-                });
-                
-                if (itemsForPdf.length === 0) { 
-                    showMessage("A lista de compras está vazia.", true); 
-                    return; 
-                }
-                
-                const grouped = itemsForPdf.reduce((acc, i) => { 
-                    const s = i.supplier || 'Sem Fornecedor'; 
-                    if (!acc[s]) acc[s] = []; 
-                    acc[s].push(i); 
-                    return acc; 
-                }, {});
-                
-                // Gerar PDF usando jsPDF diretamente
-                try {
-                    const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF('p', 'mm', 'a4');
-                    const sortedSuppliers = Object.keys(grouped).sort();
-                    
-                    sortedSuppliers.forEach((supplier, index) => {
-                        if (index > 0) pdf.addPage();
-                        
-                        const items = grouped[supplier].sort((a,b) => (a.name || '').localeCompare(b.name || ''));
-                        
-                        // Cabeçalho
-                        pdf.setFontSize(18);
-                        pdf.setFont(undefined, 'bold');
-                        pdf.text('Lista de Compras', 20, 20);
-                        
-                        pdf.setFontSize(14);
-                        pdf.text(`Fornecedor: ${supplier}`, 20, 35);
-                        
-                        pdf.setFontSize(12);
-                        pdf.setFont(undefined, 'normal');
-                        pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, 45);
-                        
-                        // Cabeçalho da tabela
-                        let yPosition = 65;
-                        pdf.setFontSize(10);
-                        pdf.setFont(undefined, 'bold');
-                        pdf.text('Produto', 20, yPosition);
-                        pdf.text('Qtd. Atual', 90, yPosition);
-                        pdf.text('Qtd. Pedida', 140, yPosition);
-                        
-                        // Linha separadora
-                        pdf.line(20, yPosition + 2, 180, yPosition + 2);
-                        yPosition += 10;
-                        
-                        // Itens
-                        pdf.setFont(undefined, 'normal');
-                        items.forEach(item => {
-                            if (yPosition > 270) {
-                                pdf.addPage();
-                                yPosition = 20;
-                            }
-                            
-                            pdf.text(item.name, 20, yPosition);
-                            pdf.text(`${item.currentQty} ${item.unit || ''}`, 90, yPosition);
-                            pdf.text(item.quantity, 140, yPosition);
-                            yPosition += 8;
-                        });
-                    });
-                    
-                    pdf.save('Lista_de_Compras.pdf');
-                    showMessage('PDF da lista de compras gerado com sucesso!');
-                } catch (error) {
-                    console.error('Erro ao gerar PDF:', error);
-                    showMessage('Erro ao gerar PDF. Tente novamente.', true);
-                }
-            }
-        });
 
     </script>
 </body>
