@@ -405,7 +405,18 @@
                <option value="">Selecione um fornecedor</option>
                ${sortedSuppliers.map(supplier => `<option value="${escapeHtml(supplier.nome)}">${escapeHtml(supplier.nome)}</option>`).join('')}
            `;
-            productSupplierSelect.size = Math.min(appState.suppliers.length + 1, 5);
+           productSupplierSelect.size = Math.min(appState.suppliers.length + 1, 5);
+       }
+
+       function updateShoppingListSupplierFilter() {
+           const slFilter = document.getElementById('shopping-list-supplier-filter');
+           if (!slFilter) return;
+
+           slFilter.innerHTML = `
+                <option value="TODOS">Todos os fornecedores</option>
+                ${appState.suppliers.map(supplier => `<option value="${escapeHtml(supplier.nome)}">${escapeHtml(supplier.nome)}</option>`).join('')}
+           `;
+           slFilter.size = Math.min(appState.suppliers.length + 1, 5);
        }
 
         // Função para escutar mudanças nos dados do Firebase
@@ -429,6 +440,7 @@
                     renderSuppliersList();
                     renderSupplierSelect(); // Garante que o select de fornecedores seja atualizado
                     updateSupplierFilter(); // Atualiza filtro de fornecedores na lista de estoque
+                    updateShoppingListSupplierFilter(); // Atualiza filtro na lista de compras, se visível
                 }, (error) => console.error("Erro ao carregar fornecedores:", error));
         }
 
@@ -556,7 +568,7 @@
             reportDisplayArea.classList.remove('hidden');
             reportDisplayArea.classList.add('interactive-list');
             const slSelectSize = Math.min(appState.suppliers.length + 1, 5);
-            reportDisplayArea.innerHTML = `
+           reportDisplayArea.innerHTML = `
                 <div class="p-6">
                     <h2 class="text-lg font-semibold mb-4 text-gray-700">Lista de Compras</h2>
                     <p class="text-sm text-gray-500 mb-4">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
@@ -570,11 +582,12 @@
                     <button id="generate-shopping-list-pdf-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4">Gerar Lista de Compras PDF</button>
                     <div id="shopping-list-items-container" class="space-y-3"></div>
                 </div>
-            `;
+           `;
 
-            const shoppingListSupplierFilter = document.getElementById('shopping-list-supplier-filter');
-            const shoppingListItemsContainer = document.getElementById('shopping-list-items-container');
-            const generateShoppingListPdfBtn = document.getElementById('generate-shopping-list-pdf-btn');
+           const shoppingListSupplierFilter = document.getElementById('shopping-list-supplier-filter');
+           const shoppingListItemsContainer = document.getElementById('shopping-list-items-container');
+           const generateShoppingListPdfBtn = document.getElementById('generate-shopping-list-pdf-btn');
+           updateShoppingListSupplierFilter();
 
             const renderShoppingListItems = () => {
                 shoppingListItemsContainer.innerHTML = '';
