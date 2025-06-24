@@ -436,11 +436,12 @@
             }, (error) => console.error("Erro ao carregar produção:", error));
 
             const suppliersCollectionRef = collection(db, "fornecedores");
-            appState.unsubscribeSuppliers = onSnapshot(suppliersCollectionRef, (snapshot) => {
-                appState.suppliers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderSuppliersList();
-                renderSupplierSelect(); // Garante que o select de fornecedores seja atualizado
-            }, (error) => console.error("Erro ao carregar fornecedores:", error));
+                appState.unsubscribeSuppliers = onSnapshot(suppliersCollectionRef, (snapshot) => {
+                    appState.suppliers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderSuppliersList();
+                    renderSupplierSelect(); // Garante que o select de fornecedores seja atualizado
+                    updateSupplierFilter(); // Atualiza filtro de fornecedores na lista de estoque
+                }, (error) => console.error("Erro ao carregar fornecedores:", error));
         }
 
         // PDF Generation Functions
