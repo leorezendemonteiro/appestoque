@@ -130,7 +130,7 @@
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Produto ao Estoque</h2>
                         <form id="add-item-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input type="text" id="product-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                            <select id="product-supplier" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white supplier-select">
+                            <select id="product-supplier" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white supplier-select" required>
                                 <option value="">Selecione um fornecedor</option>
                             </select>
                             <input type="number" id="product-quantity" placeholder="Qtd. Atual" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
@@ -890,6 +890,10 @@
             e.preventDefault();
             const name = document.getElementById('product-name').value;
             const supplier = document.getElementById('product-supplier').value;
+            if (!supplier) {
+                showMessage('Selecione um fornecedor', true);
+                return;
+            }
             const quantity = parseFloat(document.getElementById('product-quantity').value);
             const min = parseFloat(document.getElementById('product-min').value) || 0;
             const ideal = parseFloat(document.getElementById('product-ideal').value) || 0;
