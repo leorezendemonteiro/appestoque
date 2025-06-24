@@ -153,12 +153,6 @@
                     
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Gerenciar Fornecedores</h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                            <div class="flex gap-2">
-                                <input type="text" id="new-supplier-name" placeholder="Nome do Fornecedor" class="flex-1 shadow appearance-none border rounded py-2 px-3 text-gray-700">
-                                <button id="add-supplier-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">Adicionar</button>
-                            </div>
-                        </div>
                         <div class="border-t pt-4">
                             <h3 class="text-md font-medium mb-3 text-gray-600">Fornecedores Cadastrados</h3>
                             <div id="suppliers-list" class="space-y-2"></div>
@@ -271,8 +265,6 @@
         const productionListDiv = document.getElementById("production-list");
         const supplierFilter = document.getElementById("supplier-filter");
         const sectorFilter = document.getElementById("sector-filter");
-        const newSupplierNameInput = document.getElementById("new-supplier-name");
-        const addSupplierBtn = document.getElementById("add-supplier-btn");
         const suppliersListDiv = document.getElementById("suppliers-list");
         const reportDisplayArea = document.getElementById("report-display-area");
 
@@ -946,25 +938,6 @@
             }
         });
 
-        addSupplierBtn.addEventListener('click', async () => {
-            const name = newSupplierNameInput.value.trim();
-            if (!name) {
-                showMessage('Nome do fornecedor é obrigatório', true);
-                return;
-            }
-            
-            try {
-                await addDoc(collection(db, 'fornecedores'), {
-                    nome: name,
-                    timestamp: new Date()
-                });
-                showMessage('Fornecedor adicionado com sucesso!');
-                newSupplierNameInput.value = '';
-            } catch (error) {
-                console.error('Erro ao adicionar fornecedor:', error);
-                showMessage('Erro ao adicionar fornecedor', true);
-            }
-        });
 
         supplierFilter.addEventListener('change', (e) => {
             appState.currentSupplierFilter = e.target.value;
