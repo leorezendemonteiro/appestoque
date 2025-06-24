@@ -25,7 +25,8 @@
         }
         /* Estilos para select de fornecedores com barra de rolagem */
         .supplier-select {
-            max-height: 120px;
+            /* Allow the element height to expand with the number of options */
+            max-height: none;
             overflow-y: auto;
         }
         /* Estilos para a área de impressão com reset para evitar conflitos */
@@ -388,27 +389,29 @@
             });
         }
 
-        function updateSupplierFilter() {
-            supplierFilter.innerHTML = `<option value="TODOS">TODOS</option>`;
-            appState.suppliers.forEach(supplier => {
-                const option = document.createElement("option");
-                option.value = supplier.nome;
-                option.textContent = supplier.nome;
-                supplierFilter.appendChild(option);
-            });
-        }
+       function updateSupplierFilter() {
+           supplierFilter.innerHTML = `<option value="TODOS">TODOS</option>`;
+           appState.suppliers.forEach(supplier => {
+               const option = document.createElement("option");
+               option.value = supplier.nome;
+               option.textContent = supplier.nome;
+               supplierFilter.appendChild(option);
+           });
+            supplierFilter.size = Math.min(appState.suppliers.length + 1, 5);
+       }
 
-        function renderSupplierSelect() {
-            const productSupplierSelect = document.getElementById('product-supplier');
-            if (!productSupplierSelect) return;
-            
-            const sortedSuppliers = [...appState.suppliers].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-            
-            productSupplierSelect.innerHTML = `
-                <option value="">Selecione um fornecedor</option>
-                ${sortedSuppliers.map(supplier => `<option value="${escapeHtml(supplier.nome)}">${escapeHtml(supplier.nome)}</option>`).join('')}
-            `;
-        }
+       function renderSupplierSelect() {
+           const productSupplierSelect = document.getElementById('product-supplier');
+           if (!productSupplierSelect) return;
+
+           const sortedSuppliers = [...appState.suppliers].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+
+           productSupplierSelect.innerHTML = `
+               <option value="">Selecione um fornecedor</option>
+               ${sortedSuppliers.map(supplier => `<option value="${escapeHtml(supplier.nome)}">${escapeHtml(supplier.nome)}</option>`).join('')}
+           `;
+            productSupplierSelect.size = Math.min(appState.suppliers.length + 1, 5);
+       }
 
         // Função para escutar mudanças nos dados do Firebase
         function listenToDataChanges() {
@@ -557,13 +560,14 @@
         function generateShoppingList() {
             reportDisplayArea.classList.remove('hidden');
             reportDisplayArea.classList.add('interactive-list');
+            const slSelectSize = Math.min(appState.suppliers.length + 1, 5);
             reportDisplayArea.innerHTML = `
                 <div class="p-6">
                     <h2 class="text-lg font-semibold mb-4 text-gray-700">Lista de Compras</h2>
                     <p class="text-sm text-gray-500 mb-4">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
                     <div class="mb-4">
                         <label for="shopping-list-supplier-filter" class="block text-gray-700 text-sm font-bold mb-2">Filtrar por fornecedor:</label>
-                        <select id="shopping-list-supplier-filter" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white supplier-select" size="5">
+                        <select id="shopping-list-supplier-filter" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white supplier-select" size="${slSelectSize}">
                             <option value="TODOS">Todos os fornecedores</option>
                             ${appState.suppliers.map(supplier => `<option value="${escapeHtml(supplier.nome)}">${escapeHtml(supplier.nome)}</option>`).join('')}
                         </select>
