@@ -25,7 +25,8 @@
         }
         /* Estilos para select de fornecedores com barra de rolagem */
         .supplier-select {
-            max-height: 120px;
+            /* Allow the element height to expand with the number of options */
+            max-height: none;
             overflow-y: auto;
         }
         /* Estilos para a área de impressão com reset para evitar conflitos */
@@ -130,11 +131,6 @@
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Produto ao Estoque</h2>
                         <form id="add-item-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input type="text" id="product-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-              <select id="product-supplier" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white supplier-select" required>
-                                <option value="">Selecione um fornecedor</option>
-                            </select>
-                            <input type="number" id="product-quantity" placeholder="Qtd. Atual" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
-                            <input type="number" id="product-min" placeholder="Qtd. Mínima" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any">
                              <input type="number" id="product-ideal" placeholder="Qtd. Ideal" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any">
                             <select id="product-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
                                 <option>un</option> <option>kg</option> <option>g</option> <option>lt</option> <option>ml</option>
@@ -145,7 +141,6 @@
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-lg font-semibold text-gray-700">Itens no Estoque</h2>
-              <select id="supplier-filter" class="supplier-select shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm"></select>
                         </div>
                         <div id="stock-list" class="space-y-3"></div>
                     </div>
@@ -211,7 +206,6 @@
         <div id="message-container" class="fixed top-5 right-5 text-sm font-bold z-50"></div>
 
     </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -388,27 +382,29 @@
             });
         }
 
-        function updateSupplierFilter() {
-            supplierFilter.innerHTML = `<option value="TODOS">TODOS</option>`;
-            appState.suppliers.forEach(supplier => {
-                const option = document.createElement("option");
-                option.value = supplier.nome;
-                option.textContent = supplier.nome;
-                supplierFilter.appendChild(option);
-            });
-        }
+       function updateSupplierFilter() {
+           supplierFilter.innerHTML = `<option value="TODOS">TODOS</option>`;
+           appState.suppliers.forEach(supplier => {
+               const option = document.createElement("option");
+               option.value = supplier.nome;
+               option.textContent = supplier.nome;
+               supplierFilter.appendChild(option);
+           });
+            supplierFilter.size = Math.min(appState.suppliers.length + 1, 5);
+       }
 
-        function renderSupplierSelect() {
-            const productSupplierSelect = document.getElementById('product-supplier');
-            if (!productSupplierSelect) return;
-            
-            const sortedSuppliers = [...appState.suppliers].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-            
-            productSupplierSelect.innerHTML = `
-                <option value="">Selecione um fornecedor</option>
-                ${sortedSuppliers.map(supplier => `<option value="${escapeHtml(supplier.nome)}">${escapeHtml(supplier.nome)}</option>`).join('')}
-            `;
-        }
+       function renderSupplierSelect() {
+           const productSupplierSelect = document.getElementById('product-supplier');
+           if (!productSupplierSelect) return;
+
+           const sortedSuppliers = [...appState.suppliers].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+
+           productSupplierSelect.innerHTML = `
+               <option value="">Selecione um fornecedor</option>
+               ${sortedSuppliers.map(supplier => `<option value="${escapeHtml(supplier.nome)}">${escapeHtml(supplier.nome)}</option>`).join('')}
+           `;
+            productSupplierSelect.size = Math.min(appState.suppliers.length + 1, 5);
+       }
 
         // Função para escutar mudanças nos dados do Firebase
         function listenToDataChanges() {
@@ -557,13 +553,14 @@
         function generateShoppingList() {
             reportDisplayArea.classList.remove('hidden');
             reportDisplayArea.classList.add('interactive-list');
+            const slSelectSize = Math.min(appState.suppliers.length + 1, 5);
             reportDisplayArea.innerHTML = `
                 <div class="p-6">
                     <h2 class="text-lg font-semibold mb-4 text-gray-700">Lista de Compras</h2>
                     <p class="text-sm text-gray-500 mb-4">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
                     <div class="mb-4">
                         <label for="shopping-list-supplier-filter" class="block text-gray-700 text-sm font-bold mb-2">Filtrar por fornecedor:</label>
-            <select id="shopping-list-supplier-filter" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white supplier-select">
+
                             <option value="TODOS">Todos os fornecedores</option>
                             ${appState.suppliers.map(supplier => `<option value="${escapeHtml(supplier.nome)}">${escapeHtml(supplier.nome)}</option>`).join('')}
                         </select>
