@@ -563,7 +563,7 @@
                     <p class="text-sm text-gray-500 mb-4">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
                     <div class="mb-4">
                         <label for="shopping-list-supplier-filter" class="block text-gray-700 text-sm font-bold mb-2">Filtrar por fornecedor:</label>
-                        <select id="shopping-list-supplier-filter" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
+                        <select id="shopping-list-supplier-filter" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white supplier-select">
                             <option value="TODOS">Todos os fornecedores</option>
                             ${appState.suppliers.map(supplier => `<option value="${escapeHtml(supplier.nome)}">${escapeHtml(supplier.nome)}</option>`).join('')}
                         </select>
