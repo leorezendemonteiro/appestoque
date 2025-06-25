@@ -149,6 +149,10 @@
                     
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Gerenciar Fornecedores</h2>
+                        <form id="add-supplier-form" class="flex flex-col sm:flex-row gap-4 mb-4">
+                            <input type="text" id="supplier-name" placeholder="Nome do Fornecedor" class="flex-1 shadow appearance-none border rounded py-2 px-3 text-gray-700" required>
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Adicionar</button>
+                        </form>
                         <div class="border-t pt-4">
                             <h3 class="text-md font-medium mb-3 text-gray-600">Fornecedores Cadastrados</h3>
                             <div id="suppliers-list" class="space-y-2"></div>
@@ -248,6 +252,7 @@
         const signupForm = document.getElementById("signup-form");
         const addItemForm = document.getElementById("add-item-form");
         const addProductionForm = document.getElementById("add-production-form");
+        const addSupplierForm = document.getElementById("add-supplier-form");
         const showSignupBtn = document.getElementById("show-signup-btn");
         const showLoginBtn = document.getElementById("show-login-btn");
         const logoutBtn = document.getElementById("logout-btn");
@@ -978,6 +983,28 @@
             } catch (error) {
                 console.error('Erro ao adicionar item de produção:', error);
                 showMessage('Erro ao adicionar item de produção', true);
+            }
+        });
+
+        addSupplierForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('supplier-name').value.trim();
+            if (!name) {
+                showMessage('Nome do fornecedor é obrigatório', true);
+                return;
+            }
+            try {
+                const docRef = await addDoc(collection(db, 'fornecedores'), { nome: name });
+                showMessage('Fornecedor adicionado com sucesso!');
+                addSupplierForm.reset();
+                appState.suppliers.push({ id: docRef.id, nome: name });
+                renderSuppliersList();
+                renderSupplierSelect();
+                updateSupplierFilter();
+                updateShoppingListSupplierFilter();
+            } catch (error) {
+                console.error('Erro ao adicionar fornecedor:', error);
+                showMessage('Erro ao adicionar fornecedor', true);
             }
         });
 
