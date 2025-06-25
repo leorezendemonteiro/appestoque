@@ -414,7 +414,12 @@
 
            slFilter.innerHTML = `
                 <option value="TODOS">Todos os fornecedores</option>
-                ${appState.suppliers.map(supplier => `<option value="${escapeHtml(supplier.nome)}">${escapeHtml(supplier.nome)}</option>`).join('')}
+                ${appState.suppliers
+                    .map(s => {
+                        const label = escapeHtml(s.nome || s.name || '');
+                        return `<option value="${label}">${label}</option>`;
+                    })
+                    .join('')}
            `;
            slFilter.size = Math.min(appState.suppliers.length + 1, 5);
        }
