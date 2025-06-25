@@ -16,6 +16,11 @@ pnpm-debug.log*
 .env
 .env.*
 
+# Firebase CLI files
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+
 # Coverage directory
 coverage/
 
