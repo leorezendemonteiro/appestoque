@@ -226,14 +226,15 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        let appState = { 
-            stockItems: [], 
-            productionItems: [], 
-            suppliers: [], 
-            currentSupplierFilter: 'TODOS', 
-            currentSectorFilter: 'TODOS', 
-            unsubscribeStock: null, 
-            unsubscribeProduction: null, 
+        let appState = {
+            stockItems: [],
+            productionItems: [],
+            suppliers: [],
+            suppliersLoaded: false,
+            currentSupplierFilter: 'TODOS',
+            currentSectorFilter: 'TODOS',
+            unsubscribeStock: null,
+            unsubscribeProduction: null,
             unsubscribeSuppliers: null,
             shoppingListItems: []
         };
@@ -442,6 +443,7 @@
             const suppliersCollectionRef = collection(db, "fornecedores");
                 appState.unsubscribeSuppliers = onSnapshot(suppliersCollectionRef, (snapshot) => {
                     appState.suppliers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    appState.suppliersLoaded = true;
                     renderSuppliersList();
                     renderSupplierSelect(); // Garante que o select de fornecedores seja atualizado
                     updateSupplierFilter(); // Atualiza filtro de fornecedores na lista de estoque
@@ -592,7 +594,9 @@
            const shoppingListSupplierFilter = document.getElementById('shopping-list-supplier-filter');
            const shoppingListItemsContainer = document.getElementById('shopping-list-items-container');
            const generateShoppingListPdfBtn = document.getElementById('generate-shopping-list-pdf-btn');
-           updateShoppingListSupplierFilter();
+           if (appState.suppliersLoaded) {
+               updateShoppingListSupplierFilter();
+           }
 
             const renderShoppingListItems = () => {
                 shoppingListItemsContainer.innerHTML = '';
@@ -862,6 +866,7 @@
                 if (appState.unsubscribeStock) appState.unsubscribeStock();
                 if (appState.unsubscribeProduction) appState.unsubscribeProduction();
                 if (appState.unsubscribeSuppliers) appState.unsubscribeSuppliers();
+                appState.suppliersLoaded = false;
             }
         });
 
