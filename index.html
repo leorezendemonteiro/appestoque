@@ -312,31 +312,50 @@
         // Render Functions
         function renderStockList() {
             stockListDiv.innerHTML = "";
-            const filteredItems = appState.stockItems.filter(item => 
-                appState.currentSupplierFilter === 'TODOS' || item.fornecedor === appState.currentSupplierFilter
-            );
+            const filteredItems = appState.stockItems
+                .filter(item =>
+                    appState.currentSupplierFilter === 'TODOS' || item.fornecedor === appState.currentSupplierFilter
+                )
+                .sort((a, b) => (a.item || '').localeCompare(b.item || ''));
+
             if (filteredItems.length === 0) {
                 stockListDiv.innerHTML = "<p class=\"text-gray-500\">Nenhum item no estoque para este fornecedor.</p>";
                 return;
             }
+
+            const groupedBySupplier = {};
             filteredItems.forEach(item => {
-                const itemDiv = document.createElement("div");
-                itemDiv.className = "bg-gray-50 p-3 rounded-lg shadow-sm flex items-center justify-between";
-                itemDiv.innerHTML = `
-                    <div>
-                        <p class="font-semibold text-gray-800">${escapeHtml(item.item || '')}</p>
-                        <p class="text-sm text-gray-600">Fornecedor: ${escapeHtml(item.fornecedor || '')}</p>
-                        <p class="text-sm text-gray-600">Atual: ${item.atual} ${escapeHtml(item.unidade || '')}</p>
-                        <p class="text-sm text-gray-600">Mínima: ${item.minimo} ${escapeHtml(item.unidade || '')}</p>
-                        <p class="text-sm text-gray-600">Ideal: ${item.ideal} ${escapeHtml(item.unidade || '')}</p>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <input type="number" data-item-id="${item.id}" data-update-type="stock" value="${item.atual}" step="any" class="w-24 p-1 border rounded text-center text-sm">
-                        <button onclick="updateStockItem('${item.id}')" class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded">Atualizar</button>
-                        <button onclick="deleteStockItem('${item.id}')" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>
-                    </div>
-                `;
-                stockListDiv.appendChild(itemDiv);
+                if (!groupedBySupplier[item.fornecedor]) {
+                    groupedBySupplier[item.fornecedor] = [];
+                }
+                groupedBySupplier[item.fornecedor].push(item);
+            });
+
+            Object.keys(groupedBySupplier).sort().forEach(supplier => {
+                const supplierHeader = document.createElement('h3');
+                supplierHeader.className = 'text-md font-medium text-gray-700 mt-4 mb-2';
+                supplierHeader.textContent = `Fornecedor: ${supplier}`;
+                stockListDiv.appendChild(supplierHeader);
+
+                groupedBySupplier[supplier].forEach(item => {
+                    const itemDiv = document.createElement("div");
+                    itemDiv.className = "bg-gray-50 p-3 rounded-lg shadow-sm flex items-center justify-between";
+                    itemDiv.innerHTML = `
+                        <div>
+                            <p class="font-semibold text-gray-800">${escapeHtml(item.item || '')}</p>
+                            <p class="text-sm text-gray-600">Fornecedor: ${escapeHtml(item.fornecedor || '')}</p>
+                            <p class="text-sm text-gray-600">Atual: ${item.atual} ${escapeHtml(item.unidade || '')}</p>
+                            <p class="text-sm text-gray-600">Mínima: ${item.minimo} ${escapeHtml(item.unidade || '')}</p>
+                            <p class="text-sm text-gray-600">Ideal: ${item.ideal} ${escapeHtml(item.unidade || '')}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" data-item-id="${item.id}" data-update-type="stock" value="${item.atual}" step="any" class="w-24 p-1 border rounded text-center text-sm">
+                            <button onclick="updateStockItem('${item.id}')" class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded">Atualizar</button>
+                            <button onclick="deleteStockItem('${item.id}')" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>
+                        </div>
+                    `;
+                    stockListDiv.appendChild(itemDiv);
+                });
             });
         }
 
