@@ -25,8 +25,8 @@
         }
         /* Estilos para select de fornecedores com barra de rolagem */
         .supplier-select {
-            /* Allow the element height to expand with the number of options */
-            max-height: none;
+            /* Mantém a mesma altura que outros selects e mostra rolagem quando aberto */
+            max-height: 200px;
             overflow-y: auto;
         }
         /* Estilos para a área de impressão com reset para evitar conflitos */
@@ -131,7 +131,7 @@
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Produto ao Estoque</h2>
                         <form id="add-item-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input type="text" id="product-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                            <select id="product-supplier" class="supplier-select shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white" size="5"></select>
+                            <select id="product-supplier" class="supplier-select shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white" size="1"></select>
                             <input type="number" id="product-quantity" placeholder="Qtd. Atual" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
                             <input type="number" id="product-min" placeholder="Qtd. Mínima" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any">
                             <input type="number" id="product-ideal" placeholder="Qtd. Ideal" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any">
@@ -144,7 +144,7 @@
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-lg font-semibold text-gray-700">Itens no Estoque</h2>
-                            <select id="supplier-filter" class="supplier-select shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm" size="5"></select>
+                            <select id="supplier-filter" class="supplier-select shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm" size="1"></select>
                         </div>
                         <div id="stock-list" class="space-y-3"></div>
                     </div>
@@ -421,7 +421,7 @@
                option.textContent = nome;
                supplierFilter.appendChild(option);
            });
-            supplierFilter.size = Math.min(appState.suppliers.length + 1, 5);
+            supplierFilter.size = 1;
        }
 
        function renderSupplierSelect() {
@@ -437,7 +437,7 @@
                    return `<option value="${escapeHtml(nome)}">${escapeHtml(nome)}</option>`;
                }).join('')}
            `;
-           productSupplierSelect.size = Math.min(appState.suppliers.length + 1, 5);
+           productSupplierSelect.size = 1;
        }
 
        function updateShoppingListSupplierFilter() {
@@ -453,7 +453,7 @@
                     })
                     .join('')}
            `;
-           slFilter.size = Math.min(appState.suppliers.length + 1, 5);
+           slFilter.size = 1;
        }
 
         // Função para escutar mudanças nos dados do Firebase
@@ -608,7 +608,7 @@
         function generateShoppingList() {
             reportDisplayArea.classList.remove('hidden');
             reportDisplayArea.classList.add('interactive-list');
-            const slSelectSize = Math.min(appState.suppliers.length + 1, 5);
+            const slSelectSize = 1;
            reportDisplayArea.innerHTML = `
                 <div class="p-6">
                     <h2 class="text-lg font-semibold mb-4 text-gray-700">Lista de Compras</h2>
