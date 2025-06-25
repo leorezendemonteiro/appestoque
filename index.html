@@ -401,10 +401,11 @@
                 return;
             }
             appState.suppliers.forEach(supplier => {
+                const nome = supplier.nome || supplier.name || "";
                 const supplierDiv = document.createElement("div");
                 supplierDiv.className = "bg-gray-50 p-2 rounded-lg shadow-sm flex items-center justify-between";
                 supplierDiv.innerHTML = `
-                    <p class="font-semibold text-gray-800">${escapeHtml(supplier.nome)}</p>
+                    <p class="font-semibold text-gray-800">${escapeHtml(nome)}</p>
                     <button onclick="deleteSupplier('${supplier.id}')" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>
                 `;
                 suppliersListDiv.appendChild(supplierDiv);
@@ -414,9 +415,10 @@
        function updateSupplierFilter() {
            supplierFilter.innerHTML = `<option value="TODOS">TODOS</option>`;
            appState.suppliers.forEach(supplier => {
+               const nome = supplier.nome || supplier.name || "";
                const option = document.createElement("option");
-               option.value = supplier.nome;
-               option.textContent = supplier.nome;
+               option.value = nome;
+               option.textContent = nome;
                supplierFilter.appendChild(option);
            });
             supplierFilter.size = Math.min(appState.suppliers.length + 1, 5);
@@ -426,11 +428,14 @@
            const productSupplierSelect = document.getElementById('product-supplier');
            if (!productSupplierSelect) return;
 
-           const sortedSuppliers = [...appState.suppliers].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+           const sortedSuppliers = [...appState.suppliers].sort((a, b) => (a.nome || a.name || '').localeCompare(b.nome || b.name || ''));
 
            productSupplierSelect.innerHTML = `
                <option value="">Selecione um fornecedor</option>
-               ${sortedSuppliers.map(supplier => `<option value="${escapeHtml(supplier.nome)}">${escapeHtml(supplier.nome)}</option>`).join('')}
+               ${sortedSuppliers.map(supplier => {
+                   const nome = supplier.nome || supplier.name || "";
+                   return `<option value="${escapeHtml(nome)}">${escapeHtml(nome)}</option>`;
+               }).join('')}
            `;
            productSupplierSelect.size = Math.min(appState.suppliers.length + 1, 5);
        }
@@ -468,7 +473,10 @@
 
             const suppliersCollectionRef = collection(db, "fornecedores");
                 appState.unsubscribeSuppliers = onSnapshot(suppliersCollectionRef, (snapshot) => {
-                    appState.suppliers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    appState.suppliers = snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return { id: doc.id, nome: data.nome || data.name || "" };
+                    });
                     appState.suppliersLoaded = true;
                     renderSuppliersList();
                     renderSupplierSelect(); // Garante que o select de fornecedores seja atualizado
@@ -609,7 +617,10 @@
                         <label for="shopping-list-supplier-filter" class="block text-gray-700 text-sm font-bold mb-2">Filtrar por fornecedor:</label>
                         <select id="shopping-list-supplier-filter" class="supplier-select shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white" size="${slSelectSize}">
                             <option value="TODOS">Todos os fornecedores</option>
-                            ${appState.suppliers.map(supplier => `<option value="${escapeHtml(supplier.nome)}">${escapeHtml(supplier.nome)}</option>`).join('')}
+                            ${appState.suppliers.map(supplier => {
+                                const nome = supplier.nome || supplier.name || "";
+                                return `<option value="${escapeHtml(nome)}">${escapeHtml(nome)}</option>`;
+                            }).join('')}
                         </select>
                     </div>
                     <button id="generate-shopping-list-pdf-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4">Gerar Lista de Compras PDF</button>
