@@ -4,43 +4,44 @@ This project is a web based stock and production management tool built with Fire
 
 ## Getting started
 
-1. **Clone the repository**
+Follow these steps to run the application locally.
 
-   ```bash
-   git clone https://github.com/leorezendemonteiro/appestoque.git
-   cd appestoque
-   ```
+### 1. Clone the repository
 
-2. **Configure Firebase**
+```bash
+git clone https://github.com/leorezendemonteiro/appestoque.git
+cd appestoque
+```
 
-   Create a Firebase project and enable **Authentication** (Email/Password) and **Cloud Firestore**.
-   Open `index.html` and locate the block starting with `const firebaseConfig = {` inside the `<script type="module">` section near the bottom of the file.
-   Replace the sample credentials with your own:
+### 2. Configure Firebase
 
-   ```javascript
-   const firebaseConfig = {
-     apiKey: "YOUR_API_KEY",
-     authDomain: "YOUR_AUTH_DOMAIN",
-     projectId: "YOUR_PROJECT_ID",
-     storageBucket: "YOUR_STORAGE_BUCKET",
-     messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-     appId: "YOUR_APP_ID"
-   };
-   ```
+1. Create a Firebase project in the [Firebase console](https://console.firebase.google.com/).
+2. Enable **Authentication** using the **Email/Password** method.
+3. Enable **Cloud Firestore** and create the collections `estoque`, `producao` and `fornecedores`.
+4. Open `index.html` in a text editor and scroll near the end of the file to the `<script type="module">` block. Inside it you will find a section that begins with:
 
-   Your Firestore database should contain the collections `estoque`, `producao` and `fornecedores`.
+```javascript
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
+```
 
-3. **Serve the application locally**
+5. Replace each value with the credentials provided by Firebase.
 
-   Use any static web server to host `index.html`. For example:
+### 3. Serve `index.html` locally
 
-   ```bash
-   npx serve
-   ```
+Run any static web server from the project directory. One simple option is:
 
-   Open the printed local URL in your browser.
+```bash
+npx serve
+```
 
-Once served, the app requires no build step because all scripts are loaded from CDNs.
+The command prints a local URL (for example `http://localhost:3000`). Open that address in your browser to use the app. No build step is required because all scripts are loaded from CDNs.
 
 ## Usage
 
