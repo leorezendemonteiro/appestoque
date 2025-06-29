@@ -197,16 +197,17 @@
 
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Gerar Etiqueta de Produto</h2>
-                        <form id="etiqueta-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <input type="text" id="etiqueta-produto" placeholder="Produto" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                        <form id="etiqueta-form" class="flex flex-wrap gap-4">
+                            <select id="etiqueta-produto-select" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700"></select>
+                            <input type="text" id="etiqueta-produto-custom" placeholder="Digitar item personalizado" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 hidden">
                             <input type="date" id="etiqueta-producao" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
                             <input type="date" id="etiqueta-validade" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                            <div class="sm:col-span-2 flex items-center space-x-4">
+                            <div class="flex items-center space-x-4 w-full">
                                 <label class="flex items-center"><input type="radio" name="etiqueta-tipo" value="Resfriado" class="mr-1" checked>Resfriado</label>
                                 <label class="flex items-center"><input type="radio" name="etiqueta-tipo" value="Congelado" class="mr-1">Congelado</label>
                             </div>
                             <input type="number" id="etiqueta-quantidade" min="1" value="1" placeholder="Quantidade de Etiquetas" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                            <button type="submit" class="sm:col-span-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Gerar Etiqueta</button>
+                            <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Gerar Etiqueta</button>
                         </form>
                     </div>
 
@@ -392,7 +393,8 @@
         const stockListDiv = document.getElementById("stock-list");
         const productionListDiv = document.getElementById("production-list");
         const etiquetaForm = document.getElementById("etiqueta-form");
-        const etiquetaProdutoInput = document.getElementById("etiqueta-produto");
+        const etiquetaProdutoSelect = document.getElementById("etiqueta-produto-select");
+        const etiquetaProdutoCustom = document.getElementById("etiqueta-produto-custom");
         const etiquetaProducaoInput = document.getElementById("etiqueta-producao");
         const etiquetaValidadeInput = document.getElementById("etiqueta-validade");
         const etiquetaQuantidadeInput = document.getElementById("etiqueta-quantidade");
@@ -485,7 +487,10 @@
             return `${day}/${month}/${year}`;
         }
 
-        function formatDateISO(date){return date.toISOString().split("T")[0];}
+        function formatDateISO(date){
+            const [day, month, year] = new Date(date).toLocaleDateString('pt-BR').split('/');
+            return `${year}-${month}-${day}`;
+        }
 
         function getStockItemByName(name) {
             return appState.stockItems.find(it => (it.item || '') === name) || null;
@@ -770,6 +775,24 @@
            slFilter.size = 1;
        }
 
+       function updateEtiquetaProdutoSelect() {
+           const select = document.getElementById('etiqueta-produto-select');
+           if (!select) return;
+           const today = formatDateISO(new Date()).split(',')[0];
+           const todays = appState.productionItems.filter(it => {
+               const d = it.timestamp && it.timestamp.seconds ? formatDateISO(new Date(it.timestamp.seconds * 1000)).split(',')[0] : formatDateISO(new Date(it.timestamp)).split(',')[0];
+               return d === today;
+           });
+           const names = [...new Set(todays.map(it => it.item))].sort();
+           if (names.length === 0) {
+               select.innerHTML = '<option value="" disabled>Nenhum item lançado hoje na produção.</option>';
+           } else {
+               select.innerHTML = names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+           }
+           select.innerHTML += '<option value="CUSTOM">+ Digitar item personalizado</option>';
+           select.size = 1;
+       }
+
        function renderFichasList() {
            if (!fichasListDiv) return;
            fichasListDiv.innerHTML = '';
@@ -863,6 +886,7 @@
             appState.unsubscribeProduction = onSnapshot(productionCollectionRef, (snapshot) => {
                 appState.productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderProductionList();
+                updateEtiquetaProdutoSelect();
             }, (error) => console.error("Erro ao carregar produção:", error));
 
             const suppliersCollectionRef = collection(db, "fornecedores");
@@ -952,6 +976,7 @@
                     const row = [
                         it.item,
                         Number(it.atual || 0).toFixed(2),
+                        '',
                         it.unidade
                     ];
                     if(incluirPrecos){
@@ -963,21 +988,22 @@
                     return row;
                 });
 
-                const head = [['Item','Qtd. Atual','Unidade'].concat(incluirPrecos ? ['Preço Ref.','Total'] : [])];
+                const head = [['Item','Qtd. Atual','Qtd. Comprar','Unidade'].concat(incluirPrecos ? ['Preço Ref.','Total'] : [])];
                 doc.autoTable({
                     head,
                     body,
                     startY: 60,
-                    styles:{fontSize:11, lineHeight:1.3, cellPadding:6},
-                    headStyles:{fillColor:[204,204,204], textColor:0, fontStyle:'bold'},
+                    styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true},
+                    headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'},
                     bodyStyles:{fillColor:[255,255,255]},
-                    alternateRowStyles:{fillColor:[245,245,245]},
+                    alternateRowStyles:{fillColor:[242,242,242]},
                     columnStyles:{
-                        0:{cellWidth:51},
-                        1:{cellWidth:20,halign:'right'},
-                        2:{cellWidth:17,halign:'center'},
-                        3:{cellWidth:20,halign:'right'},
-                        4:{cellWidth:26,halign:'right'}
+                        0:{halign:'left'},
+                        1:{halign:'center'},
+                        2:{halign:'center'},
+                        3:{halign:'center'},
+                        4:{halign:'center'},
+                        5:{halign:'center'}
                     },
                     margin:{left:20,right:20}
                 });
@@ -1039,15 +1065,15 @@
                         head: [['Item produzido','Quantidade','Unidade','Observações']],
                         body,
                         startY: yPosition + 6,
-                        styles:{fontSize:11, lineHeight:1.3, cellPadding:6},
-                        headStyles:{fillColor:[204,204,204], textColor:0, fontStyle:'bold'},
+                        styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true},
+                        headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'},
                         bodyStyles:{fillColor:[255,255,255]},
-                        alternateRowStyles:{fillColor:[245,245,245]},
+                        alternateRowStyles:{fillColor:[242,242,242]},
                         columnStyles:{
-                            0:{cellWidth:51},
-                            1:{cellWidth:20,halign:'right'},
-                            2:{cellWidth:17,halign:'center'},
-                            3:{cellWidth:70}
+                            0:{halign:'left'},
+                            1:{halign:'center'},
+                            2:{halign:'center'},
+                            3:{halign:'center'}
                         },
                         margin:{left:20,right:20}
                     });
@@ -1231,15 +1257,15 @@
                     head: [['Item','Qtd. Atual','Qtd. Comprar','Unidade']],
                     body,
                     startY: 60,
-                    styles:{fontSize:11, lineHeight:1.3, cellPadding:6},
-                    headStyles:{fillColor:[204,204,204], textColor:0, fontStyle:'bold'},
+                    styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true},
+                    headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'},
                     bodyStyles:{fillColor:[255,255,255]},
-                    alternateRowStyles:{fillColor:[245,245,245]},
+                    alternateRowStyles:{fillColor:[242,242,242]},
                     columnStyles:{
-                        0:{cellWidth:51},
-                        1:{cellWidth:20,halign:'right'},
-                        2:{cellWidth:20,halign:'right'},
-                        3:{cellWidth:17,halign:'center'}
+                        0:{halign:'left'},
+                        1:{halign:'center'},
+                        2:{halign:'center'},
+                        3:{halign:'center'}
                     },
                     margin:{left:20,right:20}
                 });
@@ -1258,34 +1284,26 @@
         }
 
         function generateEtiquetas(produto, dataProd, validade, tipo, quantidade) {
-            const logoUrl = 'https://via.placeholder.com/100x40.png?text=LOGO';
-            const win = window.open('', '_blank');
-            const style = `
-                <style>
-                    body{font-family: Arial, sans-serif;}
-                    .etiqueta{width:280px;border:1px solid #ccc;padding:8px;margin:10px auto;text-align:center;font-size:14px;}
-                    .etiqueta img{display:block;margin:0 auto 4px;max-width:80px;}
-                    .print-btn{background:#10b981;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;}
-                </style>`;
-            let html = `<html><head><title>Etiquetas</title>${style}</head><body>`;
+            const { jsPDF } = window.jspdf;
+            const docPdf = new jsPDF({unit:'pt', format:'a6'});
+            docPdf.setFont('helvetica');
+            docPdf.setFontSize(12);
             for(let i=0;i<quantidade;i++){
+                if(i>0) docPdf.addPage();
                 const codigo = Math.random().toString(36).substring(2,8).toUpperCase();
-                html += `<div class="etiqueta">
-                            <img src="${logoUrl}" alt="Logo">
-                            <strong>Matturado</strong><br>
-                            Produto: ${escapeHtml(produto)}<br>
-                            Data de Produção: ${formatDateBR(dataProd)}<br>
-                            Validade: ${formatDateBR(validade)}<br>
-                            Tipo: ${tipo}<br>
-                            Código: ${codigo}
-                         </div>`;
+                docPdf.text('Matturado', 105, 20, {align:'center'});
+                docPdf.text(`Produto: ${produto}`, 20, 40);
+                docPdf.text(`Produção: ${formatDateBR(dataProd)}`, 20, 55);
+                if(validade) docPdf.text(`Validade: ${formatDateBR(validade)}`, 20, 70);
+                docPdf.text(`Tipo: ${tipo}`, 20, 85);
+                docPdf.text(`Código: ${codigo}`, 20, 100);
             }
-            html += `<div style="text-align:center;margin-top:20px;">
-                        <button class="print-btn" onclick="window.print()">Imprimir com App da Impressora</button>
-                        <p style="font-size:12px;margin-top:6px;">Caso esteja no celular, clique em compartilhar e envie para o app da impressora.</p>
-                     </div></body></html>`;
-            win.document.write(html);
-            win.document.close();
+            const pdfBlob = docPdf.output('blob');
+            const fileURL = URL.createObjectURL(pdfBlob);
+            window.location.href = fileURL;
+            if(navigator.share){
+                navigator.share({title:'Etiqueta de Produção', url:fileURL}).catch(()=>{});
+            }
         }
 
         // Global functions for inline event handlers
@@ -1432,17 +1450,17 @@
                 head: [['Ingrediente', 'Qtd. Líquida', 'FC', 'Qtd. Bruta', 'Unidade', 'Custo Total']],
                 body: tableBody,
                 startY: 50,
-                styles: { fontSize: 11, lineHeight: 1.3, cellPadding: 6 },
-                headStyles: { fillColor: [204,204,204], textColor: 0, fontStyle: 'bold' },
+                styles: { fontSize: 11, lineHeight: 1.1, cellPadding: 4, noWrap:true },
+                headStyles: { fillColor: [217,217,217], textColor: 0, fontStyle: 'bold' },
                 bodyStyles: { fillColor: [255,255,255] },
-                alternateRowStyles: { fillColor: [245,245,245] },
+                alternateRowStyles: { fillColor: [242,242,242] },
                 columnStyles: {
-                    0: { cellWidth: 51 },
-                    1: { cellWidth: 20, halign: 'right' },
-                    2: { cellWidth: 14, halign: 'center' },
-                    3: { cellWidth: 20, halign: 'right' },
-                    4: { cellWidth: 17, halign: 'center' },
-                    5: { cellWidth: 26, halign: 'right' }
+                    0: { halign: 'left' },
+                    1: { halign: 'center' },
+                    2: { halign: 'center' },
+                    3: { halign: 'center' },
+                    4: { halign: 'center' },
+                    5: { halign: 'center' }
                 }
             });
 
@@ -1479,6 +1497,7 @@
                 toggleViews('main-app-view');
                 switchTab('stock');
                 listenToDataChanges();
+                updateEtiquetaProdutoSelect();
             } else {
                 toggleViews('login-view');
                 // Limpar listeners quando usuário faz logout
@@ -1590,9 +1609,20 @@
 
         if(etiquetaForm){
             etiquetaProducaoInput.value = formatDateISO(new Date());
+            const updateCustomInput = () => {
+                if(etiquetaProdutoSelect.value === 'CUSTOM'){
+                    etiquetaProdutoCustom.classList.remove('hidden');
+                    etiquetaProdutoCustom.required = true;
+                } else {
+                    etiquetaProdutoCustom.classList.add('hidden');
+                    etiquetaProdutoCustom.required = false;
+                }
+            };
+            etiquetaProdutoSelect.addEventListener('change', updateCustomInput);
+            updateCustomInput();
             etiquetaForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                const produto = etiquetaProdutoInput.value.trim();
+                const produto = etiquetaProdutoSelect.value === 'CUSTOM' ? etiquetaProdutoCustom.value.trim() : etiquetaProdutoSelect.value;
                 if(!produto){ showMessage('Informe o produto', true); return; }
                 const dataProd = etiquetaProducaoInput.value || formatDateISO(new Date());
                 const validade = etiquetaValidadeInput.value || '';
