@@ -79,9 +79,8 @@
             max-height: 500px;
             overflow-y: auto;
             scroll-behavior: smooth;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            padding: 8px;
+            padding-right: 8px;
+            padding-left: 4px;
         }
     </style>
 </head>
@@ -360,12 +359,12 @@
                                     <button class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm" data-bgroup="parrilla">Produção Parrilla</button>
                                 </div>
                                 <div class="space-x-2">
-                                    <button id="balance-summary-btn" class="bg-gray-500 text-white px-2 py-1 rounded text-sm">Resumo</button>
-                                    <button id="apply-balance-btn" class="bg-green-600 text-white px-2 py-1 rounded text-sm" disabled>Aplicar Balanço</button>
-                                    <button id="balance-pdf-btn" class="bg-gray-600 text-white px-2 py-1 rounded text-sm">Exportar PDF</button>
+                                    <button id="balance-summary-btn" onClick="gerarResumoBalanco()" class="bg-gray-500 text-white px-2 py-1 rounded text-sm">Resumo</button>
+                                    <button id="apply-balance-btn" onClick="aplicarBalancoEstoque()" class="bg-green-600 text-white px-2 py-1 rounded text-sm" disabled>Aplicar Balanço</button>
+                                    <button id="balance-pdf-btn" onClick="exportarBalancoPDF()" class="bg-gray-600 text-white px-2 py-1 rounded text-sm">Exportar PDF</button>
                                 </div>
                             </div>
-                            <div id="balance-table-container" class="balanco-scroll"></div>
+                            <div id="balance-table-container"></div>
                             <div id="balance-summary" class="mt-4"></div>
                         </div>
                         <div id="balance-history-view" class="hidden">
@@ -1044,7 +1043,7 @@ function renderProductionList() {
                tbody.appendChild(tr);
            });
            const wrapper = document.createElement('div');
-           wrapper.className = 'balanco-scroll';
+           wrapper.className = tipo === 'fornecedor' ? 'scroll-container-fornecedor' : 'balanco-scroll';
            wrapper.appendChild(table);
            balanceTableContainer.appendChild(wrapper);
            checkBalanceInputs();
@@ -1652,6 +1651,22 @@ function renderProductionList() {
             docPdf.save(`balanco-${appState.currentBalanceGroup}-${todayISO}.pdf`);
         }
 
+        // Alias functions connected to the UI buttons
+        function gerarResumoBalanco() {
+            console.log('Resumo clicado');
+            showBalanceSummary();
+        }
+
+        async function aplicarBalancoEstoque() {
+            console.log('Aplicar Balanço clicado');
+            await applyBalance();
+        }
+
+        function exportarBalancoPDF() {
+            console.log('Exportar PDF clicado');
+            generateBalancePDF();
+        }
+
         function switchBalanceView(view){
             document.querySelectorAll('.balance-view-button').forEach(b => b.classList.remove('bg-blue-500','text-white'));
             const btn = document.querySelector(`.balance-view-button[data-view="${view}"]`);
@@ -2242,14 +2257,14 @@ function renderProductionList() {
                 if(rec) showHistoryDetails(rec);
             }
         });
-        if(balanceSummaryBtn) balanceSummaryBtn.addEventListener('click', showBalanceSummary);
+        if(balanceSummaryBtn) balanceSummaryBtn.addEventListener('click', gerarResumoBalanco);
         if(applyBalanceBtn) applyBalanceBtn.addEventListener('click', async () => {
             const confirmMsg = 'Deseja realmente atualizar o estoque com os valores do balanço?\nEssa ação substituirá os valores atuais pelos valores contados.';
             if(confirm(confirmMsg)) {
-                await applyBalance();
+                await aplicarBalancoEstoque();
             }
         });
-        if(balancePdfBtn) balancePdfBtn.addEventListener('click', generateBalancePDF);
+        if(balancePdfBtn) balancePdfBtn.addEventListener('click', exportarBalancoPDF);
 
         generateStockReportBtn.addEventListener('click', generateStockReportBySupplier);
         generateShoppingListBtn.addEventListener('click', generateShoppingList);
