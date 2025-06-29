@@ -972,23 +972,44 @@
                 doc.text(`Hora: ${horaBR}`, 20, 46);
 
                 const items = supplierGroups[supplier].sort((a,b)=>a.item.localeCompare(b.item));
-                const body = items.map(it => {
-                    const row = [
-                        it.item,
-                        Number(it.atual || 0).toFixed(2),
-                        '',
-                        it.unidade
-                    ];
-                    if(incluirPrecos){
+                let body = [];
+                if(incluirPrecos){
+                    body = items.map(it => {
                         const price = appState.fcValues[it.item]?.preco || 0;
                         const total = price * (it.atual || 0);
                         valorTotalEstoque += total;
-                        row.push(`R$ ${price.toFixed(2)}`, `R$ ${total.toFixed(2)}`);
-                    }
-                    return row;
-                });
+                        return [
+                            it.item,
+                            Number(it.atual || 0).toFixed(2),
+                            '',
+                            it.unidade,
+                            `R$ ${price.toFixed(2)}`,
+                            `R$ ${total.toFixed(2)}`
+                        ];
+                    });
+                } else {
+                    body = items.map(it => [
+                        it.item,
+                        Number(it.atual || 0).toFixed(2),
+                        it.unidade
+                    ]);
+                }
 
-                const head = [['Item','Qtd. Atual','Qtd. Comprar','Unidade'].concat(incluirPrecos ? ['Preço Ref.','Total'] : [])];
+                const head = incluirPrecos ?
+                    [['Item','Qtd. Atual','Qtd. Comprar','Unidade','Preço Ref.','Total']] :
+                    [['Item','Quantidade Atual','Unidade']];
+                const columnStyles = incluirPrecos ? {
+                        0:{halign:'left'},
+                        1:{halign:'center'},
+                        2:{halign:'center'},
+                        3:{halign:'center'},
+                        4:{halign:'center'},
+                        5:{halign:'center'}
+                    } : {
+                        0:{halign:'left', cellWidth:110},
+                        1:{halign:'center', cellWidth:30},
+                        2:{halign:'center', cellWidth:30}
+                    };
                 doc.autoTable({
                     head,
                     body,
@@ -997,14 +1018,7 @@
                     headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'},
                     bodyStyles:{fillColor:[255,255,255]},
                     alternateRowStyles:{fillColor:[242,242,242]},
-                    columnStyles:{
-                        0:{halign:'left'},
-                        1:{halign:'center'},
-                        2:{halign:'center'},
-                        3:{halign:'center'},
-                        4:{halign:'center'},
-                        5:{halign:'center'}
-                    },
+                    columnStyles,
                     margin:{left:20,right:20}
                 });
                 finalYPosition = doc.lastAutoTable.finalY + 10;
@@ -1285,18 +1299,30 @@
 
         function generateEtiquetas(produto, dataProd, validade, tipo, quantidade) {
             const { jsPDF } = window.jspdf;
-            const docPdf = new jsPDF({unit:'pt', format:'a6'});
-            docPdf.setFont('helvetica');
-            docPdf.setFontSize(12);
+            const docPdf = new jsPDF({orientation:'portrait', unit:'mm', format:[50,80]});
             for(let i=0;i<quantidade;i++){
                 if(i>0) docPdf.addPage();
                 const codigo = Math.random().toString(36).substring(2,8).toUpperCase();
-                docPdf.text('Matturado', 105, 20, {align:'center'});
-                docPdf.text(`Produto: ${produto}`, 20, 40);
-                docPdf.text(`Produção: ${formatDateBR(dataProd)}`, 20, 55);
-                if(validade) docPdf.text(`Validade: ${formatDateBR(validade)}`, 20, 70);
-                docPdf.text(`Tipo: ${tipo}`, 20, 85);
-                docPdf.text(`Código: ${codigo}`, 20, 100);
+                const pageWidth = docPdf.internal.pageSize.getWidth();
+                let y = 10;
+                docPdf.setFont('helvetica','normal');
+                docPdf.setFontSize(18);
+                docPdf.text('MATTURADO', pageWidth/2, y, {align:'center'});
+                docPdf.setFontSize(14);
+                y += 8;
+                docPdf.text(`Produto: ${produto}`, pageWidth/2, y, {align:'center'});
+                y += 8;
+                docPdf.text(`Produção: ${formatDateBR(dataProd)}`, pageWidth/2, y, {align:'center'});
+                y += 8;
+                if(validade){
+                    docPdf.text(`Validade: ${formatDateBR(validade)}`, pageWidth/2, y, {align:'center'});
+                    y += 8;
+                }
+                docPdf.text(`Tipo: ${tipo}`, pageWidth/2, y, {align:'center'});
+                y += 8;
+                docPdf.setFont(undefined, 'bold');
+                docPdf.text(`Código: ${codigo}`, pageWidth/2, y, {align:'center'});
+                docPdf.setFont(undefined, 'normal');
             }
             const pdfBlob = docPdf.output('blob');
             const fileURL = URL.createObjectURL(pdfBlob);
