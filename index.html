@@ -131,6 +131,7 @@
                         <button data-tab="fichas" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Ficha Técnica</button>
                         <button data-tab="fc" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Cadastro FC/Preços</button>
                         <button data-tab="cmv" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Cálculo do CMV</button>
+                        <button data-tab="balance" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Balanço de Estoque</button>
                     </nav>
                 </div>
             </div>
@@ -326,7 +327,23 @@
                             <button id="importar-cmv-btn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Importar este CMV para Fichas Técnicas</button>
                             <button id="mostrar-manual-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Inserir CMV manual</button>
                         </div>
-                        <div id="cmv-results" class="mt-4 space-y-1 text-gray-700"></div>
+                    <div id="cmv-results" class="mt-4 space-y-1 text-gray-700"></div>
+                    </div>
+                </div>
+                <div id="tab-balance" class="tab-content space-y-8">
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <div class="flex space-x-2 mb-4">
+                            <button data-bgroup="fornecedor" class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm">Por Fornecedor</button>
+                            <button data-bgroup="cozinha" class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm">Produção Cozinha</button>
+                            <button data-bgroup="parrilla" class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm">Produção Parrilla</button>
+                        </div>
+                        <div id="balance-table-container"></div>
+                        <div class="flex flex-wrap gap-2 mt-4">
+                            <button id="balance-summary-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Ver Resumo de Consumo Semanal</button>
+                            <button id="apply-balance-btn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Atualizar Estoque com o Balanço Real</button>
+                            <button id="balance-pdf-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Gerar PDF do Balanço</button>
+                        </div>
+                        <div id="balance-summary" class="mt-4"></div>
                     </div>
                 </div>
             </div>
@@ -374,7 +391,8 @@
             currentCMV: 0,
             unsubscribeCMV: null,
             fcValues: {},
-            unsubscribeFC: null
+            unsubscribeFC: null,
+            currentBalanceGroup: 'fornecedor'
         };
 
         const loginView = document.getElementById("login-view");
@@ -439,6 +457,11 @@
         const importarCmvBtn = document.getElementById("importar-cmv-btn");
         const mostrarManualBtn = document.getElementById("mostrar-manual-btn");
         const cmvResultsDiv = document.getElementById("cmv-results");
+        const balanceTableContainer = document.getElementById("balance-table-container");
+        const balanceSummaryBtn = document.getElementById("balance-summary-btn");
+        const applyBalanceBtn = document.getElementById("apply-balance-btn");
+        const balanceSummaryDiv = document.getElementById("balance-summary");
+        const balancePdfBtn = document.getElementById("balance-pdf-btn");
 
         // Helper Functions
         function showMessage(msg, isError = false) {
@@ -892,6 +915,72 @@ function renderProductionList() {
                    .join('');
        }
 
+       function renderBalanceTable(tipo = appState.currentBalanceGroup) {
+           appState.currentBalanceGroup = tipo;
+           if(!balanceTableContainer) return;
+           balanceTableContainer.innerHTML = '';
+           let items = [];
+           if (tipo === 'fornecedor') {
+               items = appState.stockItems.map(it => ({
+                   id: it.id,
+                   nome: it.item,
+                   unidade: it.unidade,
+                   quantidade: it.quantidadeAtual,
+                   tipo: 'fornecedor'
+               }));
+           } else {
+               const sector = tipo === 'cozinha' ? 'COZINHA' : 'PARRILLA';
+               items = appState.productionItems
+                   .filter(it => it.setor === sector)
+                   .map(it => ({
+                       id: it.id,
+                       nome: it.item,
+                       unidade: it.unidade,
+                       quantidade: it.quantidade,
+                       tipo
+                   }));
+           }
+           if(items.length === 0){
+               balanceTableContainer.innerHTML = '<p class="text-gray-500">Nenhum item encontrado.</p>';
+               return;
+           }
+           const table = document.createElement('table');
+           table.className = 'min-w-full divide-y divide-gray-200 text-sm';
+           table.innerHTML = `<thead class="bg-gray-50"><tr>
+                   <th class="p-2 text-left">Item</th>
+                   <th class="p-2 text-center">Unidade</th>
+                   <th class="p-2 text-center">Estoque Atual</th>
+                   <th class="p-2 text-center">Contagem Real</th>
+                   <th class="p-2 text-center">Diferença</th>
+                   <th class="p-2 text-center">Justificativa</th>
+               </tr></thead><tbody></tbody>`;
+           const tbody = table.querySelector('tbody');
+           items.sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(it => {
+               const tr = document.createElement('tr');
+               tr.className = 'balance-row';
+               tr.dataset.id = it.id;
+               tr.dataset.tipo = it.tipo;
+               tr.dataset.name = it.nome;
+               tr.dataset.unit = it.unidade || '';
+               tr.dataset.current = it.quantidade || 0;
+               tr.innerHTML = `
+                   <td class="p-2">${escapeHtml(it.nome || '')}</td>
+                   <td class="p-2 text-center">${escapeHtml(it.unidade || '')}</td>
+                   <td class="p-2 text-center">${Number(it.quantidade || 0).toFixed(2)}</td>
+                   <td class="p-2 text-center"><input type="number" step="any" class="contagem-input w-24 p-1 border rounded text-center"></td>
+                   <td class="p-2 text-center diferenca-cell">0</td>
+                   <td class="p-2 text-center"><input type="text" class="justificativa-input p-1 border rounded w-full"></td>`;
+               const input = tr.querySelector('.contagem-input');
+               const diffCell = tr.querySelector('.diferenca-cell');
+               input.addEventListener('input', () => {
+                   const val = parseFloat(input.value) || 0;
+                   diffCell.textContent = (Number(it.quantidade || 0) - val).toFixed(2);
+               });
+               tbody.appendChild(tr);
+           });
+           balanceTableContainer.appendChild(table);
+       }
+
        function calcularCMV() {
            const ei = parseFloat(document.getElementById('cmv-estoque-inicial').value) || 0;
            const compras = parseFloat(document.getElementById('cmv-compras').value) || 0;
@@ -926,6 +1015,7 @@ function renderProductionList() {
                 updateSupplierFilter();
                 renderStockList();
                 renderFcIngredienteSelect();
+                renderBalanceTable();
             }, (error) => console.error("Erro ao carregar estoque:", error));
 
             const productionCollectionRef = collection(db, "producao");
@@ -933,6 +1023,7 @@ function renderProductionList() {
                 appState.productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderProductionList();
                 updateEtiquetaProdutoSelect();
+                renderBalanceTable();
             }, (error) => console.error("Erro ao carregar produção:", error));
 
             const suppliersCollectionRef = collection(db, "fornecedores");
@@ -1374,6 +1465,101 @@ function renderProductionList() {
             if(navigator.share){
                 navigator.share({title:'Etiqueta de Produção', url:fileURL}).catch(()=>{});
             }
+        }
+
+        function showBalanceSummary() {
+            if(!balanceSummaryDiv) return;
+            const rows = Array.from(document.querySelectorAll('.balance-row'));
+            if (rows.length === 0) { balanceSummaryDiv.innerHTML = '<p class="text-gray-500">Nenhum item.</p>'; return; }
+            const table = document.createElement('table');
+            table.className = 'min-w-full divide-y divide-gray-200 text-sm';
+            table.innerHTML = `<thead class="bg-gray-50"><tr>
+                <th class="p-2 text-left">Item</th>
+                <th class="p-2 text-center">Estoque Anterior</th>
+                <th class="p-2 text-center">Contado</th>
+                <th class="p-2 text-center">Diferença</th>
+            </tr></thead><tbody></tbody>`;
+            const tbody = table.querySelector('tbody');
+            rows.forEach(r => {
+                const nome = r.dataset.name;
+                const current = parseFloat(r.dataset.current || '0');
+                const cont = parseFloat(r.querySelector('.contagem-input').value) || 0;
+                const diff = current - cont;
+                const tr = document.createElement('tr');
+                const diffClass = diff > 0 ? 'text-red-600' : diff === 0 ? 'text-green-600' : 'text-yellow-600';
+                tr.innerHTML = `
+                    <td class="p-2">${escapeHtml(nome)}</td>
+                    <td class="p-2 text-center">${current.toFixed(2)}</td>
+                    <td class="p-2 text-center">${cont.toFixed(2)}</td>
+                    <td class="p-2 text-center ${diffClass}">${diff.toFixed(2)}</td>`;
+                tbody.appendChild(tr);
+            });
+            balanceSummaryDiv.innerHTML = '';
+            balanceSummaryDiv.appendChild(table);
+        }
+
+        async function applyBalance() {
+            const rows = Array.from(document.querySelectorAll('.balance-row'));
+            if(rows.length === 0) return;
+            const groups = { fornecedor: [], cozinha: [], parrilla: [] };
+            for(const r of rows){
+                const tipo = r.dataset.tipo;
+                const id = r.dataset.id;
+                const nome = r.dataset.name;
+                const unidade = r.dataset.unit || '';
+                const current = parseFloat(r.dataset.current || '0');
+                const cont = parseFloat(r.querySelector('.contagem-input').value) || 0;
+                const diff = current - cont;
+                const just = r.querySelector('.justificativa-input').value.trim();
+                groups[tipo].push({ nome, unidade, quantidadeSistema: current, contagemReal: cont, diferenca: diff, justificativa: just, atualizado: true, dataHora: new Date() });
+                try{
+                    if(tipo === 'fornecedor'){
+                        await updateDoc(doc(db,'estoque',id), { quantidadeAtual: cont, origem:'balanco', ultimaAtualizacao:new Date() });
+                    }else{
+                        await updateDoc(doc(db,'producao',id), { quantidade: cont, origem:'balanco', timestamp:new Date() });
+                    }
+                }catch(e){ console.error('Erro ao atualizar', e); }
+            }
+            const dateKey = formatDateISO(new Date());
+            for(const t of Object.keys(groups)){
+                if(groups[t].length>0){
+                    await setDoc(doc(db,'balanco',dateKey,t), { tipo:t, itens: groups[t] });
+                }
+            }
+            showMessage('Balanço atualizado!');
+        }
+
+        function generateBalancePDF() {
+            const rows = Array.from(document.querySelectorAll('.balance-row'));
+            if(rows.length === 0) { showMessage('Nenhum item encontrado', true); return; }
+            const { jsPDF } = window.jspdf;
+            const docPdf = new jsPDF();
+            const todayISO = formatDateISO(new Date());
+            const dataBR = new Date().toLocaleDateString('pt-BR');
+            const horaBR = new Date().toLocaleTimeString('pt-BR');
+            const label = appState.currentBalanceGroup === 'fornecedor' ? 'Por Fornecedor' : (appState.currentBalanceGroup === 'cozinha' ? 'Produção Cozinha' : 'Produção Parrilla');
+            docPdf.setFont('helvetica');
+            docPdf.setFontSize(16); docPdf.text(`Balanço de Estoque - ${label}`,20,20);
+            docPdf.setFontSize(11); docPdf.text(`Data: ${dataBR}`,20,30); docPdf.text(`Hora: ${horaBR}`,20,36);
+            const body = rows.map(r => {
+                const nome = r.dataset.name;
+                const current = parseFloat(r.dataset.current||'0');
+                const cont = parseFloat(r.querySelector('.contagem-input').value)||0;
+                const diff = current - cont;
+                const just = r.querySelector('.justificativa-input').value || '';
+                return [nome, current.toFixed(2), cont.toFixed(2), diff.toFixed(2), just];
+            });
+            docPdf.autoTable({
+                head: [['Item','Sistema','Contado','Diferença','Justificativa']],
+                body,
+                startY: 50,
+                styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true},
+                headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'},
+                alternateRowStyles:{fillColor:[242,242,242]},
+                margin:{left:20,right:20}
+            });
+            docPdf.setFontSize(10); docPdf.text(`Gerado em ${dataBR}`,20,285); docPdf.text('App Estoque',190,285,{align:'right'});
+            docPdf.save(`balanco-${appState.currentBalanceGroup}-${todayISO}.pdf`);
         }
 
         // Global functions for inline event handlers
@@ -1862,7 +2048,7 @@ function renderProductionList() {
             if (e.target.classList.contains('tab-button')) {
                 const tabName = e.target.getAttribute('data-tab');
                 switchTab(tabName);
-                
+
                 // Esconder área de relatórios quando mudar de aba
                 if (tabName !== 'reports') {
                     reportDisplayArea.classList.add('hidden');
@@ -1870,6 +2056,17 @@ function renderProductionList() {
                 }
             }
         });
+
+        document.querySelectorAll('.balance-group-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.balance-group-button').forEach(b => b.classList.remove('bg-blue-500','text-white'));
+                btn.classList.add('bg-blue-500','text-white');
+                renderBalanceTable(btn.dataset.bgroup);
+            });
+        });
+        if(balanceSummaryBtn) balanceSummaryBtn.addEventListener('click', showBalanceSummary);
+        if(applyBalanceBtn) applyBalanceBtn.addEventListener('click', applyBalance);
+        if(balancePdfBtn) balancePdfBtn.addEventListener('click', generateBalancePDF);
 
         generateStockReportBtn.addEventListener('click', generateStockReportBySupplier);
         generateShoppingListBtn.addEventListener('click', generateShoppingList);
