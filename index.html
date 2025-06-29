@@ -140,6 +140,7 @@
                             <select id="product-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
                                 <option>un</option> <option>kg</option> <option>g</option> <option>lt</option> <option>ml</option>
                             </select>
+                            <input type="number" id="product-price" placeholder="Preço Unitário (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
                             <button type="submit" class="sm:col-span-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Adicionar</button>
                         </form>
                     </div>
@@ -234,12 +235,29 @@
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Ficha Técnica</h2>
                         <p class="text-sm text-gray-600 mb-2">CMV aplicado: <span id="current-cmv-display">0%</span></p>
-                        <form id="ficha-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                            <input type="text" id="ficha-nome" placeholder="Nome do Prato" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                            <input type="number" id="ficha-custo" placeholder="Custo de Produção (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                            <button type="submit" class="sm:col-span-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Adicionar</button>
+                        <form id="ficha-form" class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <input type="text" id="ficha-nome" placeholder="Nome do Prato" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                                <input type="text" id="ficha-categoria" placeholder="Categoria/Grupo" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                                <input type="number" id="ficha-rendimento" placeholder="Rendimento" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                                <input type="text" id="ficha-imagem" placeholder="URL da Imagem (opcional)" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-700 mb-2">Ingredientes</h3>
+                                <div id="ingredientes-container" class="space-y-2"></div>
+                                <button type="button" id="add-ingrediente-btn" class="mt-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-2 rounded">+ Adicionar ingrediente</button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <p>Custo total do prato: R$ <span id="custo-total-prato">0.00</span></p>
+                                <p>Custo por porção: R$ <span id="custo-por-porcao">0.00</span></p>
+                                <p>Preço sugerido: R$ <span id="preco-sugerido">0.00</span></p>
+                                <input type="number" id="preco-real" placeholder="Preço real praticado (opcional)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+                                <p>CMV real: <span id="cmv-real-display">0%</span></p>
+                                <p>Margem de lucro estimada: <span id="margem-lucro-display">0%</span></p>
+                            </div>
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Salvar Ficha Técnica</button>
                         </form>
-                        <div id="fichas-list" class="space-y-3"></div>
+                        <div id="fichas-list" class="space-y-3 mt-4"></div>
                     </div>
                 </div>
                 <div id="tab-cmv" class="tab-content space-y-8">
@@ -304,10 +322,12 @@
             unsubscribeObsParrilla: null,
             unsubscribeObsCozinha: null,
             editingObs: { parrilla: null, cozinha: null },
-            fichas: [],
-            unsubscribeFichas: null,
+            fichasTecnicas: [],
+            unsubscribeFichasTecnicas: null,
             currentCMV: 0,
-            unsubscribeCMV: null
+            unsubscribeCMV: null,
+            fcValues: {},
+            unsubscribeFC: null
         };
 
         const loginView = document.getElementById("login-view");
@@ -344,6 +364,14 @@
         const cozinhaObsListDiv = document.getElementById("cozinha-obs-list");
         const fichaForm = document.getElementById("ficha-form");
         const fichasListDiv = document.getElementById("fichas-list");
+        const ingredientesContainer = document.getElementById("ingredientes-container");
+        const addIngredienteBtn = document.getElementById("add-ingrediente-btn");
+        const custoTotalPratoSpan = document.getElementById("custo-total-prato");
+        const custoPorPorcaoSpan = document.getElementById("custo-por-porcao");
+        const precoSugeridoSpan = document.getElementById("preco-sugerido");
+        const precoRealInput = document.getElementById("preco-real");
+        const cmvRealDisplay = document.getElementById("cmv-real-display");
+        const margemLucroDisplay = document.getElementById("margem-lucro-display");
         const currentCmvDisplay = document.getElementById("current-cmv-display");
         const cmvForm = document.getElementById("cmv-form");
         const cmvManualContainer = document.getElementById("cmv-manual-container");
@@ -402,6 +430,122 @@
         function formatDateBR(dateStr) {
             const [year, month, day] = dateStr.split('-');
             return `${day}/${month}/${year}`;
+        }
+
+        function getStockItemByName(name) {
+            return appState.stockItems.find(it => (it.item || '') === name) || null;
+        }
+
+        function getFCForIngredient(name) {
+            return appState.fcValues[name] || 1;
+        }
+
+        function addIngredienteRow(data = {}) {
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-7 gap-2 items-center';
+
+            const select = document.createElement('select');
+            select.className = 'ingrediente-nome col-span-2 border rounded p-1 text-sm';
+            select.innerHTML = `<option value="">Ingrediente</option>` +
+                appState.stockItems.map(it => `<option value="${escapeHtml(it.item)}">${escapeHtml(it.item)}</option>`).join('');
+            select.value = data.nome || '';
+
+            const qtyInput = document.createElement('input');
+            qtyInput.type = 'number';
+            qtyInput.step = 'any';
+            qtyInput.className = 'q-liquida border rounded p-1 text-sm';
+            qtyInput.value = data.qtdLiquida || '';
+
+            const unidadeInput = document.createElement('input');
+            unidadeInput.type = 'text';
+            unidadeInput.className = 'unidade border rounded p-1 text-sm';
+            unidadeInput.value = data.unidade || '';
+
+            const fcInput = document.createElement('input');
+            fcInput.type = 'number';
+            fcInput.step = 'any';
+            fcInput.className = 'fator border rounded p-1 text-sm';
+            fcInput.value = data.fc || '';
+
+            const qBrutaSpan = document.createElement('span');
+            qBrutaSpan.className = 'q-bruta text-sm';
+            qBrutaSpan.textContent = '0';
+
+            const custoUnitSpan = document.createElement('span');
+            custoUnitSpan.className = 'custo-unit text-sm';
+            custoUnitSpan.textContent = '0';
+
+            const custoTotalSpan = document.createElement('span');
+            custoTotalSpan.className = 'custo-total text-sm';
+            custoTotalSpan.textContent = '0';
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.textContent = 'Excluir';
+            removeBtn.className = 'bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded';
+
+            removeBtn.addEventListener('click', () => {
+                row.remove();
+                calculateFichaTotals();
+            });
+
+            function updateRow() {
+                const itemName = select.value;
+                const qty = parseFloat(qtyInput.value) || 0;
+                let fc = parseFloat(fcInput.value);
+                if (isNaN(fc)) {
+                    fc = getFCForIngredient(itemName);
+                    fcInput.value = fc;
+                }
+                const qBruta = qty * fc;
+                qBrutaSpan.textContent = qBruta.toFixed(2);
+
+                const stock = getStockItemByName(itemName);
+                const custoUnit = stock && stock.preco ? parseFloat(stock.preco) : 0;
+                custoUnitSpan.textContent = custoUnit.toFixed(2);
+                const custoTotal = qBruta * custoUnit;
+                custoTotalSpan.textContent = custoTotal.toFixed(2);
+
+                calculateFichaTotals();
+            }
+
+            select.addEventListener('change', updateRow);
+            qtyInput.addEventListener('input', updateRow);
+            fcInput.addEventListener('input', updateRow);
+
+            row.appendChild(select);
+            row.appendChild(qtyInput);
+            row.appendChild(unidadeInput);
+            row.appendChild(fcInput);
+            row.appendChild(qBrutaSpan);
+            row.appendChild(custoUnitSpan);
+            row.appendChild(custoTotalSpan);
+            row.appendChild(removeBtn);
+
+            ingredientesContainer.appendChild(row);
+            updateRow();
+        }
+
+        function calculateFichaTotals() {
+            let total = 0;
+            ingredientesContainer.querySelectorAll('.custo-total').forEach(span => {
+                total += parseFloat(span.textContent) || 0;
+            });
+            custoTotalPratoSpan.textContent = total.toFixed(2);
+
+            const rendimento = parseFloat(document.getElementById('ficha-rendimento').value) || 1;
+            const porcao = rendimento > 0 ? total / rendimento : 0;
+            custoPorPorcaoSpan.textContent = porcao.toFixed(2);
+
+            const cmv = appState.currentCMV;
+            const precoSugerido = cmv > 0 ? porcao / (cmv / 100) : 0;
+            precoSugeridoSpan.textContent = precoSugerido.toFixed(2);
+
+            const precoReal = parseFloat(precoRealInput.value) || 0;
+            const cmvReal = precoReal > 0 ? (porcao / precoReal) * 100 : 0;
+            const margem = precoReal > 0 ? ((precoReal - porcao) / precoReal) * 100 : 0;
+            cmvRealDisplay.textContent = cmvReal.toFixed(2) + '%';
+            margemLucroDisplay.textContent = margem.toFixed(2) + '%';
         }
 
         // Render Functions
@@ -572,24 +716,23 @@
        function renderFichasList() {
            if (!fichasListDiv) return;
            fichasListDiv.innerHTML = '';
-           if (appState.fichas.length === 0) {
+           if (appState.fichasTecnicas.length === 0) {
                fichasListDiv.innerHTML = '<p class="text-gray-500">Nenhuma ficha cadastrada.</p>';
                return;
            }
-           const sorted = [...appState.fichas].sort((a,b)=> (a.nome||'').localeCompare(b.nome||''));
+           const sorted = [...appState.fichasTecnicas].sort((a,b)=> (a.nome||'').localeCompare(b.nome||''));
            sorted.forEach(f => {
-               const preco = appState.currentCMV > 0 ? (f.custo / (appState.currentCMV / 100)) : 0;
+               const preco = f.precoSugerido || 0;
                const div = document.createElement('div');
                div.className = 'bg-gray-50 p-3 rounded-lg shadow-sm flex items-center justify-between';
                div.innerHTML = `
                    <div>
                        <p class="font-semibold text-gray-800">${escapeHtml(f.nome || '')}</p>
-                       <p class="text-sm text-gray-600">Custo: R$ ${Number(f.custo).toFixed(2)}</p>
+                       <p class="text-sm text-gray-600">Categoria: ${escapeHtml(f.categoria || '')}</p>
                        <p class="text-sm text-gray-600">Preço sugerido: R$ ${preco.toFixed(2)}</p>
                    </div>
                    <div class="flex items-center space-x-2">
-                       <input type="number" data-ficha-id="${f.id}" value="${Number(f.custo).toFixed(2)}" step="0.01" class="w-24 p-1 border rounded text-center text-sm">
-                       <button onclick="updateFicha('${f.id}')" class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded">Atualizar</button>
+                       <button onclick="generateFichaPdf('${f.id}')" class="bg-gray-500 hover:bg-gray-700 text-white text-xs font-bold py-1 px-2 rounded">PDF</button>
                        <button onclick="deleteFicha('${f.id}')" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>
                    </div>
                `;
@@ -654,11 +797,18 @@
                 renderObservationList('cozinha');
             }, (error) => console.error('Erro ao carregar observações cozinha:', error));
 
-            const fichasRef = collection(db, 'fichas');
-            appState.unsubscribeFichas = onSnapshot(fichasRef, (snapshot) => {
-                appState.fichas = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            const fichasRef = collection(db, 'fichasTecnicas');
+            appState.unsubscribeFichasTecnicas = onSnapshot(fichasRef, (snapshot) => {
+                appState.fichasTecnicas = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                 renderFichasList();
             }, (error) => console.error('Erro ao carregar fichas:', error));
+
+            const fcRef = collection(db, 'fc');
+            appState.unsubscribeFC = onSnapshot(fcRef, (snapshot) => {
+                snapshot.docs.forEach(d => {
+                    appState.fcValues[d.id] = d.data().valor;
+                });
+            });
 
             const cmvRef = doc(db, 'config', 'cmvAplicado');
             appState.unsubscribeCMV = onSnapshot(cmvRef, (snap) => {
@@ -1125,29 +1275,62 @@
             }
         };
 
-        window.updateFicha = async (id) => {
-            const input = document.querySelector(`input[data-ficha-id="${id}"]`);
-            if (!input) return;
-            const custo = parseFloat(input.value);
-            if (isNaN(custo)) { showMessage('Valor inválido', true); return; }
-            try {
-                await updateDoc(doc(db, 'fichas', id), { custo });
-                showMessage('Ficha atualizada!');
-            } catch (err) {
-                console.error('Erro ao atualizar ficha:', err);
-                showMessage('Erro ao atualizar ficha', true);
-            }
-        };
-
         window.deleteFicha = async (id) => {
             if (!confirm('Excluir ficha?')) return;
             try {
-                await deleteDoc(doc(db, 'fichas', id));
+                await deleteDoc(doc(db, 'fichasTecnicas', id));
                 showMessage('Ficha excluída!');
             } catch (err) {
                 console.error('Erro ao excluir ficha:', err);
                 showMessage('Erro ao excluir ficha', true);
             }
+        };
+
+        window.generateFichaPdf = async (id) => {
+            const ficha = appState.fichasTecnicas.find(f => f.id === id);
+            if (!ficha) return;
+            const { jsPDF } = window.jspdf;
+            const docPdf = new jsPDF();
+
+            docPdf.setFontSize(16);
+            docPdf.text(ficha.nome, 20, 20);
+            docPdf.setFontSize(12);
+            docPdf.text(`Categoria: ${ficha.categoria}`, 20, 30);
+            docPdf.text(`Data: ${new Date(ficha.dataCriacao.seconds*1000).toLocaleDateString('pt-BR')}`, 20, 38);
+
+            let y = 50;
+            docPdf.text('Ingrediente', 20, y);
+            docPdf.text('Qtd. Líquida', 60, y);
+            docPdf.text('FC', 100, y);
+            docPdf.text('Qtd. Bruta', 120, y);
+            docPdf.text('Unidade', 150, y);
+            docPdf.text('Custo Total', 180, y);
+            y += 5;
+            docPdf.line(20, y, 200, y);
+            y += 5;
+
+            ficha.ingredientes.forEach(ing => {
+                docPdf.text(ing.nome.substring(0,20), 20, y);
+                docPdf.text(String(ing.qtdLiquida), 60, y);
+                docPdf.text(String(ing.fc), 100, y);
+                docPdf.text(String(ing.qtdBruta), 120, y);
+                docPdf.text(ing.unidade, 150, y);
+                docPdf.text(`R$ ${ing.custoTotal.toFixed(2)}`, 180, y, { align:'right' });
+                y += 6;
+                if(y > 270){ docPdf.addPage(); y = 20; }
+            });
+
+            y += 10;
+            docPdf.text(`Custo total: R$ ${ficha.custoTotal.toFixed(2)}`, 20, y); y+=6;
+            docPdf.text(`Rendimento: ${ficha.rendimento}`, 20, y); y+=6;
+            docPdf.text(`Custo por porção: R$ ${ficha.custoPorPorcao.toFixed(2)}`, 20, y); y+=6;
+            docPdf.text(`CMV aplicado: ${ficha.cmvAplicado.toFixed(2)}%`, 20, y); y+=6;
+            docPdf.text(`Preço sugerido: R$ ${ficha.precoSugerido.toFixed(2)}`, 20, y); y+=6;
+            if(ficha.precoReal){ docPdf.text(`Preço real: R$ ${ficha.precoReal.toFixed(2)}`, 20, y); y+=6; }
+            docPdf.text(`CMV real: ${ficha.cmvReal.toFixed(2)}%`, 20, y); y+=6;
+            docPdf.text(`Margem de lucro: ${ficha.margemLucro.toFixed(2)}%`, 20, y);
+
+            docPdf.save('ficha-tecnica.pdf');
         };
 
         // Event Listeners
@@ -1175,6 +1358,8 @@
                 if (appState.unsubscribeSuppliers) appState.unsubscribeSuppliers();
                 if (appState.unsubscribeObsParrilla) appState.unsubscribeObsParrilla();
                 if (appState.unsubscribeObsCozinha) appState.unsubscribeObsCozinha();
+                if (appState.unsubscribeFichasTecnicas) appState.unsubscribeFichasTecnicas();
+                if (appState.unsubscribeFC) appState.unsubscribeFC();
                 appState.suppliersLoaded = false;
             }
         });
@@ -1229,6 +1414,7 @@
             const min = parseFloat(document.getElementById('product-min').value) || 0;
             const ideal = parseFloat(document.getElementById('product-ideal').value) || 0;
             const unit = document.getElementById('product-unit').value;
+            const price = parseFloat(document.getElementById('product-price').value) || 0;
             
             try {
                 await addDoc(collection(db, 'estoque'), {
@@ -1238,6 +1424,7 @@
                     minimo: min,
                     ideal: ideal,
                     unidade: unit,
+                    preco: price,
                     timestamp: new Date()
                 });
                 showMessage('Item adicionado com sucesso!');
@@ -1334,6 +1521,14 @@
             renderProductionList();
         });
 
+        if(addIngredienteBtn){
+            addIngredienteBtn.addEventListener('click', () => addIngredienteRow());
+            addIngredienteRow();
+        }
+
+        precoRealInput.addEventListener('input', calculateFichaTotals);
+        document.getElementById('ficha-rendimento').addEventListener('input', calculateFichaTotals);
+
         tabsContainer.addEventListener('click', (e) => {
             if (e.target.classList.contains('tab-button')) {
                 const tabName = e.target.getAttribute('data-tab');
@@ -1355,12 +1550,54 @@
         fichaForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const nome = document.getElementById('ficha-nome').value.trim();
-            const custo = parseFloat(document.getElementById('ficha-custo').value);
-            if (!nome || isNaN(custo)) { showMessage('Preencha todos os campos', true); return; }
+            const categoria = document.getElementById('ficha-categoria').value.trim();
+            const rendimento = parseFloat(document.getElementById('ficha-rendimento').value) || 1;
+            const imagemURL = document.getElementById('ficha-imagem').value.trim();
+
+            const ingredientes = [];
+            ingredientesContainer.querySelectorAll('.grid').forEach(row => {
+                const sel = row.querySelector('.ingrediente-nome');
+                const itemName = sel.value;
+                const qLiq = parseFloat(row.querySelector('.q-liquida').value) || 0;
+                const unidade = row.querySelector('.unidade').value;
+                const fc = parseFloat(row.querySelector('.fator').value) || 1;
+                const qBruta = qLiq * fc;
+                const stock = getStockItemByName(itemName);
+                const custoUnit = stock && stock.preco ? parseFloat(stock.preco) : 0;
+                const custoTotal = qBruta * custoUnit;
+                ingredientes.push({ nome: itemName, qtdLiquida: qLiq, unidade, fc, qtdBruta: qBruta, custoUnitario: custoUnit, custoTotal });
+            });
+
+            let custoTotal = 0;
+            ingredientes.forEach(i => { custoTotal += i.custoTotal; });
+            const custoPorPorcao = rendimento > 0 ? custoTotal / rendimento : 0;
+            const precoSugerido = appState.currentCMV > 0 ? custoPorPorcao / (appState.currentCMV / 100) : 0;
+            const precoReal = parseFloat(precoRealInput.value) || null;
+            const cmvReal = precoReal ? (custoPorPorcao / precoReal) * 100 : 0;
+            const margemLucro = precoReal ? ((precoReal - custoPorPorcao) / precoReal) * 100 : 0;
+
+            if (!nome || !categoria || ingredientes.length === 0) { showMessage('Preencha todos os campos', true); return; }
+
             try {
-                await addDoc(collection(db, 'fichas'), { nome, custo, timestamp: new Date() });
+                await addDoc(collection(db, 'fichasTecnicas'), {
+                    nome,
+                    categoria,
+                    rendimento,
+                    ingredientes,
+                    custoTotal,
+                    custoPorPorcao,
+                    cmvAplicado: appState.currentCMV,
+                    precoSugerido,
+                    precoReal,
+                    cmvReal,
+                    margemLucro,
+                    imagemURL,
+                    dataCriacao: new Date()
+                });
                 showMessage('Ficha adicionada com sucesso!');
                 fichaForm.reset();
+                ingredientesContainer.innerHTML = '';
+                calculateFichaTotals();
             } catch (err) {
                 console.error('Erro ao adicionar ficha:', err);
                 showMessage('Erro ao adicionar ficha', true);
