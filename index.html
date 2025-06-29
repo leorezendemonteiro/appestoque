@@ -6,6 +6,7 @@
     <title>App Estoque Cozinha</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
         .tab-button.active {
             border-color: #3b82f6;
@@ -1402,29 +1403,31 @@
             docPdf.text(`Categoria: ${ficha.categoria}`, 20, 30);
             docPdf.text(`Data: ${new Date(ficha.dataCriacao.seconds*1000).toLocaleDateString('pt-BR')}`, 20, 38);
 
-            let y = 50;
-            docPdf.text('Ingrediente', 20, y);
-            docPdf.text('Qtd. Líquida', 60, y);
-            docPdf.text('FC', 100, y);
-            docPdf.text('Qtd. Bruta', 120, y);
-            docPdf.text('Unidade', 150, y);
-            docPdf.text('Custo Total', 180, y);
-            y += 5;
-            docPdf.line(20, y, 200, y);
-            y += 5;
+            const tableBody = ficha.ingredientes.map(ing => [
+                ing.nome,
+                String(ing.qtdLiquida),
+                String(ing.fc),
+                String(ing.qtdBruta),
+                ing.unidade,
+                `R$ ${ing.custoTotal.toFixed(2)}`
+            ]);
 
-            ficha.ingredientes.forEach(ing => {
-                docPdf.text(ing.nome.substring(0,20), 20, y);
-                docPdf.text(String(ing.qtdLiquida), 60, y);
-                docPdf.text(String(ing.fc), 100, y);
-                docPdf.text(String(ing.qtdBruta), 120, y);
-                docPdf.text(ing.unidade, 150, y);
-                docPdf.text(`R$ ${ing.custoTotal.toFixed(2)}`, 180, y, { align:'right' });
-                y += 6;
-                if(y > 270){ docPdf.addPage(); y = 20; }
+            docPdf.autoTable({
+                head: [['Ingrediente', 'Qtd. Líquida', 'FC', 'Qtd. Bruta', 'Unidade', 'Custo Total']],
+                body: tableBody,
+                startY: 50,
+                styles: { fontSize: 10, halign: 'left', cellPadding: 2 },
+                columnStyles: {
+                    0: { cellWidth: 51 },
+                    1: { cellWidth: 20 },
+                    2: { cellWidth: 14, halign: 'center' },
+                    3: { cellWidth: 20 },
+                    4: { cellWidth: 17 },
+                    5: { cellWidth: 26, halign: 'right' }
+                }
             });
 
-            y += 10;
+            let y = docPdf.lastAutoTable.finalY + 10;
             docPdf.text(`Custo total: R$ ${ficha.custoTotal.toFixed(2)}`, 20, y); y+=6;
             docPdf.text(`Rendimento: ${ficha.rendimento}`, 20, y); y+=6;
             docPdf.text(`Custo por porção: R$ ${ficha.custoPorPorcao.toFixed(2)}`, 20, y); y+=6;
