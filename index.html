@@ -355,10 +355,11 @@
                         </div>
                         <div id="balance-new-view">
                             <div class="flex justify-between mb-2">
-                                <div class="space-x-2">
+                                <div class="space-x-2 items-center flex">
                                     <button class="balance-group-button bg-blue-500 text-white px-2 py-1 rounded text-sm" data-bgroup="fornecedor">Por Fornecedor</button>
                                     <button class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm" data-bgroup="cozinha">Produção Cozinha</button>
                                     <button class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm" data-bgroup="parrilla">Produção Parrilla</button>
+                                    <select id="balance-supplier-filter" class="supplier-select shadow-sm appearance-none border rounded py-1 px-2 text-gray-700 bg-white text-sm hidden"></select>
                                 </div>
                                 <div class="space-x-2">
                                     <button id="balance-summary-btn" onClick="gerarResumoBalanco()" class="bg-gray-500 text-white px-2 py-1 rounded text-sm">Resumo</button>
@@ -432,6 +433,7 @@
             fcValues: {},
             unsubscribeFC: null,
             currentBalanceGroup: 'fornecedor',
+            currentBalanceSupplierFilter: 'TODOS',
             balanceHistoryRecords: []
         };
 
@@ -502,6 +504,7 @@
         const applyBalanceBtn = document.getElementById("apply-balance-btn");
         const balanceSummaryDiv = document.getElementById("balance-summary");
         const balancePdfBtn = document.getElementById("balance-pdf-btn");
+        const balanceSupplierFilter = document.getElementById("balance-supplier-filter");
         const balanceNewView = document.getElementById("balance-new-view");
         const balanceHistoryView = document.getElementById("balance-history-view");
         const historyDateFilter = document.getElementById("history-date-filter");
@@ -865,7 +868,20 @@ function renderProductionList() {
                option.textContent = nome;
                supplierFilter.appendChild(option);
            });
-            supplierFilter.size = 1;
+           supplierFilter.size = 1;
+       }
+
+       function updateBalanceSupplierFilter(){
+           if(!balanceSupplierFilter) return;
+           balanceSupplierFilter.innerHTML = `<option value="TODOS">TODOS</option>`;
+           appState.suppliers.forEach(supplier => {
+               const nome = supplier.nome || supplier.name || "";
+               const opt = document.createElement('option');
+               opt.value = nome;
+               opt.textContent = nome;
+               balanceSupplierFilter.appendChild(opt);
+           });
+           balanceSupplierFilter.size = 1;
        }
 
        function renderSupplierSelect() {
@@ -984,6 +1000,9 @@ function renderProductionList() {
            appState.currentBalanceGroup = tipo;
            if(!balanceTableContainer) return;
            balanceTableContainer.innerHTML = '';
+           if(balanceSupplierFilter){
+               balanceSupplierFilter.classList.toggle('hidden', tipo !== 'fornecedor');
+           }
            let items = [];
            if (tipo === 'fornecedor') {
                items = appState.stockItems.map(it => ({
@@ -991,8 +1010,12 @@ function renderProductionList() {
                    nome: it.item,
                    unidade: it.unidade,
                    quantidade: it.quantidadeAtual,
+                   fornecedor: it.fornecedor,
                    tipo: 'fornecedor'
                }));
+               if(appState.currentBalanceSupplierFilter !== 'TODOS'){
+                   items = items.filter(it => (it.fornecedor || '') === appState.currentBalanceSupplierFilter);
+               }
            } else {
                const sector = tipo === 'cozinha' ? 'COZINHA' : 'PARRILLA';
                items = appState.productionItems
@@ -1026,6 +1049,7 @@ function renderProductionList() {
                tr.dataset.id = it.id;
                tr.dataset.tipo = it.tipo;
                tr.dataset.name = it.nome;
+               if(it.fornecedor) tr.dataset.supplier = it.fornecedor;
                tr.dataset.unit = it.unidade || '';
                tr.dataset.current = it.quantidade || 0;
                tr.innerHTML = `
@@ -1106,6 +1130,7 @@ function renderProductionList() {
                     renderSuppliersList();
                     renderSupplierSelect(); // Garante que o select de fornecedores seja atualizado
                     updateSupplierFilter(); // Atualiza filtro de fornecedores na lista de estoque
+                    updateBalanceSupplierFilter(); // Atualiza filtro na aba de balanço
                     updateShoppingListSupplierFilter(); // Atualiza filtro na lista de compras, se visível
                 }, (error) => console.error("Erro ao carregar fornecedores:", error));
 
@@ -1620,35 +1645,48 @@ function renderProductionList() {
             checkBalanceInputs();
         }
 
-        function generateBalancePDF() {
-            const rows = Array.from(document.querySelectorAll('.balance-row'));
-            if(rows.length === 0) { showMessage('Nenhum item encontrado', true); return; }
-            const { jsPDF } = window.jspdf;
-            const docPdf = new jsPDF();
-            const todayISO = formatDateISO(new Date());
-            const dataBR = new Date().toLocaleDateString('pt-BR');
-            const horaBR = new Date().toLocaleTimeString('pt-BR');
+       function generateBalancePDF() {
+           const rows = Array.from(document.querySelectorAll('.balance-row'));
+           if(rows.length === 0) { showMessage('Nenhum item encontrado', true); return; }
+           const { jsPDF } = window.jspdf;
+           const docPdf = new jsPDF();
+           const todayISO = formatDateISO(new Date());
+           const dataBR = new Date().toLocaleDateString('pt-BR');
+           const horaBR = new Date().toLocaleTimeString('pt-BR');
             const label = appState.currentBalanceGroup === 'fornecedor' ? 'Por Fornecedor' : (appState.currentBalanceGroup === 'cozinha' ? 'Produção Cozinha' : 'Produção Parrilla');
             docPdf.setFont('helvetica');
-            docPdf.setFontSize(16); docPdf.text(`Balanço de Estoque - ${label}`,20,20);
-            docPdf.setFontSize(11); docPdf.text(`Data: ${dataBR}`,20,30); docPdf.text(`Hora: ${horaBR}`,20,36);
-            const body = rows.map(r => {
-                const nome = r.dataset.name;
-                const current = parseFloat(r.dataset.current||'0');
-                const cont = parseFloat(r.querySelector('.contagem-input').value)||0;
-                const diff = current - cont;
-                const just = r.querySelector('.justificativa-input').value || '';
-                return [nome, current.toFixed(2), cont.toFixed(2), diff.toFixed(2), just];
-            });
-            docPdf.autoTable({
-                head: [['Item','Sistema','Contado','Diferença','Justificativa']],
-                body,
-                startY: 50,
-                styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true},
-                headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'},
-                alternateRowStyles:{fillColor:[242,242,242]},
-                margin:{left:20,right:20}
-            });
+            if(appState.currentBalanceGroup === 'fornecedor'){
+                const groups = {};
+                rows.forEach(r => {
+                    const sup = r.dataset.supplier || 'Outros';
+                    const nome = r.dataset.name;
+                    const current = parseFloat(r.dataset.current||'0');
+                    const cont = parseFloat(r.querySelector('.contagem-input').value)||0;
+                    const diff = current - cont;
+                    const just = r.querySelector('.justificativa-input').value || '';
+                    if(!groups[sup]) groups[sup] = [];
+                    groups[sup].push([nome,current.toFixed(2),cont.toFixed(2),diff.toFixed(2),just]);
+                });
+                const suppliers = Object.keys(groups).sort();
+                suppliers.forEach((sup,idx) => {
+                    if(idx>0) docPdf.addPage();
+                    docPdf.setFontSize(16); docPdf.text(`Balanço de Estoque - ${sup}`,20,20);
+                    docPdf.setFontSize(11); docPdf.text(`Data: ${dataBR}`,20,30); docPdf.text(`Hora: ${horaBR}`,20,36);
+                    docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body: groups[sup], startY: 45, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:true}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
+                });
+            } else {
+                docPdf.setFontSize(16); docPdf.text(`Balanço de Estoque - ${label}`,20,20);
+                docPdf.setFontSize(11); docPdf.text(`Data: ${dataBR}`,20,30); docPdf.text(`Hora: ${horaBR}`,20,36);
+                const body = rows.map(r => {
+                    const nome = r.dataset.name;
+                    const current = parseFloat(r.dataset.current||'0');
+                    const cont = parseFloat(r.querySelector('.contagem-input').value)||0;
+                    const diff = current - cont;
+                    const just = r.querySelector('.justificativa-input').value || '';
+                    return [nome, current.toFixed(2), cont.toFixed(2), diff.toFixed(2), just];
+                });
+                docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY: 45, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:true}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
+            }
             docPdf.setFontSize(10); docPdf.text(`Gerado em ${dataBR}`,20,285); docPdf.text('App Estoque',190,285,{align:'right'});
             docPdf.save(`balanco-${appState.currentBalanceGroup}-${todayISO}.pdf`);
         }
@@ -2219,6 +2257,13 @@ function renderProductionList() {
             appState.currentSectorFilter = e.target.value;
             renderProductionList();
         });
+
+        if(balanceSupplierFilter){
+            balanceSupplierFilter.addEventListener('change', (e) => {
+                appState.currentBalanceSupplierFilter = e.target.value;
+                renderBalanceTable();
+            });
+        }
 
         if(addIngredienteBtn){
             addIngredienteBtn.addEventListener('click', () => addIngredienteRow());
