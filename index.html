@@ -465,6 +465,8 @@
             return `${day}/${month}/${year}`;
         }
 
+        function formatDateISO(date){return date.toISOString().split("T")[0];}
+
         function getStockItemByName(name) {
             return appState.stockItems.find(it => (it.item || '') === name) || null;
         }
@@ -899,6 +901,11 @@
             const incluirPrecos = confirm('Deseja incluir os preços de referência cadastrados nas fichas técnicas?');
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
+            const todayISO = formatDateISO(new Date());
+            const dataBR = new Date().toLocaleDateString('pt-BR');
+            const horaBR = new Date().toLocaleTimeString('pt-BR');
+            doc.setFont('helvetica');
+            doc.setFontSize(11);
 
             let valorTotalEstoque = 0;
             let finalYPosition = 0;
@@ -906,176 +913,153 @@
             const supplierGroups = {};
             appState.stockItems.forEach(item => {
                 const supplier = item.fornecedor;
-                if (!supplierGroups[supplier]) {
-                    supplierGroups[supplier] = [];
-                }
+                if (!supplierGroups[supplier]) supplierGroups[supplier] = [];
                 supplierGroups[supplier].push(item);
             });
 
             const sortedSuppliers = Object.keys(supplierGroups).sort();
-
             sortedSuppliers.forEach((supplier, supplierIndex) => {
-                if (supplierIndex > 0) {
-                    doc.addPage();
-                }
+                if (supplierIndex > 0) { doc.addPage(); }
+                doc.setFontSize(16); doc.setFont(undefined,'bold');
+                doc.text('Relatório de Estoque', 20, 20);
+                doc.setFontSize(12); doc.text(`Fornecedor: ${supplier}`, 20, 30);
+                doc.setFontSize(11); doc.setFont(undefined,'normal');
+                doc.text(`Data: ${dataBR}`, 20, 40);
+                doc.text(`Hora: ${horaBR}`, 20, 46);
 
-                doc.setFontSize(18);
-                doc.setFont(undefined, "bold");
-                doc.text("Relatório de Estoque", 20, 20);
-
-                doc.setFontSize(14);
-                doc.text(`Fornecedor: ${supplier}`, 20, 35);
-
-                doc.setFontSize(12);
-                doc.setFont(undefined, "normal");
-                doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, 45);
-                doc.text(`Hora: ${new Date().toLocaleTimeString('pt-BR')}`, 20, 55);
-
-                let yPosition = 75;
-                doc.setFontSize(10);
-                doc.setFont(undefined, "bold");
-                doc.text("Produto", 20, yPosition);
-                doc.text("Qtd. Atual", 90, yPosition);
-                if(incluirPrecos){
-                    doc.text("Preço Ref.", 130, yPosition);
-                    doc.text("Total", 170, yPosition);
-                }
-
-                doc.line(20, yPosition + 2, 190, yPosition + 2);
-                yPosition += 10;
-
-                doc.setFont(undefined, "normal");
-                const items = supplierGroups[supplier].sort((a, b) => a.item.localeCompare(b.item));
-                items.forEach(item => {
-                    if (yPosition > 270) {
-                        doc.addPage();
-                        yPosition = 20;
-                        doc.setFontSize(10);
-                        doc.setFont(undefined, "bold");
-                        doc.text("Produto", 20, yPosition);
-                        doc.text("Qtd. Atual", 90, yPosition);
-                        if(incluirPrecos){
-                            doc.text("Preço Ref.", 130, yPosition);
-                            doc.text("Total", 170, yPosition);
-                        }
-                        doc.line(20, yPosition + 2, 190, yPosition + 2);
-                        yPosition += 10;
-                        doc.setFont(undefined, "normal");
-                    }
-                    doc.text(item.item.substring(0, 30), 20, yPosition);
-                    doc.text(`${item.atual} ${item.unidade}`, 90, yPosition);
+                const items = supplierGroups[supplier].sort((a,b)=>a.item.localeCompare(b.item));
+                const body = items.map(it => {
+                    const row = [
+                        it.item,
+                        Number(it.atual || 0).toFixed(2),
+                        it.unidade
+                    ];
                     if(incluirPrecos){
-                        const price = appState.fcValues[item.item]?.preco || 0;
-                        const totalItem = price * item.atual;
-                        doc.text(`R$ ${price.toFixed(2)}`, 130, yPosition, {align:'right'});
-                        doc.text(`R$ ${totalItem.toFixed(2)}`, 170, yPosition, {align:'right'});
-                        valorTotalEstoque += totalItem;
+                        const price = appState.fcValues[it.item]?.preco || 0;
+                        const total = price * (it.atual || 0);
+                        valorTotalEstoque += total;
+                        row.push(`R$ ${price.toFixed(2)}`, `R$ ${total.toFixed(2)}`);
                     }
-                    yPosition += 8;
+                    return row;
                 });
 
-                yPosition += 10;
-                if (yPosition > 260) {
-                    doc.addPage();
-                    yPosition = 20;
-                }
-                doc.setFont(undefined, "bold");
-                doc.text(`Total de Itens: ${items.length}`, 20, yPosition);
-                finalYPosition = yPosition;
+                const head = [['Item','Qtd. Atual','Unidade'].concat(incluirPrecos ? ['Preço Ref.','Total'] : [])];
+                doc.autoTable({
+                    head,
+                    body,
+                    startY: 60,
+                    styles:{fontSize:11},
+                    headStyles:{fillColor:[240,240,240]},
+                    columnStyles:{
+                        0:{cellWidth:51},
+                        1:{cellWidth:20,halign:'center'},
+                        2:{cellWidth:17,halign:'center'},
+                        3:{cellWidth:20,halign:'right'},
+                        4:{cellWidth:26,halign:'right'}
+                    },
+                    margin:{left:20,right:20}
+                });
+                finalYPosition = doc.lastAutoTable.finalY + 10;
             });
 
             if(incluirPrecos){
-                let y = finalYPosition + 10;
-                if (y > 260) {
-                    doc.addPage();
-                    y = 20;
-                }
-                doc.setFontSize(12);
-                doc.setFont(undefined, "bold");
-                doc.text(`\uD83D\uDCE6 Valor Total em Estoque: R$ ${valorTotalEstoque.toFixed(2)}`, 20, y);
+                doc.setFont(undefined,'bold');
+                doc.text(`\uD83D\uDCE6 Valor Total em Estoque: R$ ${valorTotalEstoque.toFixed(2)}`, 20, finalYPosition);
             }
 
-            doc.save("relatorio-estoque.pdf");
-            showMessage("Relatório de estoque gerado com sucesso!");
+            doc.setFontSize(10);
+            doc.text(`Gerado em ${dataBR}`, 20, 285);
+            doc.text('App Estoque', 190, 285, {align:'right'});
+            doc.save(`relatorio-estoque-${todayISO}.pdf`);
+            showMessage('Relatório de estoque gerado com sucesso!');
         }
 
         function generateProductionReport(sector) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
+            const todayISO = formatDateISO(new Date());
+            const dataBR = new Date().toLocaleDateString('pt-BR');
+            const horaBR = new Date().toLocaleTimeString('pt-BR');
+            doc.setFont('helvetica');
+            doc.setFontSize(11);
 
-            doc.setFontSize(18);
-            doc.setFont(undefined, "bold");
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
             doc.text(`Relatório de Produção - ${sector}`, 20, 20);
-            doc.setFontSize(10);
-            doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 20, 30);
-            
-            let yPosition = 50;
-            const filteredItems = appState.productionItems.filter(item => item.setor === sector).sort((a, b) => a.item.localeCompare(b.item));
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Data: ${dataBR}`, 20, 30);
+            doc.text(`Hora: ${horaBR}`, 20, 36);
 
+            let yPosition = 50;
+            const filteredItems = appState.productionItems.filter(item => item.setor === sector);
             if (filteredItems.length === 0) {
-                doc.setFontSize(12);
                 doc.text(`Nenhum item encontrado para o setor ${sector}.`, 20, yPosition);
             } else {
-                doc.setFontSize(12);
-                doc.text(`Total de itens: ${filteredItems.length}`, 20, yPosition);
-                yPosition += 20;
-                
-                filteredItems.forEach((item, index) => {
-                    if (yPosition > 270) {
-                        doc.addPage();
-                        yPosition = 20;
-                    }
-                    
-                    const itemName = item.item || item.name || 'Item sem nome';
-                    const sectorName = item.setor || item.sector || '';
-                    const quantity = parseFloat(item.quantidade || item.quantity || 0);
-                    const unit = item.unidade || item.unit || '';
-                    
-                    doc.setFontSize(12);
-                    doc.text(`${index + 1}. ${itemName}`, 20, yPosition);
-                    doc.setFontSize(10);
-                    doc.text(`Setor: ${sectorName}`, 25, yPosition + 8);
-                    doc.text(`Quantidade: ${quantity.toFixed(2)} ${unit}`, 25, yPosition + 16);
-                    
-                    yPosition += 35;
+                const grouped = {};
+                filteredItems.forEach(it => {
+                    const d = it.timestamp && it.timestamp.seconds ? formatDateISO(new Date(it.timestamp.seconds * 1000)) : formatDateISO(new Date(it.timestamp));
+                    if (!grouped[d]) grouped[d] = [];
+                    grouped[d].push(it);
+                });
+
+                Object.keys(grouped).sort().forEach(date => {
+                    if (yPosition > 250) { doc.addPage(); yPosition = 20; }
+                    doc.setFont(undefined, 'bold');
+                    doc.text(formatDateBR(date), 20, yPosition);
+                    const body = grouped[date].sort((a,b)=>a.item.localeCompare(b.item)).map(it => [
+                        it.item,
+                        Number(it.quantidade || 0).toFixed(2),
+                        it.unidade,
+                        it.observacao || ''
+                    ]);
+                    doc.autoTable({
+                        head: [['Item produzido','Quantidade','Unidade','Observações']],
+                        body,
+                        startY: yPosition + 6,
+                        styles:{fontSize:11},
+                        headStyles:{fillColor:[240,240,240]},
+                        columnStyles:{
+                            0:{cellWidth:51},
+                            1:{cellWidth:20,halign:'center'},
+                            2:{cellWidth:17,halign:'center'},
+                            3:{cellWidth:70}
+                        },
+                        margin:{left:20,right:20}
+                    });
+                    yPosition = doc.lastAutoTable.finalY + 10;
                 });
             }
 
-            if (yPosition > 260) { doc.addPage(); yPosition = 20; }
-            doc.setFontSize(14);
             doc.setFont(undefined, 'bold');
             doc.text('Observações do Dia', 20, yPosition);
-            yPosition += 10;
-
+            yPosition += 8;
             const obsArray = sector === 'PARRILLA' ? appState.obsParrilla : appState.obsCozinha;
             if (obsArray.length === 0) {
-                doc.setFontSize(12);
                 doc.setFont(undefined, 'normal');
                 doc.text('Sem observações registradas para este período.', 20, yPosition);
             } else {
                 const sorted = [...obsArray].sort((a,b) => a.id.localeCompare(b.id));
                 sorted.forEach(obs => {
                     if (yPosition > 270) { doc.addPage(); yPosition = 20; }
-                    doc.setFontSize(12);
                     doc.setFont(undefined, 'bold');
                     doc.text(`📅 ${formatDateBR(obs.id)}`, 20, yPosition);
-                    yPosition += 8;
-                    doc.setFontSize(10);
+                    yPosition += 6;
                     doc.setFont(undefined, 'normal');
-                    const lines = (obs.texto || '').split('\n');
+                    const lines = doc.splitTextToSize(obs.texto || '', 170);
                     lines.forEach(line => {
-                        const chunks = doc.splitTextToSize(`• ${line}`, 170);
-                        chunks.forEach(chunk => {
-                            if (yPosition > 270) { doc.addPage(); yPosition = 20; }
-                            doc.text(chunk, 25, yPosition);
-                            yPosition += 6;
-                        });
+                        if (yPosition > 270) { doc.addPage(); yPosition = 20; }
+                        doc.text(line, 25, yPosition);
+                        yPosition += 6;
                     });
                     yPosition += 4;
                 });
             }
 
-            doc.save(`relatorio-producao-${sector.toLowerCase()}.pdf`);
+            doc.setFontSize(10);
+            doc.text(`Gerado em ${dataBR}`, 20, 285);
+            doc.text('App Estoque', 190, 285, {align:'right'});
+            doc.save(`relatorio-producao-${sector.toLowerCase()}-${todayISO}.pdf`);
             showMessage(`Relatório de produção ${sector} gerado com sucesso!`);
         }
 
@@ -1163,116 +1147,99 @@
         function generateShoppingListPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            
-            const selectedSupplier = reportDisplayArea.querySelector("#shopping-list-supplier-filter").value;
-            const visibleItems = Array.from(reportDisplayArea.querySelectorAll(".shopping-list-item"))
-                .filter(item => {
-                    const itemSupplier = item.dataset.supplier;
-                    // Incluir apenas itens visíveis conforme o filtro do fornecedor
-                    return selectedSupplier === "TODOS" || itemSupplier === selectedSupplier;
-                });
+            const todayISO = formatDateISO(new Date());
+            const dataBR = new Date().toLocaleDateString('pt-BR');
+            const horaBR = new Date().toLocaleTimeString('pt-BR');
+            doc.setFont('helvetica');
+            doc.setFontSize(11);
+
+            const selectedSupplier = reportDisplayArea.querySelector('#shopping-list-supplier-filter').value;
+            const visibleItems = Array.from(reportDisplayArea.querySelectorAll('.shopping-list-item'))
+                .filter(item => selectedSupplier === 'TODOS' || item.dataset.supplier === selectedSupplier);
 
             if (visibleItems.length === 0) {
-                showMessage("Nenhum item encontrado!", true);
+                showMessage('Nenhum item encontrado!', true);
                 return;
             }
 
-            // Agrupar itens por fornecedor
             const supplierGroups = {};
             visibleItems.forEach(item => {
                 const supplier = item.dataset.supplier;
-                if (!supplierGroups[supplier]) {
-                    supplierGroups[supplier] = [];
-                }
-                
+                if (!supplierGroups[supplier]) supplierGroups[supplier] = [];
+
                 const itemName = item.dataset.itemName;
                 const currentQty = parseFloat(item.dataset.currentQty);
-                const qtyInput = item.querySelector(".shopping-quantity-input");
+                const qtyInput = item.querySelector('.shopping-quantity-input');
                 const qtyValue = qtyInput.value.trim();
-                const requestedQty = qtyValue === "" ? null : parseFloat(qtyValue);
+                const requestedQty = qtyValue === '' ? 0 : parseFloat(qtyValue);
                 const unit = item.dataset.itemUnit;
-                
+
                 supplierGroups[supplier].push({
                     name: itemName,
-                    currentQty: currentQty,
-                    requestedQty: requestedQty,
-                    unit: unit
+                    currentQty,
+                    requestedQty,
+                    unit
                 });
             });
 
+            let totalEstimado = 0;
             const sortedSuppliers = Object.keys(supplierGroups).sort();
-            
+            let lastY = 0;
             sortedSuppliers.forEach((supplier, supplierIndex) => {
-                if (supplierIndex > 0) {
-                    doc.addPage();
-                }
-                
-                const items = supplierGroups[supplier].sort((a, b) => a.name.localeCompare(b.name));
-                
-                // Cabeçalho da página
-                doc.setFontSize(18);
-                doc.setFont(undefined, "bold");
-                doc.text("Lista de Compras", 20, 20);
-                
-                doc.setFontSize(14);
-                doc.text(`Fornecedor: ${supplier}`, 20, 35);
-                
-                doc.setFontSize(12);
-                doc.setFont(undefined, "normal");
-                doc.text(`Data: ${new Date().toLocaleDateString("pt-BR")}`, 20, 45);
-                doc.text(`Hora: ${new Date().toLocaleTimeString("pt-BR")}`, 20, 55);
-                
-                // Cabeçalho da tabela
-                let yPosition = 75;
-                doc.setFontSize(10);
-                doc.setFont(undefined, "bold");
-                doc.text("Item", 20, yPosition);
-                doc.text("Qtd. Atual", 90, yPosition);
-                doc.text("Qtd. Pedida", 140, yPosition);
-                
-                // Linha separadora
-                doc.line(20, yPosition + 2, 190, yPosition + 2);
-                yPosition += 10;
-                
-                // Itens
-                doc.setFont(undefined, "normal");
-                items.forEach(item => {
-                    if (yPosition > 270) {
-                        doc.addPage();
-                        yPosition = 20;
-                        
-                        // Repetir cabeçalho na nova página
-                        doc.setFontSize(10);
-                        doc.setFont(undefined, "bold");
-                        doc.text("Item", 20, yPosition);
-                        doc.text("Qtd. Atual", 90, yPosition);
-                        doc.text("Qtd. Pedida", 140, yPosition);
-                        doc.line(20, yPosition + 2, 190, yPosition + 2);
-                        yPosition += 10;
-                        doc.setFont(undefined, "normal");
-                    }
-                    
-                    doc.text(item.name.substring(0, 25), 20, yPosition);
-                    doc.text(`${item.currentQty.toFixed(2)} ${item.unit}`, 90, yPosition);
-                    const requestedText = item.requestedQty === null ? "" : `${item.requestedQty.toFixed(2)} ${item.unit}`;
-                    doc.text(requestedText, 140, yPosition);
-                    
-                    yPosition += 8;
+                if (supplierIndex > 0) { doc.addPage(); }
+
+                const items = supplierGroups[supplier].sort((a,b)=>a.name.localeCompare(b.name));
+                doc.setFontSize(16); doc.setFont(undefined,'bold');
+                doc.text('Lista de Compras', 20, 20);
+                doc.setFontSize(12); doc.text(`Fornecedor: ${supplier}`, 20, 30);
+                doc.setFontSize(11); doc.setFont(undefined,'normal');
+                doc.text(`Data: ${dataBR}`, 20, 40);
+                doc.text(`Hora: ${horaBR}`, 20, 46);
+
+                const body = items.map(it => {
+                    const price = appState.fcValues[it.name]?.preco || 0;
+                    const total = price * (it.requestedQty || 0);
+                    if(price && it.requestedQty){ totalEstimado += total; }
+                    return [
+                        it.name,
+                        it.requestedQty ? it.requestedQty.toFixed(2) : '',
+                        it.unit,
+                        price ? `R$ ${price.toFixed(2)}` : '',
+                        price ? `R$ ${total.toFixed(2)}` : ''
+                    ];
                 });
-                
-                // Resumo no final da página do fornecedor
-                yPosition += 10;
-                if (yPosition > 260) {
-                    doc.addPage();
-                    yPosition = 20;
-                }
-                
-                doc.setFont(undefined, "bold");
-                doc.text(`Total de itens: ${items.length}`, 20, yPosition);
+
+                doc.autoTable({
+                    head: [['Item','Qtd. Comprar','Unidade','Preço Unitário','Total']],
+                    body,
+                    startY: 60,
+                    styles:{fontSize:11},
+                    headStyles:{fillColor:[240,240,240]},
+                    columnStyles:{
+                        0:{cellWidth:51},
+                        1:{cellWidth:20,halign:'center'},
+                        2:{cellWidth:17,halign:'center'},
+                        3:{cellWidth:20,halign:'right'},
+                        4:{cellWidth:26,halign:'right'}
+                    },
+                    margin:{left:20,right:20}
+                });
+                lastY = doc.lastAutoTable.finalY + 10;
+                doc.setFont(undefined,'bold');
+                doc.text(`Total de itens: ${items.length}`, 20, lastY);
             });
-            
-            doc.save("lista-de-compras.pdf");
-            showMessage("Lista de compras gerada com sucesso!");
+
+            if(totalEstimado > 0){
+                const y = lastY + 10;
+                doc.setFont(undefined,'bold');
+                doc.text(`Total estimado de compras: R$ ${totalEstimado.toFixed(2)}`, 20, y);
+            }
+
+            doc.setFontSize(10);
+            doc.text(`Gerado em ${dataBR}`, 20, 285);
+            doc.text('App Estoque', 190, 285, {align:'right'});
+            doc.save(`relatorio-lista-compras-${todayISO}.pdf`);
+            showMessage('Lista de compras gerada com sucesso!');
         }
 
         // Global functions for inline event handlers
@@ -1396,6 +1363,9 @@
             if (!ficha) return;
             const { jsPDF } = window.jspdf;
             const docPdf = new jsPDF();
+            const todayISO = formatDateISO(new Date());
+            docPdf.setFont("helvetica");
+            docPdf.setFontSize(11);
 
             docPdf.setFontSize(16);
             docPdf.text(ficha.nome, 20, 20);
@@ -1405,11 +1375,11 @@
 
             const tableBody = ficha.ingredientes.map(ing => [
                 ing.nome,
-                String(ing.qtdLiquida),
-                String(ing.fc),
-                String(ing.qtdBruta),
+                Number(ing.qtdLiquida || 0).toFixed(2),
+                ing.fc ? Number(ing.fc).toFixed(2) : '',
+                Number(ing.qtdBruta || 0).toFixed(2),
                 ing.unidade,
-                `R$ ${ing.custoTotal.toFixed(2)}`
+                `R$ ${Number(ing.custoTotal || 0).toFixed(2)}`
             ]);
 
             docPdf.autoTable({
@@ -1417,6 +1387,7 @@
                 body: tableBody,
                 startY: 50,
                 styles: { fontSize: 10, halign: 'left', cellPadding: 2 },
+                headStyles: { fillColor: [240,240,240] },
                 columnStyles: {
                     0: { cellWidth: 51 },
                     1: { cellWidth: 20 },
@@ -1437,7 +1408,10 @@
             docPdf.text(`CMV real: ${ficha.cmvReal.toFixed(2)}%`, 20, y); y+=6;
             docPdf.text(`Margem de lucro: ${ficha.margemLucro.toFixed(2)}%`, 20, y);
 
-            docPdf.save('ficha-tecnica.pdf');
+            docPdf.setFontSize(10);
+            docPdf.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')}`, 20, 285);
+            docPdf.text('App Estoque', 190, 285, {align:'right'});
+            docPdf.save(`relatorio-ficha-tecnica-${todayISO}.pdf`);
         };
 
         // Event Listeners
