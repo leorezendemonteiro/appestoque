@@ -233,13 +233,35 @@
                 <div id="tab-fichas" class="tab-content space-y-8">
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Ficha Técnica</h2>
-                        <p class="text-gray-600">Funcionalidade em desenvolvimento.</p>
+                        <p class="text-sm text-gray-600 mb-2">CMV aplicado: <span id="current-cmv-display">0%</span></p>
+                        <form id="ficha-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <input type="text" id="ficha-nome" placeholder="Nome do Prato" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <input type="number" id="ficha-custo" placeholder="Custo de Produção (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <button type="submit" class="sm:col-span-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Adicionar</button>
+                        </form>
+                        <div id="fichas-list" class="space-y-3"></div>
                     </div>
                 </div>
                 <div id="tab-cmv" class="tab-content space-y-8">
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Cálculo do CMV</h2>
-                        <p class="text-gray-600">Funcionalidade em desenvolvimento.</p>
+                        <form id="cmv-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <input type="number" id="cmv-estoque-inicial" placeholder="Estoque Inicial (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <input type="number" id="cmv-compras" placeholder="Compras do Mês (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <input type="number" id="cmv-estoque-final" placeholder="Estoque Final (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <input type="number" id="cmv-despesas-fixas" placeholder="Despesas Fixas (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <input type="number" id="cmv-mao-obra" placeholder="Mão de Obra (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <input type="number" id="cmv-receita-bruta" placeholder="Receita Bruta do Mês (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                        </form>
+                        <div id="cmv-manual-container" class="mt-4 hidden">
+                            <input type="number" id="cmv-manual-input" placeholder="CMV (%) manual" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+                        </div>
+                        <div class="flex flex-wrap gap-2 mt-4">
+                            <button id="calcular-cmv-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Calcular CMV</button>
+                            <button id="importar-cmv-btn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Importar este CMV para Fichas Técnicas</button>
+                            <button id="mostrar-manual-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Inserir CMV manual</button>
+                        </div>
+                        <div id="cmv-results" class="mt-4 space-y-1 text-gray-700"></div>
                     </div>
                 </div>
             </div>
@@ -281,7 +303,11 @@
             obsCozinha: [],
             unsubscribeObsParrilla: null,
             unsubscribeObsCozinha: null,
-            editingObs: { parrilla: null, cozinha: null }
+            editingObs: { parrilla: null, cozinha: null },
+            fichas: [],
+            unsubscribeFichas: null,
+            currentCMV: 0,
+            unsubscribeCMV: null
         };
 
         const loginView = document.getElementById("login-view");
@@ -316,6 +342,16 @@
         const cozinhaObsText = document.getElementById("cozinha-obs-text");
         const saveCozinhaObsBtn = document.getElementById("save-cozinha-obs");
         const cozinhaObsListDiv = document.getElementById("cozinha-obs-list");
+        const fichaForm = document.getElementById("ficha-form");
+        const fichasListDiv = document.getElementById("fichas-list");
+        const currentCmvDisplay = document.getElementById("current-cmv-display");
+        const cmvForm = document.getElementById("cmv-form");
+        const cmvManualContainer = document.getElementById("cmv-manual-container");
+        const cmvManualInput = document.getElementById("cmv-manual-input");
+        const calcularCmvBtn = document.getElementById("calcular-cmv-btn");
+        const importarCmvBtn = document.getElementById("importar-cmv-btn");
+        const mostrarManualBtn = document.getElementById("mostrar-manual-btn");
+        const cmvResultsDiv = document.getElementById("cmv-results");
 
         // Helper Functions
         function showMessage(msg, isError = false) {
@@ -533,6 +569,51 @@
            slFilter.size = 1;
        }
 
+       function renderFichasList() {
+           if (!fichasListDiv) return;
+           fichasListDiv.innerHTML = '';
+           if (appState.fichas.length === 0) {
+               fichasListDiv.innerHTML = '<p class="text-gray-500">Nenhuma ficha cadastrada.</p>';
+               return;
+           }
+           const sorted = [...appState.fichas].sort((a,b)=> (a.nome||'').localeCompare(b.nome||''));
+           sorted.forEach(f => {
+               const preco = appState.currentCMV > 0 ? (f.custo / (appState.currentCMV / 100)) : 0;
+               const div = document.createElement('div');
+               div.className = 'bg-gray-50 p-3 rounded-lg shadow-sm flex items-center justify-between';
+               div.innerHTML = `
+                   <div>
+                       <p class="font-semibold text-gray-800">${escapeHtml(f.nome || '')}</p>
+                       <p class="text-sm text-gray-600">Custo: R$ ${Number(f.custo).toFixed(2)}</p>
+                       <p class="text-sm text-gray-600">Preço sugerido: R$ ${preco.toFixed(2)}</p>
+                   </div>
+                   <div class="flex items-center space-x-2">
+                       <input type="number" data-ficha-id="${f.id}" value="${Number(f.custo).toFixed(2)}" step="0.01" class="w-24 p-1 border rounded text-center text-sm">
+                       <button onclick="updateFicha('${f.id}')" class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded">Atualizar</button>
+                       <button onclick="deleteFicha('${f.id}')" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>
+                   </div>
+               `;
+               fichasListDiv.appendChild(div);
+           });
+       }
+
+       function calcularCMV() {
+           const ei = parseFloat(document.getElementById('cmv-estoque-inicial').value) || 0;
+           const compras = parseFloat(document.getElementById('cmv-compras').value) || 0;
+           const ef = parseFloat(document.getElementById('cmv-estoque-final').value) || 0;
+           const despesas = parseFloat(document.getElementById('cmv-despesas-fixas').value) || 0;
+           const mao = parseFloat(document.getElementById('cmv-mao-obra').value) || 0;
+           const receita = parseFloat(document.getElementById('cmv-receita-bruta').value) || 0;
+           const cmvCalc = (ei + compras) - ef;
+           const cmvPerc = receita > 0 ? (cmvCalc / receita) * 100 : 0;
+           cmvResultsDiv.innerHTML = `
+               <p>Gasto Operacional Total: R$ ${(despesas + mao).toFixed(2)}</p>
+               <p>CMV Absoluto: R$ ${cmvCalc.toFixed(2)}</p>
+               <p>CMV (%): ${cmvPerc.toFixed(2)}%</p>
+           `;
+           return { ei, compras, ef, despesas, mao, receita, cmvCalc, cmvPerc };
+       }
+
         // Função para escutar mudanças nos dados do Firebase
         function listenToDataChanges() {
             const stockCollectionRef = collection(db, "estoque");
@@ -572,6 +653,21 @@
                 appState.obsCozinha = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                 renderObservationList('cozinha');
             }, (error) => console.error('Erro ao carregar observações cozinha:', error));
+
+            const fichasRef = collection(db, 'fichas');
+            appState.unsubscribeFichas = onSnapshot(fichasRef, (snapshot) => {
+                appState.fichas = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderFichasList();
+            }, (error) => console.error('Erro ao carregar fichas:', error));
+
+            const cmvRef = doc(db, 'config', 'cmvAplicado');
+            appState.unsubscribeCMV = onSnapshot(cmvRef, (snap) => {
+                if (snap.exists()) {
+                    appState.currentCMV = snap.data().valor || 0;
+                    if (currentCmvDisplay) currentCmvDisplay.textContent = appState.currentCMV.toFixed(2) + '%';
+                    renderFichasList();
+                }
+            }, (error) => console.error('Erro ao carregar CMV aplicado:', error));
         }
 
         // PDF Generation Functions
@@ -1029,6 +1125,31 @@
             }
         };
 
+        window.updateFicha = async (id) => {
+            const input = document.querySelector(`input[data-ficha-id="${id}"]`);
+            if (!input) return;
+            const custo = parseFloat(input.value);
+            if (isNaN(custo)) { showMessage('Valor inválido', true); return; }
+            try {
+                await updateDoc(doc(db, 'fichas', id), { custo });
+                showMessage('Ficha atualizada!');
+            } catch (err) {
+                console.error('Erro ao atualizar ficha:', err);
+                showMessage('Erro ao atualizar ficha', true);
+            }
+        };
+
+        window.deleteFicha = async (id) => {
+            if (!confirm('Excluir ficha?')) return;
+            try {
+                await deleteDoc(doc(db, 'fichas', id));
+                showMessage('Ficha excluída!');
+            } catch (err) {
+                console.error('Erro ao excluir ficha:', err);
+                showMessage('Erro ao excluir ficha', true);
+            }
+        };
+
         // Event Listeners
         showSignupBtn.addEventListener('click', () => {
             loginView.classList.add('hidden');
@@ -1230,6 +1351,55 @@
         generateShoppingListBtn.addEventListener('click', generateShoppingList);
         generateKitchenReportBtn.addEventListener('click', () => generateProductionReport('COZINHA'));
         generateParrillaReportBtn.addEventListener('click', () => generateProductionReport('PARRILLA'));
+
+        fichaForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nome = document.getElementById('ficha-nome').value.trim();
+            const custo = parseFloat(document.getElementById('ficha-custo').value);
+            if (!nome || isNaN(custo)) { showMessage('Preencha todos os campos', true); return; }
+            try {
+                await addDoc(collection(db, 'fichas'), { nome, custo, timestamp: new Date() });
+                showMessage('Ficha adicionada com sucesso!');
+                fichaForm.reset();
+            } catch (err) {
+                console.error('Erro ao adicionar ficha:', err);
+                showMessage('Erro ao adicionar ficha', true);
+            }
+        });
+
+        calcularCmvBtn.addEventListener('click', calcularCMV);
+        mostrarManualBtn.addEventListener('click', () => {
+            cmvManualContainer.classList.toggle('hidden');
+        });
+        importarCmvBtn.addEventListener('click', async () => {
+            const calc = calcularCMV();
+            let percent = calc.cmvPerc;
+            let origem = 'automatica';
+            if (!cmvManualContainer.classList.contains('hidden')) {
+                const manual = parseFloat(cmvManualInput.value);
+                if (!isNaN(manual)) { percent = manual; origem = 'manual'; }
+            }
+            const now = new Date();
+            const docId = `${String(now.getMonth()+1).padStart(2,'0')}_${now.getFullYear()}`;
+            try {
+                await setDoc(doc(db, 'cmv', docId), {
+                    estoqueInicial: calc.ei,
+                    compras: calc.compras,
+                    estoqueFinal: calc.ef,
+                    despesasFixas: calc.despesas,
+                    maoDeObra: calc.mao,
+                    receitaBruta: calc.receita,
+                    cmvCalculado: calc.cmvCalc,
+                    cmvPercentual: percent,
+                    origem
+                });
+                await setDoc(doc(db, 'config', 'cmvAplicado'), { valor: percent, origem }, { merge: true });
+                showMessage('CMV salvo e aplicado às fichas técnicas!');
+            } catch (err) {
+                console.error('Erro ao salvar CMV:', err);
+                showMessage('Erro ao salvar CMV', true);
+            }
+        });
 
     </script>
 </body>

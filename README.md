@@ -49,3 +49,4 @@ The command prints a local URL (for example `http://localhost:3000`). Open that 
 - **Login or sign up** – Create an account or log in using the form on the home screen.
 - **Add items** – In the **Estoque** tab add stock items, or use **Produção** to log production entries.
 - **Generate reports** – Visit the **Relatórios** tab to download stock, shopping list and production reports in PDF format.
+- **CMV calculation** – Use the **Cálculo do CMV** tab to calcular monthly CMV and apply it to technical sheets. The most recent value is shown in **Ficha Técnica** and used to suggest sale prices.
