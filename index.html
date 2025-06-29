@@ -196,6 +196,21 @@
                     </div>
 
                     <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Gerar Etiqueta de Produto</h2>
+                        <form id="etiqueta-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <input type="text" id="etiqueta-produto" placeholder="Produto" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <input type="date" id="etiqueta-producao" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+                            <input type="date" id="etiqueta-validade" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+                            <div class="sm:col-span-2 flex items-center space-x-4">
+                                <label class="flex items-center"><input type="radio" name="etiqueta-tipo" value="Resfriado" class="mr-1" checked>Resfriado</label>
+                                <label class="flex items-center"><input type="radio" name="etiqueta-tipo" value="Congelado" class="mr-1">Congelado</label>
+                            </div>
+                            <input type="number" id="etiqueta-quantidade" min="1" value="1" placeholder="Quantidade de Etiquetas" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <button type="submit" class="sm:col-span-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Gerar Etiqueta</button>
+                        </form>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Observações - Parrilla</h2>
                         <div class="grid grid-cols-1 gap-4 mb-4">
                             <input type="date" id="parrilla-obs-date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" />
@@ -376,6 +391,11 @@
         const generateParrillaReportBtn = document.getElementById("generate-parrilla-report-btn");
         const stockListDiv = document.getElementById("stock-list");
         const productionListDiv = document.getElementById("production-list");
+        const etiquetaForm = document.getElementById("etiqueta-form");
+        const etiquetaProdutoInput = document.getElementById("etiqueta-produto");
+        const etiquetaProducaoInput = document.getElementById("etiqueta-producao");
+        const etiquetaValidadeInput = document.getElementById("etiqueta-validade");
+        const etiquetaQuantidadeInput = document.getElementById("etiqueta-quantidade");
         const supplierFilter = document.getElementById("supplier-filter");
         const sectorFilter = document.getElementById("sector-filter");
         const suppliersListDiv = document.getElementById("suppliers-list");
@@ -1237,6 +1257,37 @@
             showMessage('Lista de compras gerada com sucesso!');
         }
 
+        function generateEtiquetas(produto, dataProd, validade, tipo, quantidade) {
+            const logoUrl = 'https://via.placeholder.com/100x40.png?text=LOGO';
+            const win = window.open('', '_blank');
+            const style = `
+                <style>
+                    body{font-family: Arial, sans-serif;}
+                    .etiqueta{width:280px;border:1px solid #ccc;padding:8px;margin:10px auto;text-align:center;font-size:14px;}
+                    .etiqueta img{display:block;margin:0 auto 4px;max-width:80px;}
+                    .print-btn{background:#10b981;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;}
+                </style>`;
+            let html = `<html><head><title>Etiquetas</title>${style}</head><body>`;
+            for(let i=0;i<quantidade;i++){
+                const codigo = Math.random().toString(36).substring(2,8).toUpperCase();
+                html += `<div class="etiqueta">
+                            <img src="${logoUrl}" alt="Logo">
+                            <strong>Matturado</strong><br>
+                            Produto: ${escapeHtml(produto)}<br>
+                            Data de Produção: ${formatDateBR(dataProd)}<br>
+                            Validade: ${formatDateBR(validade)}<br>
+                            Tipo: ${tipo}<br>
+                            Código: ${codigo}
+                         </div>`;
+            }
+            html += `<div style="text-align:center;margin-top:20px;">
+                        <button class="print-btn" onclick="window.print()">Imprimir com App da Impressora</button>
+                        <p style="font-size:12px;margin-top:6px;">Caso esteja no celular, clique em compartilhar e envie para o app da impressora.</p>
+                     </div></body></html>`;
+            win.document.write(html);
+            win.document.close();
+        }
+
         // Global functions for inline event handlers
         window.updateStockItem = async (id) => {
             const input = document.querySelector(`input[data-item-id="${id}"][data-update-type="stock"]`);
@@ -1536,6 +1587,20 @@
                 showMessage('Erro ao adicionar item de produção', true);
             }
         });
+
+        if(etiquetaForm){
+            etiquetaProducaoInput.value = formatDateISO(new Date());
+            etiquetaForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const produto = etiquetaProdutoInput.value.trim();
+                if(!produto){ showMessage('Informe o produto', true); return; }
+                const dataProd = etiquetaProducaoInput.value || formatDateISO(new Date());
+                const validade = etiquetaValidadeInput.value || '';
+                const tipo = document.querySelector('input[name="etiqueta-tipo"]:checked').value;
+                const qtd = parseInt(etiquetaQuantidadeInput.value) || 1;
+                generateEtiquetas(produto, dataProd, validade, tipo, qtd);
+            });
+        }
 
         addSupplierForm.addEventListener('submit', async (e) => {
             e.preventDefault();
