@@ -74,13 +74,7 @@
             overflow-y: auto;
             scroll-behavior: smooth;
         }
-        .balanco-scroll {
-            max-height: 500px;
-            overflow-y: auto;
-            scroll-behavior: smooth;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 8px;
+
         }
     </style>
 </head>
@@ -349,32 +343,7 @@
                             <button data-view="novo" class="balance-view-button bg-blue-500 text-white px-2 py-1 rounded text-sm">Realizar Balanço</button>
                             <button data-view="historico" class="balance-view-button bg-gray-200 px-2 py-1 rounded text-sm">Histórico de Balanços</button>
                         </div>
-                        <div id="balance-new-view">
-                            <div class="flex space-x-2 mb-4">
-                                <button data-bgroup="fornecedor" class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm">Por Fornecedor</button>
-                                <button data-bgroup="cozinha" class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm">Produção Cozinha</button>
-                                <button data-bgroup="parrilla" class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm">Produção Parrilla</button>
-                            </div>
-                            <div id="balance-table-container" class="lista-balanco balanco-scroll"></div>
-                            <div class="flex flex-wrap gap-2 mt-4">
-                                <button id="balance-summary-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Ver Resumo de Consumo Semanal</button>
-                                <button id="apply-balance-btn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Atualizar Estoque com o Balanço Real</button>
-                                <button id="balance-pdf-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Gerar PDF do Balanço</button>
-                            </div>
-                            <div id="balance-summary" class="mt-4"></div>
-                        </div>
-                        <div id="balance-history-view" class="hidden">
-                            <div class="flex flex-col sm:flex-row gap-4 mb-4">
-                                <input type="month" id="history-date-filter" class="shadow appearance-none border rounded py-2 px-3 text-gray-700">
-                                <select id="history-type-filter" class="shadow appearance-none border rounded py-2 px-3 text-gray-700 bg-white">
-                                    <option value="">Todos</option>
-                                    <option value="fornecedor">Por Fornecedor</option>
-                                    <option value="cozinha">Produção Cozinha</option>
-                                    <option value="parrilla">Produção Parrilla</option>
-                                </select>
-                            </div>
-                            <div id="balance-history-list" class="balanco-scroll"></div>
-                        </div>
+
                     </div>
                 </div>
             </div>
@@ -558,15 +527,6 @@
             return `${year}-${month}-${day}`;
         }
 
-        function formatDateTimeBR(date) {
-            const d = date && date.seconds ? new Date(date.seconds * 1000) : new Date(date);
-            return d.toLocaleString('pt-BR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-            });
         }
 
 
@@ -1024,10 +984,12 @@ function renderProductionList() {
                input.addEventListener('input', () => {
                    const val = parseFloat(input.value) || 0;
                    diffCell.textContent = (Number(it.quantidade || 0) - val).toFixed(2);
+                   checkBalanceInputs();
                });
                tbody.appendChild(tr);
            });
            balanceTableContainer.appendChild(table);
+           checkBalanceInputs();
        }
 
        function calcularCMV() {
@@ -1549,9 +1511,10 @@ function renderProductionList() {
 
         async function applyBalance() {
             const rows = Array.from(document.querySelectorAll('.balance-row'));
-            if(rows.length === 0) return;
+            if (rows.length === 0) return;
             const groups = { fornecedor: [], cozinha: [], parrilla: [] };
-            for(const r of rows){
+            const now = new Date();
+            for (const r of rows) {
                 const tipo = r.dataset.tipo;
                 const id = r.dataset.id;
                 const nome = r.dataset.name;
@@ -1560,22 +1523,42 @@ function renderProductionList() {
                 const cont = parseFloat(r.querySelector('.contagem-input').value) || 0;
                 const diff = current - cont;
                 const just = r.querySelector('.justificativa-input').value.trim();
-                groups[tipo].push({ nome, unidade, quantidadeSistema: current, contagemReal: cont, diferenca: diff, justificativa: just, atualizado: true, dataHora: new Date() });
-                try{
-                    if(tipo === 'fornecedor'){
-                        await updateDoc(doc(db,'estoque',id), { quantidadeAtual: cont, origem:'balanco', ultimaAtualizacao:new Date() });
-                    }else{
-                        await updateDoc(doc(db,'producao',id), { quantidade: cont, origem:'balanco', timestamp:new Date() });
+                groups[tipo].push({ nome, unidade, quantidadeSistema: current, contagemReal: cont, diferenca: diff, justificativa: just, atualizado: true, dataHora: now });
+                try {
+                    if (tipo === 'fornecedor') {
+                        const item = appState.stockItems.find(it => it.id === id) || {};
+                        const historico = Array.isArray(item.historicoEntradas) ? [...item.historicoEntradas] : [];
+                        historico.push({ tipo: 'balanco', quantidade: cont, dataHora: now });
+                        await updateDoc(doc(db, 'estoque', id), {
+                            quantidadeAtual: cont,
+                            origem: 'balanco',
+                            historicoEntradas: historico,
+                            ultimaAtualizacao: now,
+                            atualizado: true
+                        });
+                    } else {
+                        await updateDoc(doc(db, 'producao', id), {
+                            quantidade: cont,
+                            origem: 'balanco',
+                            timestamp: now,
+                            atualizado: true
+                        });
+                        await addDoc(collection(db, 'producao', id, 'historicoInclusoes'), {
+                            quantidade: cont,
+                            origem: 'balanco',
+                            dataHora: now
+                        });
                     }
-                }catch(e){ console.error('Erro ao atualizar', e); }
+                } catch (e) { console.error('Erro ao atualizar', e); }
             }
-            const dateKey = formatDateISO(new Date());
+            const dateKey = formatDateISO(now);
             for(const t of Object.keys(groups)){
                 if(groups[t].length>0){
                     await setDoc(doc(db,'balanco',dateKey,t), { tipo:t, itens: groups[t], responsavel: auth.currentUser ? auth.currentUser.email : '' });
                 }
             }
             showMessage('Balanço atualizado!');
+            checkBalanceInputs();
         }
 
         function generateBalancePDF() {
@@ -2202,7 +2185,12 @@ function renderProductionList() {
             }
         });
         if(balanceSummaryBtn) balanceSummaryBtn.addEventListener('click', showBalanceSummary);
-        if(applyBalanceBtn) applyBalanceBtn.addEventListener('click', applyBalance);
+        if(applyBalanceBtn) applyBalanceBtn.addEventListener('click', async () => {
+            const confirmMsg = 'Deseja realmente atualizar o estoque com os valores do balanço?\nEssa ação substituirá os valores atuais pelos valores contados.';
+            if(confirm(confirmMsg)) {
+                await applyBalance();
+            }
+        });
         if(balancePdfBtn) balancePdfBtn.addEventListener('click', generateBalancePDF);
 
         generateStockReportBtn.addEventListener('click', generateStockReportBySupplier);
