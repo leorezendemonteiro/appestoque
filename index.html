@@ -397,7 +397,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, updateDoc, setDoc, getDocs, query, where, collectionGroup, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, updateDoc, setDoc, getDocs, query, where, collectionGroup, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
@@ -1882,22 +1882,20 @@ function renderProductionList() {
             const input = document.querySelector(`input[data-item-id="${id}"]`);
             if (!input) return;
 
-            const increment = parseFloat(input.value);
-            if (isNaN(increment)) {
+            const delta = parseFloat(input.value);
+            if (isNaN(delta)) {
                 showMessage('Quantidade inválida', true);
                 return;
             }
 
             try {
                 const ref = doc(db, 'producao', id);
-                const snap = await getDoc(ref);
-                const atual = snap.exists() ? (snap.data().quantidade || 0) : 0;
                 await updateDoc(ref, {
-                    quantidade: atual + increment,
+                    quantidade: increment(delta),
                     timestamp: new Date().toISOString()
                 });
                 await addDoc(collection(ref, 'historicoInclusoes'), {
-                    quantidade: increment,
+                    quantidade: delta,
                     dataHora: new Date().toISOString()
                 });
                 showMessage('Produção registrada com sucesso!');
