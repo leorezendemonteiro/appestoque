@@ -74,6 +74,19 @@
             overflow-y: auto;
             scroll-behavior: smooth;
         }
+        .botao-balanco-fixo {
+          position: fixed;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 999;
+          background-color: #059669;
+          margin-bottom: 12px;
+          color: white;
+          padding: 12px 24px;
+          border-radius: 8px;
+          font-weight: bold;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -345,10 +358,10 @@
                         <div id="balance-table-container" class="lista-balanco"></div>
                         <div class="flex flex-wrap gap-2 mt-4">
                             <button id="balance-summary-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Ver Resumo de Consumo Semanal</button>
-                            <button id="apply-balance-btn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Atualizar Estoque com o Balanço Real</button>
                             <button id="balance-pdf-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Gerar PDF do Balanço</button>
                         </div>
                         <div id="balance-summary" class="mt-4"></div>
+            <button id="apply-balance-btn" class="botao-balanco-fixo w-full" disabled>✅ Atualizar Estoque com o Balanço</button>
                     </div>
                 </div>
             </div>
@@ -522,6 +535,19 @@
         function formatDateISO(date){
             const [day, month, year] = new Date(date).toLocaleDateString('pt-BR').split('/');
             return `${year}-${month}-${day}`;
+        }
+
+        function checkBalanceInputs() {
+            if(!applyBalanceBtn) return;
+            const inputs = document.querySelectorAll('.contagem-input');
+            let hasVal = false;
+            inputs.forEach(inp => {
+                const v = parseFloat(inp.value);
+                if(!isNaN(v) && v !== 0) { hasVal = true; }
+            });
+            applyBalanceBtn.disabled = !hasVal;
+            applyBalanceBtn.classList.toggle('opacity-50', !hasVal);
+            applyBalanceBtn.classList.toggle('cursor-not-allowed', !hasVal);
         }
 
 
@@ -979,10 +1005,12 @@ function renderProductionList() {
                input.addEventListener('input', () => {
                    const val = parseFloat(input.value) || 0;
                    diffCell.textContent = (Number(it.quantidade || 0) - val).toFixed(2);
+                   checkBalanceInputs();
                });
                tbody.appendChild(tr);
            });
            balanceTableContainer.appendChild(table);
+           checkBalanceInputs();
        }
 
        function calcularCMV() {
@@ -1504,9 +1532,10 @@ function renderProductionList() {
 
         async function applyBalance() {
             const rows = Array.from(document.querySelectorAll('.balance-row'));
-            if(rows.length === 0) return;
+            if (rows.length === 0) return;
             const groups = { fornecedor: [], cozinha: [], parrilla: [] };
-            for(const r of rows){
+            const now = new Date();
+            for (const r of rows) {
                 const tipo = r.dataset.tipo;
                 const id = r.dataset.id;
                 const nome = r.dataset.name;
@@ -1515,22 +1544,42 @@ function renderProductionList() {
                 const cont = parseFloat(r.querySelector('.contagem-input').value) || 0;
                 const diff = current - cont;
                 const just = r.querySelector('.justificativa-input').value.trim();
-                groups[tipo].push({ nome, unidade, quantidadeSistema: current, contagemReal: cont, diferenca: diff, justificativa: just, atualizado: true, dataHora: new Date() });
-                try{
-                    if(tipo === 'fornecedor'){
-                        await updateDoc(doc(db,'estoque',id), { quantidadeAtual: cont, origem:'balanco', ultimaAtualizacao:new Date() });
-                    }else{
-                        await updateDoc(doc(db,'producao',id), { quantidade: cont, origem:'balanco', timestamp:new Date() });
+                groups[tipo].push({ nome, unidade, quantidadeSistema: current, contagemReal: cont, diferenca: diff, justificativa: just, atualizado: true, dataHora: now });
+                try {
+                    if (tipo === 'fornecedor') {
+                        const item = appState.stockItems.find(it => it.id === id) || {};
+                        const historico = Array.isArray(item.historicoEntradas) ? [...item.historicoEntradas] : [];
+                        historico.push({ tipo: 'balanco', quantidade: cont, dataHora: now });
+                        await updateDoc(doc(db, 'estoque', id), {
+                            quantidadeAtual: cont,
+                            origem: 'balanco',
+                            historicoEntradas: historico,
+                            ultimaAtualizacao: now,
+                            atualizado: true
+                        });
+                    } else {
+                        await updateDoc(doc(db, 'producao', id), {
+                            quantidade: cont,
+                            origem: 'balanco',
+                            timestamp: now,
+                            atualizado: true
+                        });
+                        await addDoc(collection(db, 'producao', id, 'historicoInclusoes'), {
+                            quantidade: cont,
+                            origem: 'balanco',
+                            dataHora: now
+                        });
                     }
-                }catch(e){ console.error('Erro ao atualizar', e); }
+                } catch (e) { console.error('Erro ao atualizar', e); }
             }
-            const dateKey = formatDateISO(new Date());
+            const dateKey = formatDateISO(now);
             for(const t of Object.keys(groups)){
                 if(groups[t].length>0){
                     await setDoc(doc(db,'balanco',dateKey,t), { tipo:t, itens: groups[t] });
                 }
             }
             showMessage('Balanço atualizado!');
+            checkBalanceInputs();
         }
 
         function generateBalancePDF() {
@@ -2069,7 +2118,12 @@ function renderProductionList() {
             });
         });
         if(balanceSummaryBtn) balanceSummaryBtn.addEventListener('click', showBalanceSummary);
-        if(applyBalanceBtn) applyBalanceBtn.addEventListener('click', applyBalance);
+        if(applyBalanceBtn) applyBalanceBtn.addEventListener('click', async () => {
+            const confirmMsg = 'Deseja realmente atualizar o estoque com os valores do balanço?\nEssa ação substituirá os valores atuais pelos valores contados.';
+            if(confirm(confirmMsg)) {
+                await applyBalance();
+            }
+        });
         if(balancePdfBtn) balancePdfBtn.addEventListener('click', generateBalancePDF);
 
         generateStockReportBtn.addEventListener('click', generateStockReportBySupplier);
