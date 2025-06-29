@@ -395,7 +395,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, updateDoc, setDoc, getDocs, query, where, collectionGroup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, updateDoc, setDoc, getDocs, query, where, collectionGroup, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
@@ -569,12 +569,14 @@
         }
 
         function formatDateTimeBR(date) {
+            if (!date) return '—';
             const d = new Date(date);
             return d.toLocaleString('pt-BR', {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric',
                 hour: '2-digit',
+                minute: '2-digit',
             });
         }
 
@@ -1597,7 +1599,7 @@ function renderProductionList() {
             const rows = Array.from(document.querySelectorAll('.balance-row'));
             if (rows.length === 0) return;
             const groups = { fornecedor: [], cozinha: [], parrilla: [] };
-            const now = new Date();
+            const now = new Date().toISOString();
             for (const r of rows) {
                 const tipo = r.dataset.tipo;
                 const id = r.dataset.id;
@@ -1815,7 +1817,7 @@ function renderProductionList() {
             const item = appState.stockItems.find(it => it.id === id);
             if (!item) return;
             const historico = Array.isArray(item.historicoEntradas) ? [...item.historicoEntradas] : [];
-            const agora = new Date();
+            const agora = new Date().toISOString();
             let novaQtd = 0;
             let tipo = 'entrada';
             if (valor === 0) {
@@ -1869,11 +1871,11 @@ function renderProductionList() {
                 const atual = snap.exists() ? (snap.data().quantidade || 0) : 0;
                 await updateDoc(ref, {
                     quantidade: atual + increment,
-                    timestamp: new Date()
+                    timestamp: new Date().toISOString()
                 });
                 await addDoc(collection(ref, 'historicoInclusoes'), {
                     quantidade: increment,
-                    dataHora: new Date()
+                    dataHora: new Date().toISOString()
                 });
                 showMessage('Produção registrada com sucesso!');
                 input.value = '';
@@ -2096,8 +2098,8 @@ function renderProductionList() {
                     unidade: unit,
                     preco: price,
                     historicoEntradas: [],
-                    ultimaAtualizacao: new Date(),
-                    timestamp: new Date()
+                    ultimaAtualizacao: new Date().toISOString(),
+                    timestamp: new Date().toISOString()
                 });
                 showMessage('Item adicionado com sucesso!');
                 addItemForm.reset();
@@ -2120,11 +2122,11 @@ function renderProductionList() {
                     setor: sector,
                     quantidade: quantity,
                     unidade: unit,
-                    timestamp: new Date()
+                    timestamp: new Date().toISOString()
                 });
                 await addDoc(collection(db, 'producao', docRef.id, 'historicoInclusoes'), {
                     quantidade: quantity,
-                    dataHora: new Date()
+                    dataHora: new Date().toISOString()
                 });
                 showMessage('Item de produção adicionado com sucesso!');
                 addProductionForm.reset();
