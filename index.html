@@ -189,6 +189,26 @@
                         </div>
                         <div id="production-list" class="space-y-3"></div>
                     </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Observações - Parrilla</h2>
+                        <div class="grid grid-cols-1 gap-4 mb-4">
+                            <input type="date" id="parrilla-obs-date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" />
+                            <textarea id="parrilla-obs-text" maxlength="500" rows="3" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" placeholder="Observações do dia"></textarea>
+                            <button id="save-parrilla-obs" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded">Salvar Observações</button>
+                        </div>
+                        <div id="parrilla-obs-list" class="space-y-3"></div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Observações - Cozinha</h2>
+                        <div class="grid grid-cols-1 gap-4 mb-4">
+                            <input type="date" id="cozinha-obs-date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" />
+                            <textarea id="cozinha-obs-text" maxlength="500" rows="3" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" placeholder="Observações do dia"></textarea>
+                            <button id="save-cozinha-obs" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded">Salvar Observações</button>
+                        </div>
+                        <div id="cozinha-obs-list" class="space-y-3"></div>
+                    </div>
                 </div>
 
                 <div id="tab-reports" class="tab-content space-y-8">
@@ -217,7 +237,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
@@ -242,7 +262,12 @@
             unsubscribeStock: null,
             unsubscribeProduction: null,
             unsubscribeSuppliers: null,
-            shoppingListItems: []
+            shoppingListItems: [],
+            obsParrilla: [],
+            obsCozinha: [],
+            unsubscribeObsParrilla: null,
+            unsubscribeObsCozinha: null,
+            editingObs: { parrilla: null, cozinha: null }
         };
 
         const loginView = document.getElementById("login-view");
@@ -269,6 +294,14 @@
         const sectorFilter = document.getElementById("sector-filter");
         const suppliersListDiv = document.getElementById("suppliers-list");
         const reportDisplayArea = document.getElementById("report-display-area");
+        const parrillaObsDate = document.getElementById("parrilla-obs-date");
+        const parrillaObsText = document.getElementById("parrilla-obs-text");
+        const saveParrillaObsBtn = document.getElementById("save-parrilla-obs");
+        const parrillaObsListDiv = document.getElementById("parrilla-obs-list");
+        const cozinhaObsDate = document.getElementById("cozinha-obs-date");
+        const cozinhaObsText = document.getElementById("cozinha-obs-text");
+        const saveCozinhaObsBtn = document.getElementById("save-cozinha-obs");
+        const cozinhaObsListDiv = document.getElementById("cozinha-obs-list");
 
         // Helper Functions
         function showMessage(msg, isError = false) {
@@ -314,6 +347,11 @@
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
+        }
+
+        function formatDateBR(dateStr) {
+            const [year, month, day] = dateStr.split('-');
+            return `${day}/${month}/${year}`;
         }
 
         // Render Functions
@@ -368,7 +406,7 @@
 
         function renderProductionList() {
             productionListDiv.innerHTML = "";
-            const filteredItems = appState.productionItems.filter(item => 
+            const filteredItems = appState.productionItems.filter(item =>
                 appState.currentSectorFilter === 'TODOS' || item.setor === appState.currentSectorFilter
             );
             if (filteredItems.length === 0) {
@@ -390,7 +428,32 @@
                         <button onclick="deleteProductionItem('${item.id}')" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>
                     </div>
                 `;
-                productionListDiv.appendChild(itemDiv);
+            productionListDiv.appendChild(itemDiv);
+        });
+        }
+
+        function renderObservationList(sector) {
+            const listDiv = sector === 'parrilla' ? parrillaObsListDiv : cozinhaObsListDiv;
+            const obsArray = sector === 'parrilla' ? appState.obsParrilla : appState.obsCozinha;
+            listDiv.innerHTML = '';
+            if (obsArray.length === 0) {
+                listDiv.innerHTML = '<p class="text-gray-500">Nenhuma observação cadastrada.</p>';
+                return;
+            }
+            const sorted = [...obsArray].sort((a, b) => a.id.localeCompare(b.id));
+            sorted.forEach(obs => {
+                const div = document.createElement('div');
+                div.className = 'bg-gray-50 p-3 rounded-lg shadow-sm flex justify-between';
+                div.innerHTML = `
+                    <div class="mr-2">
+                        <p class="font-semibold text-gray-800">${formatDateBR(obs.id)}</p>
+                        <p class="text-sm text-gray-600 break-words whitespace-pre-line">${escapeHtml(obs.texto || '')}</p>
+                    </div>
+                    <div class="flex flex-col space-y-1">\
+                        <button onclick="editObservation('${sector}','${obs.id}')" class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded">Editar</button>\
+                        <button onclick="deleteObservation('${sector}','${obs.id}')" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>\
+                    </div>`;
+                listDiv.appendChild(div);
             });
         }
 
@@ -483,6 +546,18 @@
                     updateSupplierFilter(); // Atualiza filtro de fornecedores na lista de estoque
                     updateShoppingListSupplierFilter(); // Atualiza filtro na lista de compras, se visível
                 }, (error) => console.error("Erro ao carregar fornecedores:", error));
+
+            const parrillaObsRef = collection(db, 'observacoesProducao', 'parrilla', 'dias');
+            appState.unsubscribeObsParrilla = onSnapshot(parrillaObsRef, (snapshot) => {
+                appState.obsParrilla = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderObservationList('parrilla');
+            }, (error) => console.error('Erro ao carregar observações parrilla:', error));
+
+            const cozinhaObsRef = collection(db, 'observacoesProducao', 'cozinha', 'dias');
+            appState.unsubscribeObsCozinha = onSnapshot(cozinhaObsRef, (snapshot) => {
+                appState.obsCozinha = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderObservationList('cozinha');
+            }, (error) => console.error('Erro ao carregar observações cozinha:', error));
         }
 
         // PDF Generation Functions
@@ -600,7 +675,41 @@
                     yPosition += 35;
                 });
             }
-            
+
+            if (yPosition > 260) { doc.addPage(); yPosition = 20; }
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('Observações do Dia', 20, yPosition);
+            yPosition += 10;
+
+            const obsArray = sector === 'PARRILLA' ? appState.obsParrilla : appState.obsCozinha;
+            if (obsArray.length === 0) {
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'normal');
+                doc.text('Sem observações registradas para este período.', 20, yPosition);
+            } else {
+                const sorted = [...obsArray].sort((a,b) => a.id.localeCompare(b.id));
+                sorted.forEach(obs => {
+                    if (yPosition > 270) { doc.addPage(); yPosition = 20; }
+                    doc.setFontSize(12);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`📅 ${formatDateBR(obs.id)}`, 20, yPosition);
+                    yPosition += 8;
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'normal');
+                    const lines = (obs.texto || '').split('\n');
+                    lines.forEach(line => {
+                        const chunks = doc.splitTextToSize(`• ${line}`, 170);
+                        chunks.forEach(chunk => {
+                            if (yPosition > 270) { doc.addPage(); yPosition = 20; }
+                            doc.text(chunk, 25, yPosition);
+                            yPosition += 6;
+                        });
+                    });
+                    yPosition += 4;
+                });
+            }
+
             doc.save(`relatorio-producao-${sector.toLowerCase()}.pdf`);
             showMessage(`Relatório de produção ${sector} gerado com sucesso!`);
         }
@@ -880,6 +989,32 @@
             }
         };
 
+        window.editObservation = (sector, date) => {
+            const obsArr = sector === 'parrilla' ? appState.obsParrilla : appState.obsCozinha;
+            const obs = obsArr.find(o => o.id === date);
+            if (!obs) return;
+            if (sector === 'parrilla') {
+                parrillaObsDate.value = date;
+                parrillaObsText.value = obs.texto || '';
+                appState.editingObs.parrilla = date;
+            } else {
+                cozinhaObsDate.value = date;
+                cozinhaObsText.value = obs.texto || '';
+                appState.editingObs.cozinha = date;
+            }
+        };
+
+        window.deleteObservation = async (sector, date) => {
+            if (!confirm('Excluir observação?')) return;
+            try {
+                await deleteDoc(doc(db, 'observacoesProducao', sector, 'dias', date));
+                showMessage('Observação excluída!');
+            } catch (e) {
+                console.error('Erro ao excluir observação:', e);
+                showMessage('Erro ao excluir observação', true);
+            }
+        };
+
         // Event Listeners
         showSignupBtn.addEventListener('click', () => {
             loginView.classList.add('hidden');
@@ -903,6 +1038,8 @@
                 if (appState.unsubscribeStock) appState.unsubscribeStock();
                 if (appState.unsubscribeProduction) appState.unsubscribeProduction();
                 if (appState.unsubscribeSuppliers) appState.unsubscribeSuppliers();
+                if (appState.unsubscribeObsParrilla) appState.unsubscribeObsParrilla();
+                if (appState.unsubscribeObsCozinha) appState.unsubscribeObsCozinha();
                 appState.suppliersLoaded = false;
             }
         });
@@ -1018,6 +1155,36 @@
             } catch (error) {
                 console.error('Erro ao adicionar fornecedor:', error);
                 showMessage('Erro ao adicionar fornecedor', true);
+            }
+        });
+
+        saveParrillaObsBtn.addEventListener('click', async () => {
+            const date = parrillaObsDate.value;
+            const text = parrillaObsText.value.trim();
+            if (!date || text === '') { showMessage('Preencha data e observação', true); return; }
+            try {
+                await setDoc(doc(db, 'observacoesProducao', 'parrilla', 'dias', date), { texto: text });
+                showMessage('Observação salva!');
+                parrillaObsText.value = '';
+                appState.editingObs.parrilla = null;
+            } catch (e) {
+                console.error('Erro ao salvar observação:', e);
+                showMessage('Erro ao salvar observação', true);
+            }
+        });
+
+        saveCozinhaObsBtn.addEventListener('click', async () => {
+            const date = cozinhaObsDate.value;
+            const text = cozinhaObsText.value.trim();
+            if (!date || text === '') { showMessage('Preencha data e observação', true); return; }
+            try {
+                await setDoc(doc(db, 'observacoesProducao', 'cozinha', 'dias', date), { texto: text });
+                showMessage('Observação salva!');
+                cozinhaObsText.value = '';
+                appState.editingObs.cozinha = null;
+            } catch (e) {
+                console.error('Erro ao salvar observação:', e);
+                showMessage('Erro ao salvar observação', true);
             }
         });
 
