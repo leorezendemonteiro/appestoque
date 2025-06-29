@@ -69,7 +69,7 @@
        .zeramento-highlight {
             background-color: #fee2e2;
         }
-       .lista-balanco {
+       .balanco-scroll {
             max-height: 500px;
             overflow-y: auto;
             scroll-behavior: smooth;
@@ -568,7 +568,6 @@
                 month: '2-digit',
                 year: 'numeric',
                 hour: '2-digit',
-                minute: '2-digit'
             });
         }
 
@@ -1033,7 +1032,10 @@ function renderProductionList() {
                });
                tbody.appendChild(tr);
            });
-           balanceTableContainer.appendChild(table);
+           const wrapper = document.createElement('div');
+           wrapper.className = 'balanco-scroll';
+           wrapper.appendChild(table);
+           balanceTableContainer.appendChild(wrapper);
            checkBalanceInputs();
        }
 
