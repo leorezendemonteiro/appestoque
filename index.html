@@ -69,23 +69,12 @@
        .zeramento-highlight {
             background-color: #fee2e2;
         }
-        .lista-balanco {
+       .lista-balanco {
             max-height: 500px;
             overflow-y: auto;
             scroll-behavior: smooth;
         }
-        .botao-balanco-fixo {
-          position: fixed;
-          bottom: 20px;
-          left: 50%;
-          transform: translateX(-50%);
-          z-index: 999;
-          background-color: #059669;
-          margin-bottom: 12px;
-          color: white;
-          padding: 12px 24px;
-          border-radius: 8px;
-          font-weight: bold;
+
         }
     </style>
 </head>
@@ -355,7 +344,7 @@
                             <button data-bgroup="cozinha" class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm">Produção Cozinha</button>
                             <button data-bgroup="parrilla" class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm">Produção Parrilla</button>
                         </div>
-                        <div id="balance-table-container" class="lista-balanco"></div>
+                        <div id="balance-table-container" class="lista-balanco balanco-scroll"></div>
                         <div class="flex flex-wrap gap-2 mt-4">
                             <button id="balance-summary-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Ver Resumo de Consumo Semanal</button>
                             <button id="balance-pdf-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Gerar PDF do Balanço</button>
@@ -537,17 +526,6 @@
             return `${year}-${month}-${day}`;
         }
 
-        function checkBalanceInputs() {
-            if(!applyBalanceBtn) return;
-            const inputs = document.querySelectorAll('.contagem-input');
-            let hasVal = false;
-            inputs.forEach(inp => {
-                const v = parseFloat(inp.value);
-                if(!isNaN(v) && v !== 0) { hasVal = true; }
-            });
-            applyBalanceBtn.disabled = !hasVal;
-            applyBalanceBtn.classList.toggle('opacity-50', !hasVal);
-            applyBalanceBtn.classList.toggle('cursor-not-allowed', !hasVal);
         }
 
 
