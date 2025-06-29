@@ -899,6 +899,9 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
+            let valorTotalEstoque = 0;
+            let finalYPosition = 0;
+
             const supplierGroups = {};
             appState.stockItems.forEach(item => {
                 const supplier = item.fornecedor;
@@ -962,8 +965,10 @@
                     doc.text(`${item.atual} ${item.unidade}`, 90, yPosition);
                     if(incluirPrecos){
                         const price = appState.fcValues[item.item]?.preco || 0;
+                        const totalItem = price * item.atual;
                         doc.text(`R$ ${price.toFixed(2)}`, 130, yPosition, {align:'right'});
-                        doc.text(`R$ ${(price*item.atual).toFixed(2)}`, 170, yPosition, {align:'right'});
+                        doc.text(`R$ ${totalItem.toFixed(2)}`, 170, yPosition, {align:'right'});
+                        valorTotalEstoque += totalItem;
                     }
                     yPosition += 8;
                 });
@@ -975,7 +980,19 @@
                 }
                 doc.setFont(undefined, "bold");
                 doc.text(`Total de Itens: ${items.length}`, 20, yPosition);
+                finalYPosition = yPosition;
             });
+
+            if(incluirPrecos){
+                let y = finalYPosition + 10;
+                if (y > 260) {
+                    doc.addPage();
+                    y = 20;
+                }
+                doc.setFontSize(12);
+                doc.setFont(undefined, "bold");
+                doc.text(`\uD83D\uDCE6 Valor Total em Estoque: R$ ${valorTotalEstoque.toFixed(2)}`, 20, y);
+            }
 
             doc.save("relatorio-estoque.pdf");
             showMessage("Relatório de estoque gerado com sucesso!");
