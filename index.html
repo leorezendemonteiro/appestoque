@@ -206,7 +206,6 @@
                                 <label class="flex items-center"><input type="radio" name="etiqueta-tipo" value="Resfriado" class="mr-1" checked>Resfriado</label>
                                 <label class="flex items-center"><input type="radio" name="etiqueta-tipo" value="Congelado" class="mr-1">Congelado</label>
                             </div>
-                            <input type="number" id="etiqueta-quantidade" min="1" value="1" placeholder="Quantidade de Etiquetas" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                             <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Gerar Etiqueta</button>
                         </form>
                     </div>
@@ -397,7 +396,6 @@
         const etiquetaProdutoCustom = document.getElementById("etiqueta-produto-custom");
         const etiquetaProducaoInput = document.getElementById("etiqueta-producao");
         const etiquetaValidadeInput = document.getElementById("etiqueta-validade");
-        const etiquetaQuantidadeInput = document.getElementById("etiqueta-quantidade");
         const supplierFilter = document.getElementById("supplier-filter");
         const sectorFilter = document.getElementById("sector-filter");
         const suppliersListDiv = document.getElementById("suppliers-list");
@@ -1297,33 +1295,31 @@
             showMessage('Lista de compras gerada com sucesso!');
         }
 
-        function generateEtiquetas(produto, dataProd, validade, tipo, quantidade) {
+        function generateEtiquetas(produto, dataProd, validade, tipo) {
             const { jsPDF } = window.jspdf;
             const docPdf = new jsPDF({orientation:'portrait', unit:'mm', format:[50,80]});
-            for(let i=0;i<quantidade;i++){
-                if(i>0) docPdf.addPage();
-                const codigo = Math.random().toString(36).substring(2,8).toUpperCase();
-                const pageWidth = docPdf.internal.pageSize.getWidth();
-                let y = 10;
-                docPdf.setFont('helvetica','normal');
-                docPdf.setFontSize(18);
-                docPdf.text('MATTURADO', pageWidth/2, y, {align:'center'});
-                docPdf.setFontSize(14);
-                y += 8;
-                docPdf.text(`Produto: ${produto}`, pageWidth/2, y, {align:'center'});
-                y += 8;
-                docPdf.text(`Produção: ${formatDateBR(dataProd)}`, pageWidth/2, y, {align:'center'});
-                y += 8;
-                if(validade){
-                    docPdf.text(`Validade: ${formatDateBR(validade)}`, pageWidth/2, y, {align:'center'});
-                    y += 8;
-                }
-                docPdf.text(`Tipo: ${tipo}`, pageWidth/2, y, {align:'center'});
-                y += 8;
-                docPdf.setFont(undefined, 'bold');
-                docPdf.text(`Código: ${codigo}`, pageWidth/2, y, {align:'center'});
-                docPdf.setFont(undefined, 'normal');
+            const codigo = Math.random().toString(36).substring(2,8).toUpperCase();
+            const pageWidth = docPdf.internal.pageSize.getWidth();
+            let y = 6;
+            docPdf.setFont('helvetica','bold');
+            docPdf.setFontSize(16);
+            docPdf.text('MATTURADO', pageWidth/2, y, {align:'center'});
+            docPdf.setFont('helvetica','normal');
+            docPdf.setFontSize(12);
+            y += 7;
+            docPdf.text(`Produto: ${produto}`, pageWidth/2, y, {align:'center'});
+            y += 7;
+            docPdf.text(`Produção: ${formatDateBR(dataProd)}`, pageWidth/2, y, {align:'center'});
+            y += 7;
+            if(validade){
+                docPdf.text(`Validade: ${formatDateBR(validade)}`, pageWidth/2, y, {align:'center'});
+                y += 7;
             }
+            docPdf.text(`Tipo: ${tipo}`, pageWidth/2, y, {align:'center'});
+            y += 7;
+            docPdf.setFont('helvetica','bold');
+            docPdf.text(`Código: ${codigo}`, pageWidth/2, y, {align:'center'});
+            docPdf.setFont('helvetica','normal');
             const pdfBlob = docPdf.output('blob');
             const fileURL = URL.createObjectURL(pdfBlob);
             window.location.href = fileURL;
@@ -1653,8 +1649,7 @@
                 const dataProd = etiquetaProducaoInput.value || formatDateISO(new Date());
                 const validade = etiquetaValidadeInput.value || '';
                 const tipo = document.querySelector('input[name="etiqueta-tipo"]:checked').value;
-                const qtd = parseInt(etiquetaQuantidadeInput.value) || 1;
-                generateEtiquetas(produto, dataProd, validade, tipo, qtd);
+                generateEtiquetas(produto, dataProd, validade, tipo);
             });
         }
 
