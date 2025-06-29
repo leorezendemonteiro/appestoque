@@ -346,29 +346,48 @@
                 <div id="tab-balance" class="tab-content space-y-8">
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <div class="flex space-x-2 mb-4">
-                            <button data-bgroup="fornecedor" class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm">Por Fornecedor</button>
-                            <button data-bgroup="cozinha" class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm">Produção Cozinha</button>
-                            <button data-bgroup="parrilla" class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm">Produção Parrilla</button>
+                            <button data-view="novo" class="balance-view-button bg-blue-500 text-white px-2 py-1 rounded text-sm">Realizar Balanço</button>
+                            <button data-view="historico" class="balance-view-button bg-gray-200 px-2 py-1 rounded text-sm">Histórico de Balanços</button>
                         </div>
-                        <div id="balance-table-container" class="lista-balanco balanco-scroll"></div>
-                        <div class="flex flex-wrap gap-2 mt-4">
-                            <button id="balance-summary-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Ver Resumo de Consumo Semanal</button>
-                            <button id="apply-balance-btn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Atualizar Estoque com o Balanço Real</button>
-                            <button id="balance-pdf-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Gerar PDF do Balanço</button>
+                        <div id="balance-new-view">
+                            <div class="flex space-x-2 mb-4">
+                                <button data-bgroup="fornecedor" class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm">Por Fornecedor</button>
+                                <button data-bgroup="cozinha" class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm">Produção Cozinha</button>
+                                <button data-bgroup="parrilla" class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm">Produção Parrilla</button>
+                            </div>
+                            <div id="balance-table-container" class="lista-balanco balanco-scroll"></div>
+                            <div class="flex flex-wrap gap-2 mt-4">
+                                <button id="balance-summary-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Ver Resumo de Consumo Semanal</button>
+                                <button id="apply-balance-btn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Atualizar Estoque com o Balanço Real</button>
+                                <button id="balance-pdf-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Gerar PDF do Balanço</button>
+                            </div>
+                            <div id="balance-summary" class="mt-4"></div>
                         </div>
-                        <div id="balance-summary" class="mt-4"></div>
+                        <div id="balance-history-view" class="hidden">
+                            <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                                <input type="month" id="history-date-filter" class="shadow appearance-none border rounded py-2 px-3 text-gray-700">
+                                <select id="history-type-filter" class="shadow appearance-none border rounded py-2 px-3 text-gray-700 bg-white">
+                                    <option value="">Todos</option>
+                                    <option value="fornecedor">Por Fornecedor</option>
+                                    <option value="cozinha">Produção Cozinha</option>
+                                    <option value="parrilla">Produção Parrilla</option>
+                                </select>
+                            </div>
+                            <div id="balance-history-list" class="balanco-scroll"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
+        <div id="history-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"></div>
         <div id="message-container" class="fixed top-5 right-5 text-sm font-bold z-50"></div>
 
     </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, updateDoc, setDoc, getDocs, query, where, collectionGroup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
@@ -405,7 +424,8 @@
             unsubscribeCMV: null,
             fcValues: {},
             unsubscribeFC: null,
-            currentBalanceGroup: 'fornecedor'
+            currentBalanceGroup: 'fornecedor',
+            balanceHistoryRecords: []
         };
 
         const loginView = document.getElementById("login-view");
@@ -475,6 +495,12 @@
         const applyBalanceBtn = document.getElementById("apply-balance-btn");
         const balanceSummaryDiv = document.getElementById("balance-summary");
         const balancePdfBtn = document.getElementById("balance-pdf-btn");
+        const balanceNewView = document.getElementById("balance-new-view");
+        const balanceHistoryView = document.getElementById("balance-history-view");
+        const historyDateFilter = document.getElementById("history-date-filter");
+        const historyTypeFilter = document.getElementById("history-type-filter");
+        const historyListDiv = document.getElementById("balance-history-list");
+        const historyModal = document.getElementById("history-modal");
 
         // Helper Functions
         function showMessage(msg, isError = false) {
@@ -1546,7 +1572,7 @@ function renderProductionList() {
             const dateKey = formatDateISO(new Date());
             for(const t of Object.keys(groups)){
                 if(groups[t].length>0){
-                    await setDoc(doc(db,'balanco',dateKey,t), { tipo:t, itens: groups[t] });
+                    await setDoc(doc(db,'balanco',dateKey,t), { tipo:t, itens: groups[t], responsavel: auth.currentUser ? auth.currentUser.email : '' });
                 }
             }
             showMessage('Balanço atualizado!');
@@ -1583,6 +1609,83 @@ function renderProductionList() {
             });
             docPdf.setFontSize(10); docPdf.text(`Gerado em ${dataBR}`,20,285); docPdf.text('App Estoque',190,285,{align:'right'});
             docPdf.save(`balanco-${appState.currentBalanceGroup}-${todayISO}.pdf`);
+        }
+
+        function switchBalanceView(view){
+            document.querySelectorAll('.balance-view-button').forEach(b => b.classList.remove('bg-blue-500','text-white'));
+            const btn = document.querySelector(`.balance-view-button[data-view="${view}"]`);
+            if(btn) btn.classList.add('bg-blue-500','text-white');
+            if(balanceNewView) balanceNewView.classList.toggle('hidden', view !== 'novo');
+            if(balanceHistoryView) balanceHistoryView.classList.toggle('hidden', view !== 'historico');
+            if(view === 'historico') loadBalanceHistory();
+        }
+
+        async function loadBalanceHistory(){
+            if(!historyListDiv) return;
+            historyListDiv.innerHTML = '<p class="text-gray-500">Carregando...</p>';
+            let records = [];
+            const types = historyTypeFilter && historyTypeFilter.value ? [historyTypeFilter.value] : ['fornecedor','cozinha','parrilla'];
+            for(const tp of types){
+                const q = query(collectionGroup(db, tp));
+                const snap = await getDocs(q);
+                snap.forEach(docSnap => {
+                    const dateKey = docSnap.ref.parent.parent.id;
+                    const data = docSnap.data();
+                    records.push({ date: dateKey, tipo: tp, itens: data.itens || [], responsavel: data.responsavel || '' });
+                });
+            }
+            if(historyDateFilter && historyDateFilter.value){
+                const prefix = historyDateFilter.value;
+                records = records.filter(r => r.date.startsWith(prefix));
+            }
+            records.sort((a,b) => b.date.localeCompare(a.date));
+            appState.balanceHistoryRecords = records;
+            if(records.length === 0){
+                historyListDiv.innerHTML = '<p class="text-gray-500">Nenhum balanço encontrado.</p>';
+                return;
+            }
+            const table = document.createElement('table');
+            table.className = 'min-w-full divide-y divide-gray-200 text-sm';
+            table.innerHTML = `<thead class="bg-gray-50"><tr><th class="p-2 text-left">Data</th><th class="p-2 text-left">Tipo</th><th class="p-2 text-center">Quantidade de Itens</th><th class="p-2 text-center">Total da Diferença</th><th class="p-2 text-center">Ação</th></tr></thead><tbody></tbody>`;
+            const tbody = table.querySelector('tbody');
+            records.forEach((rec,i) => {
+                const diffTot = rec.itens.reduce((s,it)=> s + (Number(it.diferenca)||0),0);
+                const tr = document.createElement('tr');
+                const label = rec.tipo === 'fornecedor' ? 'Por Fornecedor' : (rec.tipo==='cozinha' ? 'Produção Cozinha' : 'Produção Parrilla');
+                tr.innerHTML = `<td class="p-2">${formatDateBR(rec.date)}</td><td class="p-2">${label}</td><td class="p-2 text-center">${rec.itens.length}</td><td class="p-2 text-center">${diffTot.toFixed(2)}</td><td class="p-2 text-center"><button class="history-details-btn text-blue-600 underline text-sm" data-idx="${i}">Ver Detalhes</button></td>`;
+                tbody.appendChild(tr);
+            });
+            historyListDiv.innerHTML = '';
+            historyListDiv.appendChild(table);
+        }
+
+        function showHistoryDetails(rec){
+            if(!historyModal) return;
+            const diffTot = rec.itens.reduce((s,it)=> s + (Number(it.diferenca)||0),0);
+            const modalBox = document.createElement('div');
+            modalBox.className = 'bg-white p-4 rounded shadow-lg max-h-full overflow-auto w-full max-w-2xl';
+            const label = rec.tipo === 'fornecedor' ? 'Por Fornecedor' : (rec.tipo==='cozinha' ? 'Produção Cozinha' : 'Produção Parrilla');
+            modalBox.innerHTML = `<h3 class="text-lg font-semibold mb-2">${formatDateBR(rec.date)} - ${label}</h3><p class="text-sm text-gray-600 mb-2">${rec.responsavel ? 'Responsável: '+escapeHtml(rec.responsavel) : ''}</p><div class="max-h-80 overflow-auto"><table class="min-w-full divide-y divide-gray-200 text-sm"><thead class="bg-gray-50"><tr><th class="p-2 text-left">Item</th><th class="p-2 text-center">Unidade</th><th class="p-2 text-center">Sistema</th><th class="p-2 text-center">Contagem Real</th><th class="p-2 text-center">Diferença</th><th class="p-2 text-left">Justificativa</th></tr></thead><tbody>${rec.itens.map(it=>`<tr><td class="p-2">${escapeHtml(it.nome||'')}</td><td class="p-2 text-center">${escapeHtml(it.unidade||'')}</td><td class="p-2 text-center">${Number(it.quantidadeSistema||0).toFixed(2)}</td><td class="p-2 text-center">${Number(it.contagemReal||0).toFixed(2)}</td><td class="p-2 text-center">${Number(it.diferenca||0).toFixed(2)}</td><td class="p-2">${escapeHtml(it.justificativa||'')}</td></tr>`).join('')}</tbody></table></div><div class="flex justify-between items-center mt-4"><span class="font-semibold">Total Diferença: ${diffTot.toFixed(2)}</span><div class="flex gap-2"><button id="export-history-pdf-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-2 rounded text-sm">Exportar PDF do Balanço</button><button id="close-history-modal" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm">Fechar</button></div></div>`;
+            historyModal.innerHTML = '';
+            historyModal.appendChild(modalBox);
+            historyModal.classList.remove('hidden');
+            document.getElementById('close-history-modal').addEventListener('click', ()=> historyModal.classList.add('hidden'));
+            document.getElementById('export-history-pdf-btn').addEventListener('click', ()=> generateHistoricBalancePDF(rec));
+        }
+
+        function generateHistoricBalancePDF(rec){
+            const { jsPDF } = window.jspdf;
+            const docPdf = new jsPDF();
+            const dataBR = formatDateBR(rec.date);
+            const horaBR = new Date().toLocaleTimeString('pt-BR');
+            const label = rec.tipo === 'fornecedor' ? 'Por Fornecedor' : (rec.tipo==='cozinha' ? 'Produção Cozinha' : 'Produção Parrilla');
+            docPdf.setFont('helvetica');
+            docPdf.setFontSize(16); docPdf.text(`Balanço de Estoque - ${label}`,20,20);
+            docPdf.setFontSize(11); docPdf.text(`Data: ${dataBR}`,20,30); docPdf.text(`Hora: ${horaBR}`,20,36); if(rec.responsavel) docPdf.text(`Responsável: ${rec.responsavel}`,20,42);
+            const body = rec.itens.map(it => [it.nome, Number(it.quantidadeSistema||0).toFixed(2), Number(it.contagemReal||0).toFixed(2), Number(it.diferenca||0).toFixed(2), it.justificativa||'']);
+            docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY: 55, styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true}, headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
+            docPdf.setFontSize(10); docPdf.text('App Estoque',190,285,{align:'right'});
+            docPdf.save(`balanco-${rec.tipo}-${rec.date}.pdf`);
         }
 
         // Global functions for inline event handlers
@@ -2086,6 +2189,17 @@ function renderProductionList() {
                 btn.classList.add('bg-blue-500','text-white');
                 renderBalanceTable(btn.dataset.bgroup);
             });
+        });
+        document.querySelectorAll('.balance-view-button').forEach(btn => {
+            btn.addEventListener('click', () => switchBalanceView(btn.dataset.view));
+        });
+        if(historyDateFilter) historyDateFilter.addEventListener('change', loadBalanceHistory);
+        if(historyTypeFilter) historyTypeFilter.addEventListener('change', loadBalanceHistory);
+        if(historyListDiv) historyListDiv.addEventListener('click', (e) => {
+            if(e.target.classList.contains('history-details-btn')){
+                const rec = appState.balanceHistoryRecords[e.target.dataset.idx];
+                if(rec) showHistoryDetails(rec);
+            }
         });
         if(balanceSummaryBtn) balanceSummaryBtn.addEventListener('click', showBalanceSummary);
         if(applyBalanceBtn) applyBalanceBtn.addEventListener('click', applyBalance);
