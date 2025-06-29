@@ -496,10 +496,6 @@
             return `${year}-${month}-${day}`;
         }
 
-        function formatDateTimeBR(date) {
-            if (!date) return '';
-            const d = date.seconds ? new Date(date.seconds * 1000) : new Date(date);
-            return d.toLocaleString('pt-BR');
         }
 
         function getStockItemByName(name) {
@@ -685,7 +681,7 @@
             });
         }
 
-        function renderProductionList() {
+function renderProductionList() {
             productionListDiv.innerHTML = "";
             const filteredItems = appState.productionItems.filter(item =>
                 appState.currentSectorFilter === 'TODOS' || item.setor === appState.currentSectorFilter
@@ -694,25 +690,41 @@
                 productionListDiv.innerHTML = "<p class=\"text-gray-500\">Nenhum item na produção para este setor.</p>";
                 return;
             }
+            const table = document.createElement('table');
+            table.className = 'min-w-full divide-y divide-gray-200 text-sm';
+            table.innerHTML = `<thead class="bg-gray-50">
+                <tr>
+                    <th class="p-2 text-left">Item</th>
+                    <th class="p-2 text-center">Qtd. Atual</th>
+                    <th class="p-2 text-center">Produzido Agora</th>
+                    <th class="p-2 text-center">Total</th>
+                    <th class="p-2 text-center">Última Atualização</th>
+                    <th class="p-2 text-center">Ações</th>
+                </tr>
+            </thead><tbody></tbody>`;
+            const tbody = table.querySelector('tbody');
             filteredItems.forEach(item => {
-                const itemDiv = document.createElement("div");
-                itemDiv.className = "bg-gray-50 p-3 rounded-lg shadow-sm flex items-center justify-between";
-                itemDiv.innerHTML = `
-                    <div>
-                        <p class="font-semibold text-gray-800">${escapeHtml(item.item || '')}</p>
-                        <p class="text-sm text-gray-600">Setor: ${escapeHtml(item.setor || '')}</p>
-                        <p class="text-sm text-gray-600">Quantidade: ${item.quantidade} ${escapeHtml(item.unidade || '')}</p>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <input type="number" data-item-id="${item.id}" data-update-type="production" value="${item.quantidade}" step="any" class="w-24 p-1 border rounded text-center text-sm">
-                        <button onclick="updateProductionItem('${item.id}')" class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded">Atualizar</button>
-                        <button onclick="deleteProductionItem('${item.id}')" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>
-                    </div>
-                `;
-            productionListDiv.appendChild(itemDiv);
-        });
+                const last = item.timestamp ? formatDateTimeBR(item.timestamp.seconds ? item.timestamp.seconds*1000 : item.timestamp) : '—';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-2 font-semibold">${escapeHtml(item.item || '')}</td>
+                    <td class="p-2 text-center">${Number(item.quantidade || 0).toFixed(2)}</td>
+                    <td class="p-2 text-center"><input type="number" data-item-id="${item.id}" step="any" class="nova-producao-input w-24 p-1 border rounded text-center text-sm"></td>
+                    <td class="p-2 text-center" id="total-${item.id}">${Number(item.quantidade || 0).toFixed(2)}</td>
+                    <td class="p-2 text-center">${last}</td>
+                    <td class="p-2 text-center">
+                        <button onclick="updateProductionItem('${item.id}')" class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded">Salvar</button>
+                        <button onclick="deleteProductionItem('${item.id}')" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded ml-1">Excluir</button>
+                    </td>`;
+                const input = tr.querySelector('input');
+                input.addEventListener('input', () => {
+                    const val = parseFloat(input.value) || 0;
+                    document.getElementById('total-' + item.id).textContent = (Number(item.quantidade || 0) + val).toFixed(2);
+                });
+                tbody.appendChild(tr);
+            });
+            productionListDiv.appendChild(table);
         }
-
         function renderObservationList(sector) {
             const listDiv = sector === 'parrilla' ? parrillaObsListDiv : cozinhaObsListDiv;
             const obsArray = sector === 'parrilla' ? appState.obsParrilla : appState.obsCozinha;
@@ -1434,26 +1446,34 @@
         };
 
         window.updateProductionItem = async (id) => {
-            const input = document.querySelector(`input[data-item-id="${id}"][data-update-type="production"]`);
+            const input = document.querySelector(`input[data-item-id="${id}"]`);
             if (!input) return;
-            
-            const newQuantity = parseFloat(input.value);
-            if (isNaN(newQuantity)) {
+
+            const increment = parseFloat(input.value);
+            if (isNaN(increment)) {
                 showMessage('Quantidade inválida', true);
                 return;
             }
-            
+
             try {
-                await updateDoc(doc(db, 'producao', id), {
-                    quantidade: newQuantity
+                const ref = doc(db, 'producao', id);
+                const snap = await getDoc(ref);
+                const atual = snap.exists() ? (snap.data().quantidade || 0) : 0;
+                await updateDoc(ref, {
+                    quantidade: atual + increment,
+                    timestamp: new Date()
                 });
-                showMessage('Quantidade atualizada com sucesso!');
+                await addDoc(collection(ref, 'historicoInclusoes'), {
+                    quantidade: increment,
+                    dataHora: new Date()
+                });
+                showMessage('Produção registrada com sucesso!');
+                input.value = '';
             } catch (error) {
                 console.error('Erro ao atualizar item:', error);
                 showMessage('Erro ao atualizar quantidade', true);
             }
         };
-
         window.deleteProductionItem = async (id) => {
             if (confirm('Tem certeza que deseja excluir este item?')) {
                 try {
@@ -1685,14 +1705,18 @@
             const sector = document.getElementById('production-sector').value;
             const quantity = parseFloat(document.getElementById('production-quantity').value);
             const unit = document.getElementById('production-unit').value;
-            
+
             try {
-                await addDoc(collection(db, 'producao'), {
+                const docRef = await addDoc(collection(db, 'producao'), {
                     item: name,
                     setor: sector,
                     quantidade: quantity,
                     unidade: unit,
                     timestamp: new Date()
+                });
+                await addDoc(collection(db, 'producao', docRef.id, 'historicoInclusoes'), {
+                    quantidade: quantity,
+                    dataHora: new Date()
                 });
                 showMessage('Item de produção adicionado com sucesso!');
                 addProductionForm.reset();
