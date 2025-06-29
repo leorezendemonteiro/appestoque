@@ -66,8 +66,13 @@
         .entrada-highlight {
             background-color: #e0f2fe;
         }
-        .zeramento-highlight {
+       .zeramento-highlight {
             background-color: #fee2e2;
+        }
+        .lista-balanco {
+            max-height: 500px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
         }
     </style>
 </head>
@@ -337,7 +342,7 @@
                             <button data-bgroup="cozinha" class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm">Produção Cozinha</button>
                             <button data-bgroup="parrilla" class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm">Produção Parrilla</button>
                         </div>
-                        <div id="balance-table-container"></div>
+                        <div id="balance-table-container" class="lista-balanco"></div>
                         <div class="flex flex-wrap gap-2 mt-4">
                             <button id="balance-summary-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Ver Resumo de Consumo Semanal</button>
                             <button id="apply-balance-btn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Atualizar Estoque com o Balanço Real</button>
