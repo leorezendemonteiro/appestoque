@@ -368,7 +368,6 @@
                                 </div>
                             </div>
                             <div id="balance-table-container"></div>
-                            <div id="balance-summary" class="mt-4"></div>
                         </div>
                         <div id="balance-history-view" class="hidden">
                             <div class="flex gap-2 mb-2">
@@ -389,6 +388,9 @@
         </div>
         
         <div id="history-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"></div>
+        <div id="balance-summary-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div id="balance-summary" class="bg-white p-4 rounded shadow-lg max-h-full overflow-auto w-full max-w-2xl"></div>
+        </div>
         <div id="message-container" class="fixed top-5 right-5 text-sm font-bold z-50"></div>
 
     </div>
@@ -503,6 +505,7 @@
         const balanceSummaryBtn = document.getElementById("balance-summary-btn");
         const applyBalanceBtn = document.getElementById("apply-balance-btn");
         const balanceSummaryDiv = document.getElementById("balance-summary");
+        const balanceSummaryModal = document.getElementById("balance-summary-modal");
         const balancePdfBtn = document.getElementById("balance-pdf-btn");
         const balanceSupplierFilter = document.getElementById("balance-supplier-filter");
         const balanceNewView = document.getElementById("balance-new-view");
@@ -1565,39 +1568,56 @@ function renderProductionList() {
         }
 
         function showBalanceSummary() {
-            if(!balanceSummaryDiv) return;
+            if(!balanceSummaryDiv || !balanceSummaryModal) return;
             const rows = Array.from(document.querySelectorAll('.balance-row'));
-            if (rows.length === 0) { balanceSummaryDiv.innerHTML = '<p class="text-gray-500">Nenhum item.</p>'; return; }
+            if (rows.length === 0) { balanceSummaryDiv.innerHTML = '<p class="text-gray-500">Nenhum item.</p>'; balanceSummaryModal.classList.remove('hidden'); return; }
             const table = document.createElement('table');
             table.className = 'min-w-full divide-y divide-gray-200 text-sm';
             table.innerHTML = `<thead class="bg-gray-50"><tr>
                 <th class="p-2 text-left">Item</th>
-                <th class="p-2 text-center">Estoque Anterior</th>
-                <th class="p-2 text-center">Contado</th>
+                <th class="p-2 text-center">Unidade</th>
+                <th class="p-2 text-center">Estoque Atual</th>
+                <th class="p-2 text-center">Contagem Real</th>
                 <th class="p-2 text-center">Diferença</th>
             </tr></thead><tbody></tbody>`;
             const tbody = table.querySelector('tbody');
+            let diffTotal = 0;
             rows.forEach(r => {
                 const nome = r.dataset.name;
+                const unidade = r.dataset.unit || '';
                 const current = parseFloat(r.dataset.current || '0');
                 const cont = parseFloat(r.querySelector('.contagem-input').value) || 0;
                 const diff = current - cont;
+                diffTotal += diff;
                 const tr = document.createElement('tr');
                 const diffClass = diff > 0 ? 'text-red-600' : diff === 0 ? 'text-green-600' : 'text-yellow-600';
                 tr.innerHTML = `
                     <td class="p-2">${escapeHtml(nome)}</td>
+                    <td class="p-2 text-center">${escapeHtml(unidade)}</td>
                     <td class="p-2 text-center">${current.toFixed(2)}</td>
                     <td class="p-2 text-center">${cont.toFixed(2)}</td>
                     <td class="p-2 text-center ${diffClass}">${diff.toFixed(2)}</td>`;
                 tbody.appendChild(tr);
             });
+            const tfoot = document.createElement('tfoot');
+            tfoot.innerHTML = `<tr class="bg-gray-50 font-semibold"><td class="p-2" colspan="4">Total Diferença</td><td class="p-2 text-center">${diffTotal.toFixed(2)}</td></tr>`;
+            table.appendChild(tfoot);
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = 'Fechar';
+            closeBtn.className = 'mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm';
+            closeBtn.addEventListener('click', ()=> balanceSummaryModal.classList.add('hidden'));
             balanceSummaryDiv.innerHTML = '';
             balanceSummaryDiv.appendChild(table);
+            balanceSummaryDiv.appendChild(closeBtn);
+            balanceSummaryModal.classList.remove('hidden');
         }
 
         async function applyBalance() {
             const rows = Array.from(document.querySelectorAll('.balance-row'));
             if (rows.length === 0) return;
+            const hasCount = rows.some(r => r.querySelector('.contagem-input').value.trim() !== '');
+            if(!hasCount){ showMessage('Preencha ao menos uma contagem', true); return; }
+            if(!confirm('Deseja realmente atualizar o estoque com os valores do balanço?\nEssa ação substituirá os valores atuais.')) return;
             const groups = { fornecedor: [], cozinha: [], parrilla: [] };
             const now = new Date().toISOString();
             for (const r of rows) {
@@ -1655,6 +1675,7 @@ function renderProductionList() {
            const todayISO = formatDateISO(new Date());
            const dataBR = new Date().toLocaleDateString('pt-BR');
            const horaBR = new Date().toLocaleTimeString('pt-BR');
+            const responsavel = auth.currentUser ? auth.currentUser.email : '';
             const label = appState.currentBalanceGroup === 'fornecedor' ? 'Por Fornecedor' : (appState.currentBalanceGroup === 'cozinha' ? 'Produção Cozinha' : 'Produção Parrilla');
             docPdf.setFont('helvetica');
             if(appState.currentBalanceGroup === 'fornecedor'){
@@ -1673,12 +1694,14 @@ function renderProductionList() {
                 suppliers.forEach((sup,idx) => {
                     if(idx>0) docPdf.addPage();
                     docPdf.setFontSize(16); docPdf.text(`Balanço de Estoque - ${sup}`,20,20);
-                    docPdf.setFontSize(11); docPdf.text(`Data: ${dataBR}`,20,30); docPdf.text(`Hora: ${horaBR}`,20,36);
-                    docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body: groups[sup], startY: 45, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:true}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
+                    docPdf.setFontSize(11); docPdf.text(`Data: ${dataBR}`,20,30); docPdf.text(`Hora: ${horaBR}`,20,36); if(responsavel) docPdf.text(`Responsável: ${responsavel}`,20,42);
+                    const startY = responsavel ? 51 : 45;
+                    docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body: groups[sup], startY, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:true}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
                 });
             } else {
                 docPdf.setFontSize(16); docPdf.text(`Balanço de Estoque - ${label}`,20,20);
-                docPdf.setFontSize(11); docPdf.text(`Data: ${dataBR}`,20,30); docPdf.text(`Hora: ${horaBR}`,20,36);
+                docPdf.setFontSize(11); docPdf.text(`Data: ${dataBR}`,20,30); docPdf.text(`Hora: ${horaBR}`,20,36); if(responsavel) docPdf.text(`Responsável: ${responsavel}`,20,42);
+                const startY = responsavel ? 51 : 45;
                 const body = rows.map(r => {
                     const nome = r.dataset.name;
                     const current = parseFloat(r.dataset.current||'0');
@@ -1687,11 +1710,11 @@ function renderProductionList() {
                     const just = r.querySelector('.justificativa-input').value || '';
                     return [nome, current.toFixed(2), cont.toFixed(2), diff.toFixed(2), just];
                 });
-                docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY: 45, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:true}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
+                docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:true}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
             }
-            docPdf.setFontSize(10); docPdf.text(`Gerado em ${dataBR}`,20,285); docPdf.text('App Estoque',190,285,{align:'right'});
+            docPdf.setFontSize(10); docPdf.text('Gerado por Trakto FoodOps | appestoque.vercel.app', docPdf.internal.pageSize.getWidth()/2, 285, {align:'center'});
             docPdf.save(`balanco-${appState.currentBalanceGroup}-${todayISO}.pdf`);
-        }
+       }
 
         // Alias functions connected to the UI buttons
         function gerarResumoBalanco() {
