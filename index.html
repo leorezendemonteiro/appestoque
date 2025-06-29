@@ -63,6 +63,12 @@
         .print-area thead {
             background-color: #f2f2f2;
         }
+        .entrada-highlight {
+            background-color: #e0f2fe;
+        }
+        .zeramento-highlight {
+            background-color: #fee2e2;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -490,6 +496,12 @@
             return `${year}-${month}-${day}`;
         }
 
+        function formatDateTimeBR(date) {
+            if (!date) return '';
+            const d = date.seconds ? new Date(date.seconds * 1000) : new Date(date);
+            return d.toLocaleString('pt-BR');
+        }
+
         function getStockItemByName(name) {
             return appState.stockItems.find(it => (it.item || '') === name) || null;
         }
@@ -612,9 +624,7 @@
         function renderStockList() {
             stockListDiv.innerHTML = "";
             const filteredItems = appState.stockItems
-                .filter(item =>
-                    appState.currentSupplierFilter === 'TODOS' || item.fornecedor === appState.currentSupplierFilter
-                )
+                .filter(item => appState.currentSupplierFilter === 'TODOS' || item.fornecedor === appState.currentSupplierFilter)
                 .sort((a, b) => (a.item || '').localeCompare(b.item || ''));
 
             if (filteredItems.length === 0) {
@@ -636,25 +646,42 @@
                 supplierHeader.textContent = `Fornecedor: ${supplier}`;
                 stockListDiv.appendChild(supplierHeader);
 
+                const table = document.createElement('table');
+                table.className = 'w-full text-sm mb-4';
+                table.innerHTML = `
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="p-2 text-left">Item</th>
+                            <th class="p-2 text-center">Quantidade Atual</th>
+                            <th class="p-2 text-center">Nova Entrada</th>
+                            <th class="p-2 text-center">Total Atualizado</th>
+                            <th class="p-2 text-center">Última Atualização</th>
+                            <th class="p-2 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
+                const tbody = table.querySelector('tbody');
+
                 groupedBySupplier[supplier].forEach(item => {
-                    const itemDiv = document.createElement("div");
-                    itemDiv.className = "bg-gray-50 p-3 rounded-lg shadow-sm flex items-center justify-between";
-                    itemDiv.innerHTML = `
-                        <div>
-                            <p class="font-semibold text-gray-800">${escapeHtml(item.item || '')}</p>
-                            <p class="text-sm text-gray-600">Fornecedor: ${escapeHtml(item.fornecedor || '')}</p>
-                            <p class="text-sm text-gray-600">Atual: ${item.atual} ${escapeHtml(item.unidade || '')}</p>
-                            <p class="text-sm text-gray-600">Mínima: ${item.minimo} ${escapeHtml(item.unidade || '')}</p>
-                            <p class="text-sm text-gray-600">Ideal: ${item.ideal} ${escapeHtml(item.unidade || '')}</p>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <input type="number" data-item-id="${item.id}" data-update-type="stock" value="${item.atual}" step="any" class="w-24 p-1 border rounded text-center text-sm">
-                            <button onclick="updateStockItem('${item.id}')" class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded">Atualizar</button>
-                            <button onclick="deleteStockItem('${item.id}')" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>
-                        </div>
-                    `;
-                    stockListDiv.appendChild(itemDiv);
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="p-2 font-semibold">${escapeHtml(item.item || '')}</td>
+                        <td class="p-2 text-center">${Number(item.quantidadeAtual || 0)} ${escapeHtml(item.unidade || '')}</td>
+                        <td class="p-2 text-center"><input type="number" data-item-id="${item.id}" data-update-type="entrada" data-current="${item.quantidadeAtual}" step="any" class="w-24 p-1 border rounded text-center text-sm entrada-input"></td>
+                        <td class="p-2 text-center total-atualizado"></td>
+                        <td class="p-2 text-center">${formatDateTimeBR(item.ultimaAtualizacao)}</td>
+                        <td class="p-2 text-center">
+                            <button onclick="saveEntrada('${item.id}')" class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded">Salvar</button>
+                            <button onclick="deleteStockItem('${item.id}')" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded ml-1">Excluir</button>
+                        </td>`;
+                    tbody.appendChild(row);
+
+                    const input = row.querySelector('input');
+                    input.addEventListener('input', () => handleEntradaInput(input));
                 });
+
+                stockListDiv.appendChild(table);
             });
         }
 
@@ -873,8 +900,17 @@
         // Função para escutar mudanças nos dados do Firebase
         function listenToDataChanges() {
             const stockCollectionRef = collection(db, "estoque");
-           appState.unsubscribeStock = onSnapshot(stockCollectionRef, (snapshot) => {
-                appState.stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            appState.unsubscribeStock = onSnapshot(stockCollectionRef, (snapshot) => {
+                appState.stockItems = snapshot.docs.map(doc => {
+                    const d = doc.data();
+                    return {
+                        id: doc.id,
+                        ...d,
+                        quantidadeAtual: d.quantidadeAtual ?? d.atual ?? 0,
+                        historicoEntradas: d.historicoEntradas || [],
+                        ultimaAtualizacao: d.ultimaAtualizacao || d.timestamp
+                    };
+                });
                 updateSupplierFilter();
                 renderStockList();
                 renderFcIngredienteSelect();
@@ -974,11 +1010,11 @@
                 if(incluirPrecos){
                     body = items.map(it => {
                         const price = appState.fcValues[it.item]?.preco || 0;
-                        const total = price * (it.atual || 0);
+                        const total = price * (it.quantidadeAtual || 0);
                         valorTotalEstoque += total;
                         return [
                             it.item,
-                            Number(it.atual || 0).toFixed(2),
+                            Number(it.quantidadeAtual || 0).toFixed(2),
                             '',
                             it.unidade,
                             `R$ ${price.toFixed(2)}`,
@@ -988,7 +1024,7 @@
                 } else {
                     body = items.map(it => [
                         it.item,
-                        Number(it.atual || 0).toFixed(2),
+                        Number(it.quantidadeAtual || 0).toFixed(2),
                         it.unidade
                     ]);
                 }
@@ -1188,11 +1224,11 @@
                         itemDiv.className = 'flex items-center justify-between bg-gray-50 p-2 rounded-lg shadow-sm shopping-list-item';
                         itemDiv.dataset.supplier = item.fornecedor;
                         itemDiv.dataset.itemName = item.item;
-                        itemDiv.dataset.currentQty = item.atual;
+                        itemDiv.dataset.currentQty = item.quantidadeAtual;
                         itemDiv.dataset.itemUnit = item.unidade;
                         itemDiv.innerHTML = `
                             <p class="font-semibold text-gray-800 w-1/3">${escapeHtml(item.item || '')}</p>
-                            <p class="text-sm text-gray-600 w-1/4">${item.atual} ${escapeHtml(item.unidade || '')}</p>
+                            <p class="text-sm text-gray-600 w-1/4">${item.quantidadeAtual} ${escapeHtml(item.unidade || '')}</p>
                             <input type="number" class="w-1/4 p-1 border rounded text-center text-sm shopping-quantity-input" step="any">
                             <button onclick="this.closest('.shopping-list-item').remove()" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>
                         `;
@@ -1329,24 +1365,59 @@
         }
 
         // Global functions for inline event handlers
-        window.updateStockItem = async (id) => {
-            const input = document.querySelector(`input[data-item-id="${id}"][data-update-type="stock"]`);
+        window.handleEntradaInput = (input) => {
+            const row = input.closest('tr');
+            const totalCell = row.querySelector('.total-atualizado');
+            const current = parseFloat(input.dataset.current || '0');
+            const val = parseFloat(input.value);
+            row.classList.remove('entrada-highlight', 'zeramento-highlight');
+            if (isNaN(val)) {
+                totalCell.textContent = '';
+                return;
+            }
+            if (val === 0) {
+                totalCell.textContent = '0';
+                row.classList.add('zeramento-highlight');
+            } else {
+                totalCell.textContent = (current + val).toFixed(2);
+                row.classList.add('entrada-highlight');
+            }
+        };
+
+        window.saveEntrada = async (id) => {
+            const input = document.querySelector(`input[data-item-id="${id}"][data-update-type="entrada"]`);
             if (!input) return;
-            
-            const newQuantity = parseFloat(input.value);
-            if (isNaN(newQuantity)) {
+            const valor = parseFloat(input.value);
+            if (isNaN(valor)) {
                 showMessage('Quantidade inválida', true);
                 return;
             }
-            
+            const item = appState.stockItems.find(it => it.id === id);
+            if (!item) return;
+            const historico = Array.isArray(item.historicoEntradas) ? [...item.historicoEntradas] : [];
+            const agora = new Date();
+            let novaQtd = 0;
+            let tipo = 'entrada';
+            if (valor === 0) {
+                tipo = 'zeramento';
+            } else {
+                novaQtd = (item.quantidadeAtual || 0) + valor;
+            }
+            if (valor === 0) {
+                novaQtd = 0;
+            }
+            historico.push({ tipo, quantidade: valor, dataHora: agora });
             try {
                 await updateDoc(doc(db, 'estoque', id), {
-                    atual: newQuantity
+                    quantidadeAtual: novaQtd,
+                    historicoEntradas: historico,
+                    ultimaAtualizacao: agora
                 });
-                showMessage('Quantidade atualizada com sucesso!');
+                showMessage('Entrada salva com sucesso!');
+                input.value = '';
             } catch (error) {
-                console.error('Erro ao atualizar item:', error);
-                showMessage('Erro ao atualizar quantidade', true);
+                console.error('Erro ao salvar entrada:', error);
+                showMessage('Erro ao salvar entrada', true);
             }
         };
 
@@ -1591,11 +1662,13 @@
                 await addDoc(collection(db, 'estoque'), {
                     item: name,
                     fornecedor: supplier,
-                    atual: quantity,
+                    quantidadeAtual: quantity,
                     minimo: min,
                     ideal: ideal,
                     unidade: unit,
                     preco: price,
+                    historicoEntradas: [],
+                    ultimaAtualizacao: new Date(),
                     timestamp: new Date()
                 });
                 showMessage('Item adicionado com sucesso!');
