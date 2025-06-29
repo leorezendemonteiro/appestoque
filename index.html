@@ -75,12 +75,13 @@
             scroll-behavior: smooth;
         }
 
-        .balanco-scroll {
+       .scroll-container-fornecedor {
             max-height: 500px;
             overflow-y: auto;
             scroll-behavior: smooth;
-        }
-
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 8px;
         }
     </style>
 </head>
@@ -182,7 +183,9 @@
                         </form>
                         <div class="border-t pt-4">
                             <h3 class="text-md font-medium mb-3 text-gray-600">Fornecedores Cadastrados</h3>
-                            <div id="suppliers-list" class="space-y-2"></div>
+                            <div class="scroll-container-fornecedor">
+                                <div id="suppliers-list" class="space-y-2"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -577,9 +580,18 @@
             return appState.stockItems.find(it => (it.item || '') === name) || null;
         }
 
-        function getFCData(name) {
-            return appState.fcValues[name] || null;
-        }
+       function getFCData(name) {
+           return appState.fcValues[name] || null;
+       }
+
+       function checkBalanceInputs() {
+            const inputs = document.querySelectorAll('.contagem-input');
+            const anyFilled = Array.from(inputs).some(inp => inp.value.trim() !== '');
+            if(balanceSummaryBtn) balanceSummaryBtn.disabled = !anyFilled;
+            if(applyBalanceBtn) applyBalanceBtn.disabled = !anyFilled;
+            if(balancePdfBtn) balancePdfBtn.disabled = !anyFilled;
+            return anyFilled;
+       }
 
         function addIngredienteRow(data = {}) {
             const row = document.createElement('div');
