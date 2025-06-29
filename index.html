@@ -948,11 +948,13 @@
                     head,
                     body,
                     startY: 60,
-                    styles:{fontSize:11},
-                    headStyles:{fillColor:[240,240,240]},
+                    styles:{fontSize:11, lineHeight:1.3, cellPadding:6},
+                    headStyles:{fillColor:[204,204,204], textColor:0, fontStyle:'bold'},
+                    bodyStyles:{fillColor:[255,255,255]},
+                    alternateRowStyles:{fillColor:[245,245,245]},
                     columnStyles:{
                         0:{cellWidth:51},
-                        1:{cellWidth:20,halign:'center'},
+                        1:{cellWidth:20,halign:'right'},
                         2:{cellWidth:17,halign:'center'},
                         3:{cellWidth:20,halign:'right'},
                         4:{cellWidth:26,halign:'right'}
@@ -1017,11 +1019,13 @@
                         head: [['Item produzido','Quantidade','Unidade','Observações']],
                         body,
                         startY: yPosition + 6,
-                        styles:{fontSize:11},
-                        headStyles:{fillColor:[240,240,240]},
+                        styles:{fontSize:11, lineHeight:1.3, cellPadding:6},
+                        headStyles:{fillColor:[204,204,204], textColor:0, fontStyle:'bold'},
+                        bodyStyles:{fillColor:[255,255,255]},
+                        alternateRowStyles:{fillColor:[245,245,245]},
                         columnStyles:{
                             0:{cellWidth:51},
-                            1:{cellWidth:20,halign:'center'},
+                            1:{cellWidth:20,halign:'right'},
                             2:{cellWidth:17,halign:'center'},
                             3:{cellWidth:70}
                         },
@@ -1182,7 +1186,7 @@
                 });
             });
 
-            let totalEstimado = 0;
+            // Lista de compras focada apenas em quantidades, sem precificação
             const sortedSuppliers = Object.keys(supplierGroups).sort();
             let lastY = 0;
             sortedSuppliers.forEach((supplier, supplierIndex) => {
@@ -1196,31 +1200,26 @@
                 doc.text(`Data: ${dataBR}`, 20, 40);
                 doc.text(`Hora: ${horaBR}`, 20, 46);
 
-                const body = items.map(it => {
-                    const price = appState.fcValues[it.name]?.preco || 0;
-                    const total = price * (it.requestedQty || 0);
-                    if(price && it.requestedQty){ totalEstimado += total; }
-                    return [
-                        it.name,
-                        it.requestedQty ? it.requestedQty.toFixed(2) : '',
-                        it.unit,
-                        price ? `R$ ${price.toFixed(2)}` : '',
-                        price ? `R$ ${total.toFixed(2)}` : ''
-                    ];
-                });
+                const body = items.map(it => [
+                    it.name,
+                    Number(it.currentQty || 0).toFixed(2),
+                    it.requestedQty ? it.requestedQty.toFixed(2) : '',
+                    it.unit
+                ]);
 
                 doc.autoTable({
-                    head: [['Item','Qtd. Comprar','Unidade','Preço Unitário','Total']],
+                    head: [['Item','Qtd. Atual','Qtd. Comprar','Unidade']],
                     body,
                     startY: 60,
-                    styles:{fontSize:11},
-                    headStyles:{fillColor:[240,240,240]},
+                    styles:{fontSize:11, lineHeight:1.3, cellPadding:6},
+                    headStyles:{fillColor:[204,204,204], textColor:0, fontStyle:'bold'},
+                    bodyStyles:{fillColor:[255,255,255]},
+                    alternateRowStyles:{fillColor:[245,245,245]},
                     columnStyles:{
                         0:{cellWidth:51},
-                        1:{cellWidth:20,halign:'center'},
-                        2:{cellWidth:17,halign:'center'},
-                        3:{cellWidth:20,halign:'right'},
-                        4:{cellWidth:26,halign:'right'}
+                        1:{cellWidth:20,halign:'right'},
+                        2:{cellWidth:20,halign:'right'},
+                        3:{cellWidth:17,halign:'center'}
                     },
                     margin:{left:20,right:20}
                 });
@@ -1229,11 +1228,7 @@
                 doc.text(`Total de itens: ${items.length}`, 20, lastY);
             });
 
-            if(totalEstimado > 0){
-                const y = lastY + 10;
-                doc.setFont(undefined,'bold');
-                doc.text(`Total estimado de compras: R$ ${totalEstimado.toFixed(2)}`, 20, y);
-            }
+
 
             doc.setFontSize(10);
             doc.text(`Gerado em ${dataBR}`, 20, 285);
@@ -1386,14 +1381,16 @@
                 head: [['Ingrediente', 'Qtd. Líquida', 'FC', 'Qtd. Bruta', 'Unidade', 'Custo Total']],
                 body: tableBody,
                 startY: 50,
-                styles: { fontSize: 10, halign: 'left', cellPadding: 2 },
-                headStyles: { fillColor: [240,240,240] },
+                styles: { fontSize: 11, lineHeight: 1.3, cellPadding: 6 },
+                headStyles: { fillColor: [204,204,204], textColor: 0, fontStyle: 'bold' },
+                bodyStyles: { fillColor: [255,255,255] },
+                alternateRowStyles: { fillColor: [245,245,245] },
                 columnStyles: {
                     0: { cellWidth: 51 },
-                    1: { cellWidth: 20 },
+                    1: { cellWidth: 20, halign: 'right' },
                     2: { cellWidth: 14, halign: 'center' },
-                    3: { cellWidth: 20 },
-                    4: { cellWidth: 17 },
+                    3: { cellWidth: 20, halign: 'right' },
+                    4: { cellWidth: 17, halign: 'center' },
                     5: { cellWidth: 26, halign: 'right' }
                 }
             });
