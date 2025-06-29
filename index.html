@@ -122,6 +122,7 @@
                         <button data-tab="production" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Produção</button>
                         <button data-tab="reports" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Relatórios</button>
                         <button data-tab="fichas" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Ficha Técnica</button>
+                        <button data-tab="fc" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Cadastro FC/Preços</button>
                         <button data-tab="cmv" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Cálculo do CMV</button>
                     </nav>
                 </div>
@@ -244,7 +245,18 @@
                             </div>
                             <div>
                                 <h3 class="font-semibold text-gray-700 mb-2">Ingredientes</h3>
-                                <div id="ingredientes-container" class="space-y-2"></div>
+                                <datalist id="ingredientes-options"></datalist>
+                                <div class="grid grid-cols-8 gap-2 font-semibold text-sm mb-1">
+                                    <span>Ingrediente</span>
+                                    <span>Qtd. Líquida</span>
+                                    <span>Unidade</span>
+                                    <span>FC</span>
+                                    <span>Qtd. Bruta</span>
+                                    <span>Custo Unitário</span>
+                                    <span>Custo Total</span>
+                                    <span></span>
+                                </div>
+                                <div id="ingredientes-container" class="space-y-1"></div>
                                 <button type="button" id="add-ingrediente-btn" class="mt-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-2 rounded">+ Adicionar ingrediente</button>
                             </div>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -258,6 +270,19 @@
                             <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Salvar Ficha Técnica</button>
                         </form>
                         <div id="fichas-list" class="space-y-3 mt-4"></div>
+                    </div>
+                </div>
+                <div id="tab-fc" class="tab-content space-y-8">
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Cadastro de FC e Preços</h2>
+                        <form id="fc-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <select id="fc-ingrediente" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white"></select>
+                            <input type="number" id="fc-fator" step="any" placeholder="Fator de Correção" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <input type="number" id="fc-preco" step="any" placeholder="Preço de Referência (R$)" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <input type="text" id="fc-unidade" placeholder="Unidade" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                            <button type="submit" class="sm:col-span-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Salvar</button>
+                        </form>
+                        <div id="fc-list" class="space-y-2 mt-4"></div>
                     </div>
                 </div>
                 <div id="tab-cmv" class="tab-content space-y-8">
@@ -366,6 +391,13 @@
         const fichasListDiv = document.getElementById("fichas-list");
         const ingredientesContainer = document.getElementById("ingredientes-container");
         const addIngredienteBtn = document.getElementById("add-ingrediente-btn");
+        const ingredientesOptions = document.getElementById("ingredientes-options");
+        const fcForm = document.getElementById("fc-form");
+        const fcIngrediente = document.getElementById("fc-ingrediente");
+        const fcFator = document.getElementById("fc-fator");
+        const fcPreco = document.getElementById("fc-preco");
+        const fcUnidade = document.getElementById("fc-unidade");
+        const fcListDiv = document.getElementById("fc-list");
         const custoTotalPratoSpan = document.getElementById("custo-total-prato");
         const custoPorPorcaoSpan = document.getElementById("custo-por-porcao");
         const precoSugeridoSpan = document.getElementById("preco-sugerido");
@@ -436,18 +468,18 @@
             return appState.stockItems.find(it => (it.item || '') === name) || null;
         }
 
-        function getFCForIngredient(name) {
-            return appState.fcValues[name] || 1;
+        function getFCData(name) {
+            return appState.fcValues[name] || null;
         }
 
         function addIngredienteRow(data = {}) {
             const row = document.createElement('div');
-            row.className = 'grid grid-cols-7 gap-2 items-center';
+            row.className = 'grid grid-cols-8 gap-2 items-center text-sm';
 
-            const select = document.createElement('select');
-            select.className = 'ingrediente-nome col-span-2 border rounded p-1 text-sm';
-            select.innerHTML = `<option value="">Ingrediente</option>` +
-                appState.stockItems.map(it => `<option value="${escapeHtml(it.item)}">${escapeHtml(it.item)}</option>`).join('');
+            const select = document.createElement('input');
+            select.setAttribute('list', 'ingredientes-options');
+            select.placeholder = 'Ingrediente';
+            select.className = 'ingrediente-nome border rounded p-1';
             select.value = data.nome || '';
 
             const qtyInput = document.createElement('input');
@@ -458,25 +490,27 @@
 
             const unidadeInput = document.createElement('input');
             unidadeInput.type = 'text';
-            unidadeInput.className = 'unidade border rounded p-1 text-sm';
+            unidadeInput.className = 'unidade border rounded p-1';
+            unidadeInput.readOnly = true;
             unidadeInput.value = data.unidade || '';
 
             const fcInput = document.createElement('input');
             fcInput.type = 'number';
             fcInput.step = 'any';
-            fcInput.className = 'fator border rounded p-1 text-sm';
+            fcInput.className = 'fator border rounded p-1';
+            fcInput.readOnly = true;
             fcInput.value = data.fc || '';
 
             const qBrutaSpan = document.createElement('span');
-            qBrutaSpan.className = 'q-bruta text-sm';
+            qBrutaSpan.className = 'q-bruta';
             qBrutaSpan.textContent = '0';
 
             const custoUnitSpan = document.createElement('span');
-            custoUnitSpan.className = 'custo-unit text-sm';
+            custoUnitSpan.className = 'custo-unit';
             custoUnitSpan.textContent = '0';
 
             const custoTotalSpan = document.createElement('span');
-            custoTotalSpan.className = 'custo-total text-sm';
+            custoTotalSpan.className = 'custo-total';
             custoTotalSpan.textContent = '0';
 
             const removeBtn = document.createElement('button');
@@ -492,16 +526,16 @@
             function updateRow() {
                 const itemName = select.value;
                 const qty = parseFloat(qtyInput.value) || 0;
-                let fc = parseFloat(fcInput.value);
-                if (isNaN(fc)) {
-                    fc = getFCForIngredient(itemName);
-                    fcInput.value = fc;
-                }
+                const fcData = getFCData(itemName);
+                const fc = fcData ? fcData.fator : 1;
+                fcInput.value = fc;
                 const qBruta = qty * fc;
                 qBrutaSpan.textContent = qBruta.toFixed(2);
 
                 const stock = getStockItemByName(itemName);
-                const custoUnit = stock && stock.preco ? parseFloat(stock.preco) : 0;
+                const unidade = fcData ? fcData.unidade : (stock ? stock.unidade : '');
+                unidadeInput.value = unidade || '';
+                const custoUnit = fcData ? fcData.preco : (stock && stock.preco ? parseFloat(stock.preco) : 0);
                 custoUnitSpan.textContent = custoUnit.toFixed(2);
                 const custoTotal = qBruta * custoUnit;
                 custoTotalSpan.textContent = custoTotal.toFixed(2);
@@ -740,6 +774,41 @@
            });
        }
 
+       function updateIngredienteOptions() {
+           if (!ingredientesOptions) return;
+           ingredientesOptions.innerHTML = Object.keys(appState.fcValues)
+               .sort()
+               .map(n => `<option value="${escapeHtml(n)}">`)
+               .join('');
+       }
+
+       function renderFcList() {
+           if (!fcListDiv) return;
+           fcListDiv.innerHTML = '';
+           const names = Object.keys(appState.fcValues).sort();
+           if (names.length === 0) {
+               fcListDiv.innerHTML = '<p class="text-gray-500">Nenhum ingrediente cadastrado.</p>';
+               return;
+           }
+           names.forEach(name => {
+               const d = appState.fcValues[name];
+               const div = document.createElement('div');
+               div.className = 'bg-gray-50 p-2 rounded flex justify-between items-center';
+               div.innerHTML = `<span>${escapeHtml(name)} - FC: ${d.fator} - Preço: R$ ${Number(d.preco||0).toFixed(2)}</span>` +
+                   `<button data-name="${escapeHtml(name)}" class="delete-fc text-xs bg-red-500 hover:bg-red-700 text-white px-2 py-1 rounded">Excluir</button>`;
+               fcListDiv.appendChild(div);
+           });
+       }
+
+       function renderFcIngredienteSelect() {
+           if (!fcIngrediente) return;
+           fcIngrediente.innerHTML = '<option value="">Selecione</option>' +
+               appState.stockItems
+                   .sort((a,b)=> (a.item||'').localeCompare(b.item||''))
+                   .map(it => `<option value="${escapeHtml(it.item)}">${escapeHtml(it.item)}</option>`)
+                   .join('');
+       }
+
        function calcularCMV() {
            const ei = parseFloat(document.getElementById('cmv-estoque-inicial').value) || 0;
            const compras = parseFloat(document.getElementById('cmv-compras').value) || 0;
@@ -760,10 +829,11 @@
         // Função para escutar mudanças nos dados do Firebase
         function listenToDataChanges() {
             const stockCollectionRef = collection(db, "estoque");
-            appState.unsubscribeStock = onSnapshot(stockCollectionRef, (snapshot) => {
+           appState.unsubscribeStock = onSnapshot(stockCollectionRef, (snapshot) => {
                 appState.stockItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 updateSupplierFilter();
                 renderStockList();
+                renderFcIngredienteSelect();
             }, (error) => console.error("Erro ao carregar estoque:", error));
 
             const productionCollectionRef = collection(db, "producao");
@@ -805,9 +875,12 @@
 
             const fcRef = collection(db, 'fc');
             appState.unsubscribeFC = onSnapshot(fcRef, (snapshot) => {
+                appState.fcValues = {};
                 snapshot.docs.forEach(d => {
-                    appState.fcValues[d.id] = d.data().valor;
+                    appState.fcValues[d.id] = d.data();
                 });
+                renderFcList();
+                updateIngredienteOptions();
             });
 
             const cmvRef = doc(db, 'config', 'cmvAplicado');
@@ -821,7 +894,8 @@
         }
 
         // PDF Generation Functions
-        function generateStockReportBySupplier() {
+       function generateStockReportBySupplier() {
+            const incluirPrecos = confirm('Deseja incluir os preços de referência cadastrados nas fichas técnicas?');
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
@@ -857,7 +931,11 @@
                 doc.setFontSize(10);
                 doc.setFont(undefined, "bold");
                 doc.text("Produto", 20, yPosition);
-                doc.text("Qtd. Atual", 100, yPosition);
+                doc.text("Qtd. Atual", 90, yPosition);
+                if(incluirPrecos){
+                    doc.text("Preço Ref.", 130, yPosition);
+                    doc.text("Total", 170, yPosition);
+                }
 
                 doc.line(20, yPosition + 2, 190, yPosition + 2);
                 yPosition += 10;
@@ -871,13 +949,22 @@
                         doc.setFontSize(10);
                         doc.setFont(undefined, "bold");
                         doc.text("Produto", 20, yPosition);
-                        doc.text("Qtd. Atual", 100, yPosition);
+                        doc.text("Qtd. Atual", 90, yPosition);
+                        if(incluirPrecos){
+                            doc.text("Preço Ref.", 130, yPosition);
+                            doc.text("Total", 170, yPosition);
+                        }
                         doc.line(20, yPosition + 2, 190, yPosition + 2);
                         yPosition += 10;
                         doc.setFont(undefined, "normal");
                     }
                     doc.text(item.item.substring(0, 30), 20, yPosition);
-                    doc.text(`${item.atual} ${item.unidade}`, 100, yPosition);
+                    doc.text(`${item.atual} ${item.unidade}`, 90, yPosition);
+                    if(incluirPrecos){
+                        const price = appState.fcValues[item.item]?.preco || 0;
+                        doc.text(`R$ ${price.toFixed(2)}`, 130, yPosition, {align:'right'});
+                        doc.text(`R$ ${(price*item.atual).toFixed(2)}`, 170, yPosition, {align:'right'});
+                    }
                     yPosition += 8;
                 });
 
@@ -1360,6 +1447,7 @@
                 if (appState.unsubscribeObsCozinha) appState.unsubscribeObsCozinha();
                 if (appState.unsubscribeFichasTecnicas) appState.unsubscribeFichasTecnicas();
                 if (appState.unsubscribeFC) appState.unsubscribeFC();
+                appState.fcValues = {};
                 appState.suppliersLoaded = false;
             }
         });
@@ -1480,6 +1568,43 @@
             }
         });
 
+        if(fcForm){
+            fcForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const nome = fcIngrediente.value;
+                const fator = parseFloat(fcFator.value) || 1;
+                const preco = parseFloat(fcPreco.value) || 0;
+                const unidade = fcUnidade.value.trim();
+                if(!nome){ showMessage('Selecione um ingrediente', true); return; }
+                try {
+                    await setDoc(doc(db,'fc', nome), { nome, unidade, fator, preco });
+                    showMessage('FC salvo com sucesso!');
+                    fcForm.reset();
+                } catch(err){
+                    console.error('Erro ao salvar FC:', err);
+                    showMessage('Erro ao salvar FC', true);
+                }
+            });
+
+            fcIngrediente.addEventListener('change', () => {
+                const stock = getStockItemByName(fcIngrediente.value);
+                fcUnidade.value = stock ? stock.unidade : '';
+            });
+
+            fcListDiv.addEventListener('click', async (e) => {
+                if(e.target.classList.contains('delete-fc')){
+                    const name = e.target.getAttribute('data-name');
+                    try{
+                        await deleteDoc(doc(db,'fc', name));
+                        showMessage('FC removido');
+                    }catch(err){
+                        console.error('Erro ao remover FC:', err);
+                        showMessage('Erro ao remover FC', true);
+                    }
+                }
+            });
+        }
+
         saveParrillaObsBtn.addEventListener('click', async () => {
             const date = parrillaObsDate.value;
             const text = parrillaObsText.value.trim();
@@ -1559,11 +1684,11 @@
                 const sel = row.querySelector('.ingrediente-nome');
                 const itemName = sel.value;
                 const qLiq = parseFloat(row.querySelector('.q-liquida').value) || 0;
-                const unidade = row.querySelector('.unidade').value;
-                const fc = parseFloat(row.querySelector('.fator').value) || 1;
+                const fcData = getFCData(itemName);
+                const fc = fcData ? fcData.fator : 1;
+                const unidade = fcData ? fcData.unidade : row.querySelector('.unidade').value;
                 const qBruta = qLiq * fc;
-                const stock = getStockItemByName(itemName);
-                const custoUnit = stock && stock.preco ? parseFloat(stock.preco) : 0;
+                const custoUnit = fcData ? fcData.preco : 0;
                 const custoTotal = qBruta * custoUnit;
                 ingredientes.push({ nome: itemName, qtdLiquida: qLiq, unidade, fc, qtdBruta: qBruta, custoUnitario: custoUnit, custoTotal });
             });
