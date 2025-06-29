@@ -70,9 +70,11 @@
             background-color: #fee2e2;
         }
        .balanco-scroll {
-            max-height: 500px;
+            max-height: 420px;
             overflow-y: auto;
             scroll-behavior: smooth;
+            padding-right: 8px;
+            padding-left: 4px;
         }
 
        .scroll-container-fornecedor {
@@ -1043,7 +1045,7 @@ function renderProductionList() {
                tbody.appendChild(tr);
            });
            const wrapper = document.createElement('div');
-           wrapper.className = tipo === 'fornecedor' ? 'scroll-container-fornecedor' : 'balanco-scroll';
+           wrapper.className = 'balanco-scroll';
            wrapper.appendChild(table);
            balanceTableContainer.appendChild(wrapper);
            checkBalanceInputs();
@@ -1653,17 +1655,17 @@ function renderProductionList() {
 
         // Alias functions connected to the UI buttons
         function gerarResumoBalanco() {
-            console.log('Resumo clicado');
+            console.log('Resumo acionado');
             showBalanceSummary();
         }
 
         async function aplicarBalancoEstoque() {
-            console.log('Aplicar Balanço clicado');
+            console.log('Atualizar acionado');
             await applyBalance();
         }
 
         function exportarBalancoPDF() {
-            console.log('Exportar PDF clicado');
+            console.log('PDF acionado');
             generateBalancePDF();
         }
 
