@@ -102,17 +102,42 @@
             justify-content: start;
         }
 
-        .balanco-table td,
-        .balanco-table th {
-            padding-left: 6px;
-            padding-right: 6px;
-            padding-top: 4px;
-            padding-bottom: 4px;
+        .balanco-table th,
+        .balanco-table td {
+            padding: 4px 6px !important;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        .balanco-table {
+            border-collapse: collapse;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        .balanco-table th:nth-child(1),
+        .balanco-table td:nth-child(1) {
+            width: 28%;
+        }
+
+        .balanco-table th:nth-child(2),
+        .balanco-table td:nth-child(2) {
+            width: 10%;
+        }
+
+        .balanco-table th:nth-child(3),
+        .balanco-table td:nth-child(3) {
+            width: 15%;
+        }
+
+        .balanco-table th:nth-child(4),
+        .balanco-table td:nth-child(4) {
+            width: 15%;
         }
 
         .table-col {
-            min-width: 80px;
-            max-width: 120px;
+            min-width: auto;
+            max-width: none;
         }
     </style>
 </head>
@@ -1216,7 +1241,7 @@ function renderProductionList() {
                return;
            }
            const table = document.createElement('table');
-           table.className = 'balanco-table text-xs min-w-full divide-y divide-gray-200';
+           table.className = 'balanco-table w-full text-sm table-fixed divide-y divide-gray-200';
            table.innerHTML = `<thead class="bg-gray-50"><tr>
                    <th class="table-col text-left">Item</th>
                    <th class="table-col text-left">Unidade</th>
