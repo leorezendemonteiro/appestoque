@@ -702,7 +702,7 @@
                 unidade: r.dataset.unit || '',
                 estoqueAtual: parseFloat(r.dataset.current || '0'),
                 contagemReal: parseFloat(r.querySelector('.contagem-input').value) || 0,
-                justificativa: r.querySelector('.justificativa-input').value || ''
+                justificativa: r.dataset.justificativa || ''
             }));
             const dateKey = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
             await setDoc(doc(db,'balanco_temp', user.uid, tipo, dateKey), {
@@ -730,11 +730,8 @@
                 const item = (data.itens||[]).find(it => it.nome === r.dataset.name && (it.unidade||'') === (r.dataset.unit||''));
                 if(item){
                     const input = r.querySelector('.contagem-input');
-                    const just = r.querySelector('.justificativa-input');
-                    const diffCell = r.querySelector('.diferenca-cell');
                     input.value = item.contagemReal;
-                    just.value = item.justificativa || '';
-                    diffCell.textContent = (parseFloat(r.dataset.current||'0') - parseFloat(item.contagemReal||'0')).toFixed(2);
+                    r.dataset.justificativa = item.justificativa || '';
                 }
             });
             checkBalanceInputs();
@@ -1201,8 +1198,6 @@ function renderProductionList() {
                    <th class="p-2 text-center">Unidade</th>
                    <th class="p-2 text-center">Estoque Atual</th>
                    <th class="p-2 text-center">Contagem Real</th>
-                   <th class="p-2 text-center">Diferença</th>
-                   <th class="p-2 text-center">Justificativa</th>
                </tr></thead><tbody></tbody>`;
            const tbody = table.querySelector('tbody');
            items.sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(it => {
@@ -1214,24 +1209,18 @@ function renderProductionList() {
                if(it.fornecedor) tr.dataset.supplier = it.fornecedor;
                tr.dataset.unit = it.unidade || '';
                tr.dataset.current = it.quantidade || 0;
+               tr.dataset.justificativa = '';
                tr.innerHTML = `
                    <td class="p-2">${escapeHtml(it.nome || '')}</td>
                    <td class="p-2 text-center">${escapeHtml(it.unidade || '')}</td>
                    <td class="p-2 text-center">${Number(it.quantidade || 0).toFixed(2)}</td>
-                   <td class="p-2 text-center"><input type="number" step="any" class="contagem-input w-24 p-1 border rounded text-center"></td>
-                   <td class="p-2 text-center diferenca-cell">0</td>
-                   <td class="p-2 text-center"><input type="text" class="justificativa-input p-1 border rounded w-full"></td>`;
+                   <td class="p-2 text-center"><input type="number" step="any" class="contagem-input w-24 p-1 border rounded text-center"></td>`;
                const input = tr.querySelector('.contagem-input');
-               const justInput = tr.querySelector('.justificativa-input');
-               const diffCell = tr.querySelector('.diferenca-cell');
                function handleInput(){
-                   const val = parseFloat(input.value) || 0;
-                   diffCell.textContent = (Number(it.quantidade || 0) - val).toFixed(2);
                    checkBalanceInputs();
                    debouncedSaveBalanceTemp();
                }
                input.addEventListener('input', handleInput);
-               justInput.addEventListener('input', debouncedSaveBalanceTemp);
                tbody.appendChild(tr);
            });
            const wrapper = document.createElement('div');
@@ -1759,6 +1748,7 @@ function renderProductionList() {
                 <th class="p-2 text-center">Estoque Atual</th>
                 <th class="p-2 text-center">Contagem Real</th>
                 <th class="p-2 text-center">Diferença</th>
+                <th class="p-2 text-left">Justificativa</th>
             </tr></thead><tbody></tbody>`;
             const tbody = table.querySelector('tbody');
             let diffTotal = 0;
@@ -1769,6 +1759,7 @@ function renderProductionList() {
                 const cont = parseFloat(r.querySelector('.contagem-input').value) || 0;
                 const diff = current - cont;
                 diffTotal += diff;
+                const just = r.dataset.justificativa || '';
                 const tr = document.createElement('tr');
                 const diffClass = diff > 0 ? 'text-red-600' : diff === 0 ? 'text-green-600' : 'text-yellow-600';
                 tr.innerHTML = `
@@ -1776,11 +1767,12 @@ function renderProductionList() {
                     <td class="p-2 text-center">${escapeHtml(unidade)}</td>
                     <td class="p-2 text-center">${current.toFixed(2)}</td>
                     <td class="p-2 text-center">${cont.toFixed(2)}</td>
-                    <td class="p-2 text-center ${diffClass}">${diff.toFixed(2)}</td>`;
+                    <td class="p-2 text-center ${diffClass}">${diff.toFixed(2)}</td>
+                    <td class="p-2">${escapeHtml(just)}</td>`;
                 tbody.appendChild(tr);
             });
             const tfoot = document.createElement('tfoot');
-            tfoot.innerHTML = `<tr class="bg-gray-50 font-semibold"><td class="p-2" colspan="4">Total Diferença</td><td class="p-2 text-center">${diffTotal.toFixed(2)}</td></tr>`;
+            tfoot.innerHTML = `<tr class="bg-gray-50 font-semibold"><td class="p-2" colspan="5">Total Diferença</td><td class="p-2 text-center">${diffTotal.toFixed(2)}</td></tr>`;
             table.appendChild(tfoot);
             const closeBtn = document.createElement('button');
             closeBtn.textContent = 'Fechar';
@@ -1808,7 +1800,7 @@ function renderProductionList() {
                 const current = parseFloat(r.dataset.current || '0');
                 const cont = parseFloat(r.querySelector('.contagem-input').value) || 0;
                 const diff = current - cont;
-                const just = r.querySelector('.justificativa-input').value.trim();
+                const just = r.dataset.justificativa ? r.dataset.justificativa.trim() : '';
                 groups[tipo].push({ nome, unidade, quantidadeSistema: current, contagemReal: cont, diferenca: diff, justificativa: just, atualizado: true, dataHora: now });
                 try {
                     if (tipo === 'fornecedor') {
@@ -1866,7 +1858,7 @@ function renderProductionList() {
                     const current = parseFloat(r.dataset.current||'0');
                     const cont = parseFloat(r.querySelector('.contagem-input').value)||0;
                     const diff = current - cont;
-                    const just = r.querySelector('.justificativa-input').value || '';
+                    const just = r.dataset.justificativa || '';
                     if(!groups[sup]) groups[sup] = [];
                     groups[sup].push([nome,current.toFixed(2),cont.toFixed(2),diff.toFixed(2),just]);
                 });
@@ -1887,7 +1879,7 @@ function renderProductionList() {
                     const current = parseFloat(r.dataset.current||'0');
                     const cont = parseFloat(r.querySelector('.contagem-input').value)||0;
                     const diff = current - cont;
-                    const just = r.querySelector('.justificativa-input').value || '';
+                    const just = r.dataset.justificativa || '';
                     return [nome, current.toFixed(2), cont.toFixed(2), diff.toFixed(2), just];
                 });
                 docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:true}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
