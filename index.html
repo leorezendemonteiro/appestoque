@@ -684,6 +684,81 @@
             });
        }
 
+       function debounce(func, wait){
+            let timeout;
+            return function(...args){
+                clearTimeout(timeout);
+                timeout = setTimeout(()=>func.apply(this,args), wait);
+            };
+       }
+
+       async function saveTempBalanceToFirestore(){
+            const user = auth.currentUser;
+            if(!user) return;
+            const tipo = appState.currentBalanceGroup;
+            const rows = Array.from(document.querySelectorAll('.balance-row'));
+            const itens = rows.map(r => ({
+                nome: r.dataset.name || '',
+                unidade: r.dataset.unit || '',
+                estoqueAtual: parseFloat(r.dataset.current || '0'),
+                contagemReal: parseFloat(r.querySelector('.contagem-input').value) || 0,
+                justificativa: r.querySelector('.justificativa-input').value || ''
+            }));
+            const dateKey = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
+            await setDoc(doc(db,'balanco_temp', user.uid, tipo, dateKey), {
+                criadoEm: new Date().toISOString(),
+                itens
+            });
+            cleanupOldTempBalances();
+       }
+
+       const debouncedSaveBalanceTemp = debounce(saveTempBalanceToFirestore, 800);
+
+       async function loadTempBalanceFromFirestore(tipo = appState.currentBalanceGroup){
+            const user = auth.currentUser;
+            if(!user) return;
+            const dateKey = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
+            const snap = await getDoc(doc(db,'balanco_temp', user.uid, tipo, dateKey));
+            if(!snap.exists()) return;
+            if(!confirm('Você tem um balanço em andamento para hoje. Deseja continuar de onde parou?')){
+                await deleteDoc(doc(db,'balanco_temp', user.uid, tipo, dateKey));
+                return;
+            }
+            const data = snap.data();
+            const rows = Array.from(document.querySelectorAll('.balance-row'));
+            rows.forEach(r => {
+                const item = (data.itens||[]).find(it => it.nome === r.dataset.name && (it.unidade||'') === (r.dataset.unit||''));
+                if(item){
+                    const input = r.querySelector('.contagem-input');
+                    const just = r.querySelector('.justificativa-input');
+                    const diffCell = r.querySelector('.diferenca-cell');
+                    input.value = item.contagemReal;
+                    just.value = item.justificativa || '';
+                    diffCell.textContent = (parseFloat(r.dataset.current||'0') - parseFloat(item.contagemReal||'0')).toFixed(2);
+                }
+            });
+            checkBalanceInputs();
+       }
+
+       async function cleanupOldTempBalances(){
+            const user = auth.currentUser;
+            if(!user) return;
+            const types = ['fornecedor','cozinha','parrilla'];
+            const today = new Date();
+            for(const t of types){
+                const colRef = collection(db,'balanco_temp', user.uid, t);
+                const snap = await getDocs(colRef);
+                snap.forEach(d => {
+                    const [day,month,year] = d.id.split('-');
+                    const docDate = new Date(`${year}-${month}-${day}`);
+                    const diffDays = (today - docDate) / 86400000;
+                    if(diffDays > 2){
+                        deleteDoc(doc(db,'balanco_temp', user.uid, t, d.id));
+                    }
+                });
+            }
+       }
+
         function addIngredienteRow(data = {}) {
             const row = document.createElement('div');
             row.className = 'grid grid-cols-8 gap-2 items-center text-sm';
@@ -1147,12 +1222,16 @@ function renderProductionList() {
                    <td class="p-2 text-center diferenca-cell">0</td>
                    <td class="p-2 text-center"><input type="text" class="justificativa-input p-1 border rounded w-full"></td>`;
                const input = tr.querySelector('.contagem-input');
+               const justInput = tr.querySelector('.justificativa-input');
                const diffCell = tr.querySelector('.diferenca-cell');
-               input.addEventListener('input', () => {
+               function handleInput(){
                    const val = parseFloat(input.value) || 0;
                    diffCell.textContent = (Number(it.quantidade || 0) - val).toFixed(2);
                    checkBalanceInputs();
-               });
+                   debouncedSaveBalanceTemp();
+               }
+               input.addEventListener('input', handleInput);
+               justInput.addEventListener('input', debouncedSaveBalanceTemp);
                tbody.appendChild(tr);
            });
            const wrapper = document.createElement('div');
@@ -1163,6 +1242,7 @@ function renderProductionList() {
            wrapper.appendChild(responsive);
            balanceTableContainer.appendChild(wrapper);
            checkBalanceInputs();
+           loadTempBalanceFromFirestore(tipo);
        }
 
        function calcularCMV() {
@@ -2142,6 +2222,7 @@ function renderProductionList() {
                 switchTab('stock');
                 listenToDataChanges();
                 updateEtiquetaProdutoSelect();
+                cleanupOldTempBalances();
             } else {
                 toggleViews('login-view');
                 // Limpar listeners quando usuário faz logout
