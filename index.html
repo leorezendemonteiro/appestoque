@@ -85,15 +85,23 @@
             padding-left: 4px;
         }
 
-        .tabela-responsiva {
+        .balanco-tabela-container {
             width: 100%;
             overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
         }
 
-       .tabela-responsiva table {
-           min-width: 800px;
-       }
+        .balanco-tabela-container table {
+            min-width: 700px;
+            table-layout: fixed;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .balanco-tabela-container th,
+        .balanco-tabela-container td {
+            padding: 4px 6px;
+            text-align: left;
+        }
 
         .menu-principal {
             display: flex;
@@ -1316,7 +1324,7 @@ function renderProductionList() {
            const wrapper = document.createElement('div');
            wrapper.className = 'balanco-scroll';
            const responsive = document.createElement('div');
-           responsive.className = 'tabela-responsiva';
+           responsive.className = 'balanco-tabela-container';
            responsive.appendChild(table);
            wrapper.appendChild(responsive);
            balanceTableContainer.appendChild(wrapper);
