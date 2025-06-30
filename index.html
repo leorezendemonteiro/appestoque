@@ -84,6 +84,16 @@
             padding-right: 8px;
             padding-left: 4px;
         }
+
+        .tabela-responsiva {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tabela-responsiva table {
+            min-width: 800px;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -1075,7 +1085,10 @@ function renderProductionList() {
            });
            const wrapper = document.createElement('div');
            wrapper.className = 'balanco-scroll';
-           wrapper.appendChild(table);
+           const responsive = document.createElement('div');
+           responsive.className = 'tabela-responsiva';
+           responsive.appendChild(table);
+           wrapper.appendChild(responsive);
            balanceTableContainer.appendChild(wrapper);
            checkBalanceInputs();
        }
