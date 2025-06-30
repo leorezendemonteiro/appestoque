@@ -407,7 +407,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, updateDoc, setDoc, getDocs, query, where, collectionGroup, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, updateDoc, setDoc, getDocs, getDoc, query, where, collectionGroup, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBJbyfICQFEfzL7EKbaH-08mQmZWOM8FhU",
@@ -603,13 +603,85 @@
            return appState.fcValues[name] || null;
        }
 
-       function checkBalanceInputs() {
-            const inputs = document.querySelectorAll('.contagem-input');
-            const anyFilled = Array.from(inputs).some(inp => inp.value.trim() !== '');
-            if(balanceSummaryBtn) balanceSummaryBtn.disabled = !anyFilled;
-            if(applyBalanceBtn) applyBalanceBtn.disabled = !anyFilled;
-            if(balancePdfBtn) balancePdfBtn.disabled = !anyFilled;
-            return anyFilled;
+        function checkBalanceInputs() {
+             const inputs = document.querySelectorAll('.contagem-input');
+             const anyFilled = Array.from(inputs).some(inp => inp.value.trim() !== '');
+             if(balanceSummaryBtn) balanceSummaryBtn.disabled = !anyFilled;
+             if(applyBalanceBtn) applyBalanceBtn.disabled = !anyFilled;
+             if(balancePdfBtn) balancePdfBtn.disabled = !anyFilled;
+             return anyFilled;
+        }
+
+       async function saveShoppingListToFirestore() {
+            const user = auth.currentUser;
+            if (!user) return;
+            const slFilter = document.getElementById('shopping-list-supplier-filter');
+            const fornecedorSel = slFilter ? slFilter.value : 'TODOS';
+            const items = Array.from(document.querySelectorAll('.shopping-list-item')).map(div => {
+                const qty = parseFloat(div.querySelector('.shopping-quantity-input').value) || 0;
+                return {
+                    nome: div.dataset.itemName || '',
+                    unidade: div.dataset.itemUnit || '',
+                    quantidade: qty,
+                    fornecedor: div.dataset.supplier || '',
+                    criadoEm: new Date().toISOString()
+                };
+            });
+            const dateKey = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
+            await setDoc(doc(db, 'listaCompras', user.uid, 'dias', dateKey), {
+                fornecedor: fornecedorSel,
+                itens: items
+            });
+            cleanupOldShoppingLists();
+       }
+
+       async function loadShoppingListFromFirestore(filterElem, itemsContainer, renderFn){
+            const user = auth.currentUser;
+            if(!user) return;
+            const dateKey = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
+            const snap = await getDoc(doc(db,'listaCompras', user.uid, 'dias', dateKey));
+            if(!snap.exists()) return;
+            if(!confirm('Você tem uma lista de compras salva hoje. Deseja continuar de onde parou?')) return;
+            const data = snap.data();
+            if(data.fornecedor && filterElem) filterElem.value = data.fornecedor;
+            renderFn();
+            if(Array.isArray(data.itens)){
+                data.itens.forEach(it => {
+                    const div = Array.from(itemsContainer.querySelectorAll('.shopping-list-item')).find(d => d.dataset.itemName === it.nome && d.dataset.supplier === (it.fornecedor||d.dataset.supplier));
+                    if(div){
+                        div.querySelector('.shopping-quantity-input').value = it.quantidade;
+                    } else {
+                        const extra = document.createElement('div');
+                        extra.className = 'flex items-center justify-between bg-gray-50 p-2 rounded-lg shadow-sm shopping-list-item';
+                        extra.dataset.supplier = it.fornecedor || '';
+                        extra.dataset.itemName = it.nome;
+                        extra.dataset.currentQty = '';
+                        extra.dataset.itemUnit = it.unidade || '';
+                        extra.innerHTML = `
+                            <p class="font-semibold text-gray-800 w-1/3">${escapeHtml(it.nome || '')}</p>
+                            <p class="text-sm text-gray-600 w-1/4"></p>
+                            <input type="number" class="w-1/4 p-1 border rounded text-center text-sm shopping-quantity-input" step="any" value="${it.quantidade}">
+                            <button class="delete-shopping-item bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>`;
+                        itemsContainer.appendChild(extra);
+                    }
+                });
+            }
+       }
+
+       async function cleanupOldShoppingLists(){
+            const user = auth.currentUser;
+            if(!user) return;
+            const colRef = collection(db,'listaCompras', user.uid, 'dias');
+            const snap = await getDocs(colRef);
+            const today = new Date();
+            snap.forEach(d => {
+                const [day,month,year] = d.id.split('-');
+                const docDate = new Date(`${year}-${month}-${day}`);
+                const diffDays = (today - docDate) / 86400000;
+                if(diffDays > 2){
+                    deleteDoc(doc(db,'listaCompras', user.uid, 'dias', d.id));
+                }
+            });
        }
 
         function addIngredienteRow(data = {}) {
@@ -1446,16 +1518,31 @@ function renderProductionList() {
                             <p class="font-semibold text-gray-800 w-1/3">${escapeHtml(item.item || '')}</p>
                             <p class="text-sm text-gray-600 w-1/4">${item.quantidadeAtual} ${escapeHtml(item.unidade || '')}</p>
                             <input type="number" class="w-1/4 p-1 border rounded text-center text-sm shopping-quantity-input" step="any">
-                            <button onclick="this.closest('.shopping-list-item').remove()" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>
+                            <button class="delete-shopping-item bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>
                         `;
                         shoppingListItemsContainer.appendChild(itemDiv);
                     });
                 });
             };
 
-            shoppingListSupplierFilter.addEventListener('change', renderShoppingListItems);
+            shoppingListSupplierFilter.addEventListener('change', () => {
+                renderShoppingListItems();
+                saveShoppingListToFirestore();
+            });
             generateShoppingListPdfBtn.addEventListener('click', generateShoppingListPDF);
+            shoppingListItemsContainer.addEventListener('input', (e) => {
+                if(e.target.classList.contains('shopping-quantity-input')){
+                    saveShoppingListToFirestore();
+                }
+            });
+            shoppingListItemsContainer.addEventListener('click', (e) => {
+                if(e.target.classList.contains('delete-shopping-item')){
+                    e.target.closest('.shopping-list-item').remove();
+                    saveShoppingListToFirestore();
+                }
+            });
             renderShoppingListItems(); // Initial render
+            loadShoppingListFromFirestore(shoppingListSupplierFilter, shoppingListItemsContainer, renderShoppingListItems);
         }
 
         function generateShoppingListPDF() {
