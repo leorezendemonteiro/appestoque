@@ -91,8 +91,28 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        .tabela-responsiva table {
-            min-width: 800px;
+       .tabela-responsiva table {
+           min-width: 800px;
+       }
+
+        .menu-principal {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: start;
+        }
+
+        .balanco-table td,
+        .balanco-table th {
+            padding-left: 6px;
+            padding-right: 6px;
+            padding-top: 4px;
+            padding-bottom: 4px;
+        }
+
+        .table-col {
+            min-width: 80px;
+            max-width: 120px;
         }
     </style>
 </head>
@@ -149,14 +169,18 @@
             
             <div class="mb-8">
                 <div class="border-b border-gray-200">
-                    <nav id="tabs-container" class="-mb-px flex space-x-4" aria-label="Tabs">
-                        <button data-tab="stock" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Estoque</button>
-                        <button data-tab="production" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Produção</button>
-                        <button data-tab="reports" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Relatórios</button>
-                        <button data-tab="fichas" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Ficha Técnica</button>
-                        <button data-tab="fc" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Cadastro FC/Preços</button>
-                        <button data-tab="cmv" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Cálculo do CMV</button>
-                        <button data-tab="balance" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Balanço de Estoque</button>
+                    <nav id="tabs-container" class="menu-principal" aria-label="Tabs">
+                        <div class="flex flex-wrap gap-2 w-full">
+                            <button data-tab="stock" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">Estoque</button>
+                            <button data-tab="production" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">Produção</button>
+                            <button data-tab="reports" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">Relatórios</button>
+                            <button data-tab="fichas" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">Ficha Técnica</button>
+                            <button data-tab="fc" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">Cadastro FC/Preços</button>
+                        </div>
+                        <div class="flex flex-wrap gap-2 w-full mt-1">
+                            <button data-tab="cmv" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">Cálculo do CMV</button>
+                            <button data-tab="balance" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">Balanço de Estoque</button>
+                        </div>
                     </nav>
                 </div>
             </div>
@@ -1192,12 +1216,12 @@ function renderProductionList() {
                return;
            }
            const table = document.createElement('table');
-           table.className = 'min-w-full divide-y divide-gray-200 text-sm';
+           table.className = 'balanco-table text-xs min-w-full divide-y divide-gray-200';
            table.innerHTML = `<thead class="bg-gray-50"><tr>
-                   <th class="p-2 text-left">Item</th>
-                   <th class="p-2 text-center">Unidade</th>
-                   <th class="p-2 text-center">Estoque Atual</th>
-                   <th class="p-2 text-center">Contagem Real</th>
+                   <th class="table-col text-left">Item</th>
+                   <th class="table-col text-left">Unidade</th>
+                   <th class="table-col text-right">Estoque Atual</th>
+                   <th class="table-col text-right">Contagem Real</th>
                </tr></thead><tbody></tbody>`;
            const tbody = table.querySelector('tbody');
            items.sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(it => {
@@ -1211,10 +1235,10 @@ function renderProductionList() {
                tr.dataset.current = it.quantidade || 0;
                tr.dataset.justificativa = '';
                tr.innerHTML = `
-                   <td class="p-2">${escapeHtml(it.nome || '')}</td>
-                   <td class="p-2 text-center">${escapeHtml(it.unidade || '')}</td>
-                   <td class="p-2 text-center">${Number(it.quantidade || 0).toFixed(2)}</td>
-                   <td class="p-2 text-center"><input type="number" step="any" class="contagem-input w-24 p-1 border rounded text-center"></td>`;
+                   <td class="table-col">${escapeHtml(it.nome || '')}</td>
+                   <td class="table-col">${escapeHtml(it.unidade || '')}</td>
+                   <td class="table-col text-right">${Number(it.quantidade || 0).toFixed(2)}</td>
+                   <td class="table-col text-right"><input type="number" step="any" class="contagem-input w-16 p-1 border rounded text-center"></td>`;
                const input = tr.querySelector('.contagem-input');
                function handleInput(){
                    checkBalanceInputs();
