@@ -679,6 +679,11 @@
             return `${year}-${month}-${day}`;
         }
 
+        function formatDateFile(date){
+            const [day, month, year] = new Date(date).toLocaleDateString('pt-BR').split('/');
+            return `${day}-${month}-${year}`;
+        }
+
         function formatDateTimeBR(date) {
             if (!date) return '—';
             const d = new Date(date);
@@ -803,7 +808,7 @@
                 justificativa: r.dataset.justificativa || ''
             }));
             const dateKey = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
-            await setDoc(doc(db,'balanco_temp', user.uid, tipo, dateKey), {
+           await setDoc(doc(db,'balanco_temp', user.email, tipo, dateKey), {
                 criadoEm: new Date().toISOString(),
                 itens
             });
@@ -816,10 +821,10 @@
             const user = auth.currentUser;
             if(!user) return;
             const dateKey = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
-            const snap = await getDoc(doc(db,'balanco_temp', user.uid, tipo, dateKey));
+           const snap = await getDoc(doc(db,'balanco_temp', user.email, tipo, dateKey));
             if(!snap.exists()) return;
             if(!confirm('Você tem um balanço em andamento para hoje. Deseja continuar de onde parou?')){
-                await deleteDoc(doc(db,'balanco_temp', user.uid, tipo, dateKey));
+               await deleteDoc(doc(db,'balanco_temp', user.email, tipo, dateKey));
                 return;
             }
             const data = snap.data();
@@ -841,14 +846,14 @@
             const types = ['fornecedor','cozinha','parrilla'];
             const today = new Date();
             for(const t of types){
-                const colRef = collection(db,'balanco_temp', user.uid, t);
+                const colRef = collection(db,'balanco_temp', user.email, t);
                 const snap = await getDocs(colRef);
                 snap.forEach(d => {
                     const [day,month,year] = d.id.split('-');
                     const docDate = new Date(`${year}-${month}-${day}`);
                     const diffDays = (today - docDate) / 86400000;
                     if(diffDays > 2){
-                        deleteDoc(doc(db,'balanco_temp', user.uid, t, d.id));
+                        deleteDoc(doc(db,'balanco_temp', user.email, t, d.id));
                     }
                 });
             }
@@ -1430,15 +1435,17 @@ function renderProductionList() {
         }
 
         // PDF Generation Functions
-       function generateStockReportBySupplier() {
-            const incluirPrecos = confirm('Deseja incluir os preços de referência cadastrados nas fichas técnicas?');
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const todayISO = formatDateISO(new Date());
-            const dataBR = new Date().toLocaleDateString('pt-BR');
-            const horaBR = new Date().toLocaleTimeString('pt-BR');
-            doc.setFont('helvetica');
-            doc.setFontSize(11);
+         function generateStockReportBySupplier() {
+             const incluirPrecos = confirm('Deseja incluir os preços de referência cadastrados nas fichas técnicas?');
+             const { jsPDF } = window.jspdf;
+             const doc = new jsPDF();
+             const todayISO = formatDateISO(new Date());
+             const dataBR = new Date().toLocaleDateString('pt-BR');
+             const dateFile = formatDateFile(new Date());
+             const horaBR = new Date().toLocaleTimeString('pt-BR');
+             doc.setFont('helvetica');
+             doc.setFontSize(11);
+             doc.setTextColor(0,0,0);
 
             let valorTotalEstoque = 0;
             let finalYPosition = 0;
@@ -1521,7 +1528,7 @@ function renderProductionList() {
             doc.setFontSize(10);
             doc.text(`Gerado em ${dataBR}`, 20, 285);
             doc.text('App Estoque', 190, 285, {align:'right'});
-            doc.save(`relatorio-estoque-${todayISO}.pdf`);
+            doc.save(`estoque-geral-${dateFile}.pdf`);
             showMessage('Relatório de estoque gerado com sucesso!');
         }
 
@@ -1530,9 +1537,11 @@ function renderProductionList() {
             const doc = new jsPDF();
             const todayISO = formatDateISO(new Date());
             const dataBR = new Date().toLocaleDateString('pt-BR');
+            const dateFile = formatDateFile(new Date());
             const horaBR = new Date().toLocaleTimeString('pt-BR');
             doc.setFont('helvetica');
             doc.setFontSize(11);
+            doc.setTextColor(0,0,0);
 
             doc.setFontSize(16);
             doc.setFont(undefined, 'bold');
@@ -1612,7 +1621,7 @@ function renderProductionList() {
             doc.setFontSize(10);
             doc.text(`Gerado em ${dataBR}`, 20, 285);
             doc.text('App Estoque', 190, 285, {align:'right'});
-            doc.save(`relatorio-producao-${sector.toLowerCase()}-${todayISO}.pdf`);
+            doc.save(`producao-${sector.toLowerCase()}-${dateFile}.pdf`);
             showMessage(`Relatório de produção ${sector} gerado com sucesso!`);
         }
 
@@ -1712,14 +1721,16 @@ function renderProductionList() {
             loadShoppingListFromFirestore(shoppingListSupplierFilter, shoppingListItemsContainer, renderShoppingListItems);
         }
 
-        function generateShoppingListPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+       function generateShoppingListPDF() {
+           const { jsPDF } = window.jspdf;
+           const doc = new jsPDF();
             const todayISO = formatDateISO(new Date());
             const dataBR = new Date().toLocaleDateString('pt-BR');
+            const dateFile = formatDateFile(new Date());
             const horaBR = new Date().toLocaleTimeString('pt-BR');
             doc.setFont('helvetica');
             doc.setFontSize(11);
+            doc.setTextColor(0,0,0);
 
             const selectedSupplier = reportDisplayArea.querySelector('#shopping-list-supplier-filter').value;
             const visibleItems = Array.from(reportDisplayArea.querySelectorAll('.shopping-list-item'))
@@ -1809,6 +1820,7 @@ function renderProductionList() {
             let y = 6;
             docPdf.setFont('helvetica','bold');
             docPdf.setFontSize(16);
+            docPdf.setTextColor(0,0,0);
             docPdf.text('MATTURADO', pageWidth/2, y, {align:'center'});
             docPdf.setFont('helvetica','normal');
             docPdf.setFontSize(12);
@@ -1944,10 +1956,12 @@ function renderProductionList() {
            const docPdf = new jsPDF();
            const todayISO = formatDateISO(new Date());
            const dataBR = new Date().toLocaleDateString('pt-BR');
+           const dateFile = formatDateFile(new Date());
            const horaBR = new Date().toLocaleTimeString('pt-BR');
-            const responsavel = auth.currentUser ? auth.currentUser.email : '';
-            const label = appState.currentBalanceGroup === 'fornecedor' ? 'Por Fornecedor' : (appState.currentBalanceGroup === 'cozinha' ? 'Produção Cozinha' : 'Produção Parrilla');
-            docPdf.setFont('helvetica');
+           const responsavel = auth.currentUser ? auth.currentUser.email : '';
+           const label = appState.currentBalanceGroup === 'fornecedor' ? 'Por Fornecedor' : (appState.currentBalanceGroup === 'cozinha' ? 'Produção Cozinha' : 'Produção Parrilla');
+           docPdf.setFont('helvetica');
+           docPdf.setTextColor(0,0,0);
             if(appState.currentBalanceGroup === 'fornecedor'){
                 const groups = {};
                 rows.forEach(r => {
@@ -1983,7 +1997,7 @@ function renderProductionList() {
                 docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:true}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
             }
             docPdf.setFontSize(10); docPdf.text('Gerado por Trakto FoodOps | appestoque.vercel.app', docPdf.internal.pageSize.getWidth()/2, 285, {align:'center'});
-            docPdf.save(`balanco-${appState.currentBalanceGroup}-${todayISO}.pdf`);
+            docPdf.save(`balanco-${appState.currentBalanceGroup}-${dateFile}.pdf`);
        }
 
         // Alias functions connected to the UI buttons
@@ -2068,15 +2082,17 @@ function renderProductionList() {
             const { jsPDF } = window.jspdf;
             const docPdf = new jsPDF();
             const dataBR = formatDateBR(rec.date);
+            const dateFile = formatDateFile(rec.date);
             const horaBR = new Date().toLocaleTimeString('pt-BR');
             const label = rec.tipo === 'fornecedor' ? 'Por Fornecedor' : (rec.tipo==='cozinha' ? 'Produção Cozinha' : 'Produção Parrilla');
             docPdf.setFont('helvetica');
+            docPdf.setTextColor(0,0,0);
             docPdf.setFontSize(16); docPdf.text(`Balanço de Estoque - ${label}`,20,20);
             docPdf.setFontSize(11); docPdf.text(`Data: ${dataBR}`,20,30); docPdf.text(`Hora: ${horaBR}`,20,36); if(rec.responsavel) docPdf.text(`Responsável: ${rec.responsavel}`,20,42);
             const body = rec.itens.map(it => [it.nome, Number(it.quantidadeSistema||0).toFixed(2), Number(it.contagemReal||0).toFixed(2), Number(it.diferenca||0).toFixed(2), it.justificativa||'']);
             docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY: 55, styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true}, headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
             docPdf.setFontSize(10); docPdf.text('App Estoque',190,285,{align:'right'});
-            docPdf.save(`balanco-${rec.tipo}-${rec.date}.pdf`);
+            docPdf.save(`balanco-${rec.tipo}-${dateFile}.pdf`);
         }
 
         // Global functions for inline event handlers
@@ -2242,8 +2258,10 @@ function renderProductionList() {
             const { jsPDF } = window.jspdf;
             const docPdf = new jsPDF();
             const todayISO = formatDateISO(new Date());
+            const dateFile = formatDateFile(new Date());
             docPdf.setFont("helvetica");
             docPdf.setFontSize(11);
+            docPdf.setTextColor(0,0,0);
 
             docPdf.setFontSize(16);
             docPdf.text(ficha.nome, 20, 20);
@@ -2291,7 +2309,7 @@ function renderProductionList() {
             docPdf.setFontSize(10);
             docPdf.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')}`, 20, 285);
             docPdf.text('App Estoque', 190, 285, {align:'right'});
-            docPdf.save(`relatorio-ficha-tecnica-${todayISO}.pdf`);
+            docPdf.save(`relatorio-ficha-tecnica-${dateFile}.pdf`);
         };
 
         // Event Listeners
