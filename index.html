@@ -87,11 +87,13 @@
 
         .balanco-tabela-container {
             width: 100%;
+            max-width: 100%;
             overflow-x: auto;
         }
 
         .balanco-tabela-container table {
-            min-width: 700px;
+            width: 100%;
+            min-width: unset;
             table-layout: fixed;
             border-collapse: collapse;
             font-size: 14px;
@@ -100,6 +102,7 @@
         .balanco-tabela-container th,
         .balanco-tabela-container td {
             padding: 4px 6px;
+            font-size: 14px;
             text-align: left;
         }
 
@@ -121,26 +124,7 @@
             border-collapse: collapse;
             table-layout: fixed;
             width: 100%;
-        }
-
-        .balanco-table th:nth-child(1),
-        .balanco-table td:nth-child(1) {
-            width: 28%;
-        }
-
-        .balanco-table th:nth-child(2),
-        .balanco-table td:nth-child(2) {
-            width: 10%;
-        }
-
-        .balanco-table th:nth-child(3),
-        .balanco-table td:nth-child(3) {
-            width: 15%;
-        }
-
-        .balanco-table th:nth-child(4),
-        .balanco-table td:nth-child(4) {
-            width: 15%;
+            min-width: unset;
         }
 
         .table-col {
@@ -1295,7 +1279,7 @@ function renderProductionList() {
                return;
            }
            const table = document.createElement('table');
-           table.className = 'balanco-table w-full text-sm table-fixed divide-y divide-gray-200';
+           table.className = 'balanco-table w-full table-auto text-sm divide-y divide-gray-200';
            table.innerHTML = `<thead class="bg-gray-50"><tr>
                    <th class="table-col text-left">Item</th>
                    <th class="table-col text-left">Unidade</th>
@@ -1510,7 +1494,7 @@ function renderProductionList() {
                     head,
                     body,
                     startY: 60,
-                    styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true},
+                    styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true, textColor:0},
                     headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'},
                     bodyStyles:{fillColor:[255,255,255]},
                     alternateRowStyles:{fillColor:[242,242,242]},
@@ -1577,7 +1561,7 @@ function renderProductionList() {
                         head: [['Item produzido','Quantidade','Unidade','Observações']],
                         body,
                         startY: yPosition + 6,
-                        styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true},
+                        styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true, textColor:0},
                         headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'},
                         bodyStyles:{fillColor:[255,255,255]},
                         alternateRowStyles:{fillColor:[242,242,242]},
@@ -1786,7 +1770,7 @@ function renderProductionList() {
                     head: [['Item','Qtd. Atual','Qtd. Comprar','Unidade']],
                     body,
                     startY: 60,
-                    styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true},
+                    styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true, textColor:0},
                     headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'},
                     bodyStyles:{fillColor:[255,255,255]},
                     alternateRowStyles:{fillColor:[242,242,242]},
@@ -1897,12 +1881,11 @@ function renderProductionList() {
         async function applyBalance() {
             const rows = Array.from(document.querySelectorAll('.balance-row'));
             if (rows.length === 0) return;
-            const hasCount = rows.some(r => r.querySelector('.contagem-input').value.trim() !== '');
-            if(!hasCount){ showMessage('Preencha ao menos uma contagem', true); return; }
-            if(!confirm('Deseja realmente atualizar o estoque com os valores do balanço?\nEssa ação substituirá os valores atuais.')) return;
+            const filledRows = rows.filter(r => r.querySelector('.contagem-input').value.trim() !== '');
+            if(filledRows.length === 0){ showMessage('Preencha ao menos uma contagem', true); return; }
             const groups = { fornecedor: [], cozinha: [], parrilla: [] };
             const now = new Date().toISOString();
-            for (const r of rows) {
+            for (const r of filledRows) {
                 const tipo = r.dataset.tipo;
                 const id = r.dataset.id;
                 const nome = r.dataset.name;
@@ -1945,7 +1928,7 @@ function renderProductionList() {
                     await setDoc(doc(db,'balanco',dateKey,t), { tipo:t, itens: groups[t], responsavel: auth.currentUser ? auth.currentUser.email : '' });
                 }
             }
-            showMessage('Balanço atualizado!');
+            showMessage('Estoque atualizado com sucesso com base no balanço.');
             checkBalanceInputs();
         }
 
@@ -1980,7 +1963,7 @@ function renderProductionList() {
                     docPdf.setFontSize(16); docPdf.text(`Balanço de Estoque - ${sup}`,20,20);
                     docPdf.setFontSize(11); docPdf.text(`Data: ${dataBR}`,20,30); docPdf.text(`Hora: ${horaBR}`,20,36); if(responsavel) docPdf.text(`Responsável: ${responsavel}`,20,42);
                     const startY = responsavel ? 51 : 45;
-                    docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body: groups[sup], startY, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:true}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
+                    docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body: groups[sup], startY, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:true, textColor:0}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
                 });
             } else {
                 docPdf.setFontSize(16); docPdf.text(`Balanço de Estoque - ${label}`,20,20);
@@ -1994,7 +1977,7 @@ function renderProductionList() {
                     const just = r.dataset.justificativa || '';
                     return [nome, current.toFixed(2), cont.toFixed(2), diff.toFixed(2), just];
                 });
-                docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:true}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
+                docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:true, textColor:0}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
             }
             docPdf.setFontSize(10); docPdf.text('Gerado por Trakto FoodOps | appestoque.vercel.app', docPdf.internal.pageSize.getWidth()/2, 285, {align:'center'});
             docPdf.save(`balanco-${appState.currentBalanceGroup}-${dateFile}.pdf`);
@@ -2007,7 +1990,8 @@ function renderProductionList() {
         }
 
         async function aplicarBalancoEstoque() {
-            console.log('Atualizar acionado');
+            const msg = 'Deseja aplicar o balanço e atualizar os estoques dos itens preenchidos?';
+            if(!confirm(msg)) return;
             await applyBalance();
         }
 
@@ -2090,7 +2074,7 @@ function renderProductionList() {
             docPdf.setFontSize(16); docPdf.text(`Balanço de Estoque - ${label}`,20,20);
             docPdf.setFontSize(11); docPdf.text(`Data: ${dataBR}`,20,30); docPdf.text(`Hora: ${horaBR}`,20,36); if(rec.responsavel) docPdf.text(`Responsável: ${rec.responsavel}`,20,42);
             const body = rec.itens.map(it => [it.nome, Number(it.quantidadeSistema||0).toFixed(2), Number(it.contagemReal||0).toFixed(2), Number(it.diferenca||0).toFixed(2), it.justificativa||'']);
-            docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY: 55, styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true}, headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
+            docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY: 55, styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true, textColor:0}, headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
             docPdf.setFontSize(10); docPdf.text('App Estoque',190,285,{align:'right'});
             docPdf.save(`balanco-${rec.tipo}-${dateFile}.pdf`);
         }
@@ -2282,7 +2266,7 @@ function renderProductionList() {
                 head: [['Ingrediente', 'Qtd. Líquida', 'FC', 'Qtd. Bruta', 'Unidade', 'Custo Total']],
                 body: tableBody,
                 startY: 50,
-                styles: { fontSize: 11, lineHeight: 1.1, cellPadding: 4, noWrap:true },
+                styles: { fontSize: 11, lineHeight: 1.1, cellPadding: 4, noWrap:true, textColor: 0 },
                 headStyles: { fillColor: [217,217,217], textColor: 0, fontStyle: 'bold' },
                 bodyStyles: { fillColor: [255,255,255] },
                 alternateRowStyles: { fillColor: [242,242,242] },
@@ -2617,12 +2601,7 @@ function renderProductionList() {
             }
         });
         if(balanceSummaryBtn) balanceSummaryBtn.addEventListener('click', gerarResumoBalanco);
-        if(applyBalanceBtn) applyBalanceBtn.addEventListener('click', async () => {
-            const confirmMsg = 'Deseja realmente atualizar o estoque com os valores do balanço?\nEssa ação substituirá os valores atuais pelos valores contados.';
-            if(confirm(confirmMsg)) {
-                await aplicarBalancoEstoque();
-            }
-        });
+        if(applyBalanceBtn) applyBalanceBtn.addEventListener('click', aplicarBalancoEstoque);
         if(balancePdfBtn) balancePdfBtn.addEventListener('click', exportarBalancoPDF);
 
         generateStockReportBtn.addEventListener('click', generateStockReportBySupplier);
