@@ -100,7 +100,7 @@
             table-layout: fixed;
             border-collapse: collapse;
             font-size: 14px;
-            word-break: break-word;
+            word-break: normal;
         }
 
         .balanco-tabela-container th,
@@ -1081,7 +1081,7 @@ function renderProductionList() {
                 div.innerHTML = `
                     <div class="mr-2">
                         <p class="font-semibold text-gray-800">${formatDateBR(obs.id)}</p>
-                        <p class="text-sm text-gray-600 break-words whitespace-pre-line">${escapeHtml(obs.texto || '')}</p>
+                        <p class="text-sm text-gray-600 break-normal whitespace-pre-line">${escapeHtml(obs.texto || '')}</p>
                     </div>
                     <div class="flex flex-col space-y-1">\
                         <button onclick="editObservation('${sector}','${obs.id}')" class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded">Editar</button>\
@@ -1498,7 +1498,7 @@ function renderProductionList() {
                     head,
                     body,
                     startY: 60,
-                    styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true, textColor:0},
+                    styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:false, textColor:0},
                     headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'},
                     bodyStyles:{fillColor:[255,255,255]},
                     alternateRowStyles:{fillColor:[242,242,242]},
@@ -1565,7 +1565,7 @@ function renderProductionList() {
                         head: [['Item produzido','Quantidade','Unidade','Observações']],
                         body,
                         startY: yPosition + 6,
-                        styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true, textColor:0},
+                        styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:false, textColor:0},
                         headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'},
                         bodyStyles:{fillColor:[255,255,255]},
                         alternateRowStyles:{fillColor:[242,242,242]},
@@ -1774,7 +1774,7 @@ function renderProductionList() {
                     head: [['Item','Qtd. Atual','Qtd. Comprar','Unidade']],
                     body,
                     startY: 60,
-                    styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true, textColor:0},
+                    styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:false, textColor:0},
                     headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'},
                     bodyStyles:{fillColor:[255,255,255]},
                     alternateRowStyles:{fillColor:[242,242,242]},
@@ -1967,7 +1967,7 @@ function renderProductionList() {
                     docPdf.setFontSize(16); docPdf.text(`Balanço de Estoque - ${sup}`,20,20);
                     docPdf.setFontSize(11); docPdf.text(`Data: ${dataBR}`,20,30); docPdf.text(`Hora: ${horaBR}`,20,36); if(responsavel) docPdf.text(`Responsável: ${responsavel}`,20,42);
                     const startY = responsavel ? 51 : 45;
-                    docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body: groups[sup], startY, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:true, textColor:0}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
+                    docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body: groups[sup], startY, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:false, textColor:0}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
                 });
             } else {
                 docPdf.setFontSize(16); docPdf.text(`Balanço de Estoque - ${label}`,20,20);
@@ -1981,7 +1981,7 @@ function renderProductionList() {
                     const just = r.dataset.justificativa || '';
                     return [nome, current.toFixed(2), cont.toFixed(2), diff.toFixed(2), just];
                 });
-                docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:true, textColor:0}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
+                docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:false, textColor:0}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
             }
             docPdf.setFontSize(10); docPdf.text('Gerado por Trakto FoodOps | appestoque.vercel.app', docPdf.internal.pageSize.getWidth()/2, 285, {align:'center'});
             docPdf.save(`balanco-${appState.currentBalanceGroup}-${dateFile}.pdf`);
@@ -2078,7 +2078,7 @@ function renderProductionList() {
             docPdf.setFontSize(16); docPdf.text(`Balanço de Estoque - ${label}`,20,20);
             docPdf.setFontSize(11); docPdf.text(`Data: ${dataBR}`,20,30); docPdf.text(`Hora: ${horaBR}`,20,36); if(rec.responsavel) docPdf.text(`Responsável: ${rec.responsavel}`,20,42);
             const body = rec.itens.map(it => [it.nome, Number(it.quantidadeSistema||0).toFixed(2), Number(it.contagemReal||0).toFixed(2), Number(it.diferenca||0).toFixed(2), it.justificativa||'']);
-            docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY: 55, styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:true, textColor:0}, headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
+            docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY: 55, styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:false, textColor:0}, headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
             docPdf.setFontSize(10); docPdf.text('App Estoque',190,285,{align:'right'});
             docPdf.save(`balanco-${rec.tipo}-${dateFile}.pdf`);
         }
@@ -2270,7 +2270,7 @@ function renderProductionList() {
                 head: [['Ingrediente', 'Qtd. Líquida', 'FC', 'Qtd. Bruta', 'Unidade', 'Custo Total']],
                 body: tableBody,
                 startY: 50,
-                styles: { fontSize: 11, lineHeight: 1.1, cellPadding: 4, noWrap:true, textColor: 0 },
+                styles: { fontSize: 11, lineHeight: 1.1, cellPadding: 4, noWrap:false, textColor: 0 },
                 headStyles: { fillColor: [217,217,217], textColor: 0, fontStyle: 'bold' },
                 bodyStyles: { fillColor: [255,255,255] },
                 alternateRowStyles: { fillColor: [242,242,242] },
