@@ -532,7 +532,8 @@
             unsubscribeFC: null,
             currentBalanceGroup: 'fornecedor',
             currentBalanceSupplierFilter: 'TODOS',
-            balanceHistoryRecords: []
+            balanceHistoryRecords: [],
+            tempBalancePrompted: false
         };
 
         const loginView = document.getElementById("login-view");
@@ -808,12 +809,15 @@
        async function loadTempBalanceFromFirestore(tipo = appState.currentBalanceGroup){
             const user = auth.currentUser;
             if(!user) return;
+            if(appState.tempBalancePrompted) return;
             const dateKey = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
-           const snap = await getDoc(doc(db,'balanco_temp', user.email, tipo, dateKey));
+            const snap = await getDoc(doc(db,'balanco_temp', user.email, tipo, dateKey));
             if(!snap.exists()) return;
+            appState.tempBalancePrompted = true;
             if(!confirm('Você tem um balanço em andamento para hoje. Deseja continuar de onde parou?')){
                await deleteDoc(doc(db,'balanco_temp', user.email, tipo, dateKey));
-                return;
+               appState.tempBalancePrompted = false;
+               return;
             }
             const data = snap.data();
             const rows = Array.from(document.querySelectorAll('.balance-row'));
@@ -1932,7 +1936,14 @@ function renderProductionList() {
                     await setDoc(doc(db,'balanco',dateKey,t), { tipo:t, itens: groups[t], responsavel: auth.currentUser ? auth.currentUser.email : '' });
                 }
             }
-            showMessage('Estoque atualizado com sucesso com base no balanço.');
+            const tempKey = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
+            const user = auth.currentUser;
+            if(user){
+                try{ await deleteDoc(doc(db,'balanco_temp', user.email, appState.currentBalanceGroup, tempKey)); }catch(e){ console.error('Erro ao limpar balanco_temp', e); }
+            }
+            appState.tempBalancePrompted = false;
+            rows.forEach(r => { const inp = r.querySelector('.contagem-input'); if(inp) inp.value = ''; r.dataset.justificativa = ''; });
+            showMessage('Estoque atualizado com sucesso.');
             checkBalanceInputs();
         }
 
