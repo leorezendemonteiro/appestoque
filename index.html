@@ -685,6 +685,12 @@
             });
         }
 
+        function formatQty(value) {
+            const num = parseFloat(value);
+            if (isNaN(num)) return '0';
+            return parseFloat(num.toFixed(3)).toString();
+        }
+
 
 
         function getStockItemByName(name) {
@@ -909,7 +915,7 @@
                 const fc = fcData ? fcData.fator : 1;
                 fcInput.value = fc;
                 const qBruta = qty * fc;
-                qBrutaSpan.textContent = qBruta.toFixed(2);
+                qBrutaSpan.textContent = formatQty(qBruta);
 
                 const stock = getStockItemByName(itemName);
                 const unidade = fcData ? fcData.unidade : (stock ? stock.unidade : '');
@@ -1008,7 +1014,7 @@
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td class="p-2 font-semibold">${escapeHtml(item.item || '')}</td>
-                        <td class="p-2 text-center">${Number(item.quantidadeAtual || 0)} ${escapeHtml(item.unidade || '')}</td>
+                        <td class="p-2 text-center">${formatQty(item.quantidadeAtual || 0)} ${escapeHtml(item.unidade || '')}</td>
                         <td class="p-2 text-center"><input type="number" data-item-id="${item.id}" data-update-type="entrada" data-current="${item.quantidadeAtual}" step="any" class="w-24 p-1 border rounded text-center text-sm entrada-input"></td>
                         <td class="p-2 text-center total-atualizado"></td>
                         <td class="p-2 text-center">${formatDateTimeBR(item.ultimaAtualizacao)}</td>
@@ -1053,9 +1059,9 @@ function renderProductionList() {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="p-2 font-semibold">${escapeHtml(item.item || '')}</td>
-                    <td class="p-2 text-center">${Number(item.quantidade || 0).toFixed(2)}</td>
+                    <td class="p-2 text-center">${formatQty(item.quantidade || 0)}</td>
                     <td class="p-2 text-center"><input type="number" data-item-id="${item.id}" step="any" class="nova-producao-input w-24 p-1 border rounded text-center text-sm"></td>
-                    <td class="p-2 text-center" id="total-${item.id}">${Number(item.quantidade || 0).toFixed(2)}</td>
+                    <td class="p-2 text-center" id="total-${item.id}">${formatQty(item.quantidade || 0)}</td>
                     <td class="p-2 text-center">${last}</td>
                     <td class="p-2 text-center">
                         <button onclick="updateProductionItem('${item.id}')" class="btn-salvar bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded">Salvar</button>
@@ -1064,7 +1070,7 @@ function renderProductionList() {
                 const input = tr.querySelector('input');
                 input.addEventListener('input', () => {
                     const val = parseFloat(input.value) || 0;
-                    document.getElementById('total-' + item.id).textContent = (Number(item.quantidade || 0) + val).toFixed(2);
+                    document.getElementById('total-' + item.id).textContent = formatQty(Number(item.quantidade || 0) + val);
                 });
                 tbody.appendChild(tr);
             });
@@ -1308,7 +1314,7 @@ function renderProductionList() {
                tr.innerHTML = `
                    <td class="table-col">${escapeHtml(it.nome || '')}</td>
                    <td class="table-col">${escapeHtml(it.unidade || '')}</td>
-                   <td class="table-col text-right">${Number(it.quantidade || 0).toFixed(2)}</td>
+                   <td class="table-col text-right">${formatQty(it.quantidade || 0)}</td>
                    <td class="table-col text-right"><input type="number" step="any" class="contagem-input w-16 p-1 border rounded text-center"></td>`;
                const input = tr.querySelector('.contagem-input');
                function handleInput(){
@@ -1468,7 +1474,7 @@ function renderProductionList() {
                         valorTotalEstoque += total;
                         return [
                             it.item,
-                            Number(it.quantidadeAtual || 0).toFixed(2),
+                            formatQty(it.quantidadeAtual || 0),
                             '',
                             it.unidade,
                             `R$ ${price.toFixed(2)}`,
@@ -1478,7 +1484,7 @@ function renderProductionList() {
                 } else {
                     body = items.map(it => [
                         it.item,
-                        Number(it.quantidadeAtual || 0).toFixed(2),
+                        formatQty(it.quantidadeAtual || 0),
                         it.unidade
                     ]);
                 }
@@ -1561,7 +1567,7 @@ function renderProductionList() {
                     doc.text(formatDateBR(date), 20, yPosition);
                     const body = grouped[date].sort((a,b)=>a.item.localeCompare(b.item)).map(it => [
                         it.item,
-                        Number(it.quantidade || 0).toFixed(2),
+                        formatQty(it.quantidade || 0),
                         it.unidade,
                         it.observacao || ''
                     ]);
@@ -1684,7 +1690,7 @@ function renderProductionList() {
                         itemDiv.dataset.itemUnit = item.unidade;
                         itemDiv.innerHTML = `
                             <p class="font-semibold text-gray-800 w-1/3">${escapeHtml(item.item || '')}</p>
-                            <p class="text-sm text-gray-600 w-1/4">${item.quantidadeAtual} ${escapeHtml(item.unidade || '')}</p>
+                            <p class="text-sm text-gray-600 w-1/4">${formatQty(item.quantidadeAtual)} ${escapeHtml(item.unidade || '')}</p>
                             <input type="number" class="w-1/4 p-1 border rounded text-center text-sm shopping-quantity-input" step="any">
                             <button class="delete-shopping-item bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>
                         `;
@@ -1769,8 +1775,8 @@ function renderProductionList() {
 
                 const body = items.map(it => [
                     it.name,
-                    Number(it.currentQty || 0).toFixed(2),
-                    it.requestedQty ? it.requestedQty.toFixed(2) : '',
+                    formatQty(it.currentQty || 0),
+                    it.requestedQty ? formatQty(it.requestedQty) : '',
                     it.unit
                 ]);
 
@@ -1867,14 +1873,14 @@ function renderProductionList() {
                 tr.innerHTML = `
                     <td class="p-2">${escapeHtml(nome)}</td>
                     <td class="p-2 text-center">${escapeHtml(unidade)}</td>
-                    <td class="p-2 text-center">${current.toFixed(2)}</td>
-                    <td class="p-2 text-center">${cont.toFixed(2)}</td>
-                    <td class="p-2 text-center ${diffClass}">${diff.toFixed(2)}</td>
+                    <td class="p-2 text-center">${formatQty(current)}</td>
+                    <td class="p-2 text-center">${formatQty(cont)}</td>
+                    <td class="p-2 text-center ${diffClass}">${formatQty(diff)}</td>
                     <td class="p-2">${escapeHtml(just)}</td>`;
                 tbody.appendChild(tr);
             });
             const tfoot = document.createElement('tfoot');
-            tfoot.innerHTML = `<tr class="bg-gray-50 font-semibold"><td class="p-2" colspan="5">Total Diferença</td><td class="p-2 text-center">${diffTotal.toFixed(2)}</td></tr>`;
+            tfoot.innerHTML = `<tr class="bg-gray-50 font-semibold"><td class="p-2" colspan="5">Total Diferença</td><td class="p-2 text-center">${formatQty(diffTotal)}</td></tr>`;
             table.appendChild(tfoot);
             const closeBtn = document.createElement('button');
             closeBtn.textContent = 'Fechar';
@@ -1970,7 +1976,7 @@ function renderProductionList() {
                     const diff = current - cont;
                     const just = r.dataset.justificativa || '';
                     if(!groups[sup]) groups[sup] = [];
-                    groups[sup].push([nome,current.toFixed(2),cont.toFixed(2),diff.toFixed(2),just]);
+                    groups[sup].push([nome,formatQty(current),formatQty(cont),formatQty(diff),just]);
                 });
                 const suppliers = Object.keys(groups).sort();
                 suppliers.forEach((sup,idx) => {
@@ -1990,7 +1996,7 @@ function renderProductionList() {
                     const cont = parseFloat(r.querySelector('.contagem-input').value)||0;
                     const diff = current - cont;
                     const just = r.dataset.justificativa || '';
-                    return [nome, current.toFixed(2), cont.toFixed(2), diff.toFixed(2), just];
+                    return [nome, formatQty(current), formatQty(cont), formatQty(diff), just];
                 });
                 docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY, styles:{fontSize:11,lineHeight:1.1,cellPadding:4,noWrap:false, textColor:0}, headStyles:{fillColor:[217,217,217],textColor:0,fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
             }
@@ -2056,7 +2062,7 @@ function renderProductionList() {
                 const diffTot = rec.itens.reduce((s,it)=> s + (Number(it.diferenca)||0),0);
                 const tr = document.createElement('tr');
                 const label = rec.tipo === 'fornecedor' ? 'Por Fornecedor' : (rec.tipo==='cozinha' ? 'Produção Cozinha' : 'Produção Parrilla');
-                tr.innerHTML = `<td class="p-2">${formatDateBR(rec.date)}</td><td class="p-2">${label}</td><td class="p-2 text-center">${rec.itens.length}</td><td class="p-2 text-center">${diffTot.toFixed(2)}</td><td class="p-2 text-center"><button class="history-details-btn text-blue-600 underline text-sm" data-idx="${i}">Ver Detalhes</button></td>`;
+                tr.innerHTML = `<td class="p-2">${formatDateBR(rec.date)}</td><td class="p-2">${label}</td><td class="p-2 text-center">${rec.itens.length}</td><td class="p-2 text-center">${formatQty(diffTot)}</td><td class="p-2 text-center"><button class="history-details-btn text-blue-600 underline text-sm" data-idx="${i}">Ver Detalhes</button></td>`;
                 tbody.appendChild(tr);
             });
             historyListDiv.innerHTML = '';
@@ -2069,7 +2075,7 @@ function renderProductionList() {
             const modalBox = document.createElement('div');
             modalBox.className = 'bg-white p-4 rounded shadow-lg max-h-full overflow-auto w-full max-w-2xl';
             const label = rec.tipo === 'fornecedor' ? 'Por Fornecedor' : (rec.tipo==='cozinha' ? 'Produção Cozinha' : 'Produção Parrilla');
-            modalBox.innerHTML = `<h3 class="text-lg font-semibold mb-2">${formatDateBR(rec.date)} - ${label}</h3><p class="text-sm text-gray-600 mb-2">${rec.responsavel ? 'Responsável: '+escapeHtml(rec.responsavel) : ''}</p><div class="max-h-80 overflow-auto"><table class="min-w-full divide-y divide-gray-200 text-sm"><thead class="bg-gray-50"><tr><th class="p-2 text-left">Item</th><th class="p-2 text-center">Unidade</th><th class="p-2 text-center">Sistema</th><th class="p-2 text-center">Contagem Real</th><th class="p-2 text-center">Diferença</th><th class="p-2 text-left">Justificativa</th></tr></thead><tbody>${rec.itens.map(it=>`<tr><td class="p-2">${escapeHtml(it.nome||'')}</td><td class="p-2 text-center">${escapeHtml(it.unidade||'')}</td><td class="p-2 text-center">${Number(it.quantidadeSistema||0).toFixed(2)}</td><td class="p-2 text-center">${Number(it.contagemReal||0).toFixed(2)}</td><td class="p-2 text-center">${Number(it.diferenca||0).toFixed(2)}</td><td class="p-2">${escapeHtml(it.justificativa||'')}</td></tr>`).join('')}</tbody></table></div><div class="flex justify-between items-center mt-4"><span class="font-semibold">Total Diferença: ${diffTot.toFixed(2)}</span><div class="flex gap-2"><button id="export-history-pdf-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-2 rounded text-sm">Exportar PDF do Balanço</button><button id="close-history-modal" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm">Fechar</button></div></div>`;
+            modalBox.innerHTML = `<h3 class="text-lg font-semibold mb-2">${formatDateBR(rec.date)} - ${label}</h3><p class="text-sm text-gray-600 mb-2">${rec.responsavel ? 'Responsável: '+escapeHtml(rec.responsavel) : ''}</p><div class="max-h-80 overflow-auto"><table class="min-w-full divide-y divide-gray-200 text-sm"><thead class="bg-gray-50"><tr><th class="p-2 text-left">Item</th><th class="p-2 text-center">Unidade</th><th class="p-2 text-center">Sistema</th><th class="p-2 text-center">Contagem Real</th><th class="p-2 text-center">Diferença</th><th class="p-2 text-left">Justificativa</th></tr></thead><tbody>${rec.itens.map(it=>`<tr><td class="p-2">${escapeHtml(it.nome||'')}</td><td class="p-2 text-center">${escapeHtml(it.unidade||'')}</td><td class="p-2 text-center">${formatQty(it.quantidadeSistema||0)}</td><td class="p-2 text-center">${formatQty(it.contagemReal||0)}</td><td class="p-2 text-center">${formatQty(it.diferenca||0)}</td><td class="p-2">${escapeHtml(it.justificativa||'')}</td></tr>`).join('')}</tbody></table></div><div class="flex justify-between items-center mt-4"><span class="font-semibold">Total Diferença: ${formatQty(diffTot)}</span><div class="flex gap-2"><button id="export-history-pdf-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-2 rounded text-sm">Exportar PDF do Balanço</button><button id="close-history-modal" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm">Fechar</button></div></div>`;
             historyModal.innerHTML = '';
             historyModal.appendChild(modalBox);
             historyModal.classList.remove('hidden');
@@ -2088,7 +2094,7 @@ function renderProductionList() {
             docPdf.setTextColor(0,0,0);
             docPdf.setFontSize(16); docPdf.text(`Balanço de Estoque - ${label}`,20,20);
             docPdf.setFontSize(11); docPdf.text(`Data: ${dataBR}`,20,30); docPdf.text(`Hora: ${horaBR}`,20,36); if(rec.responsavel) docPdf.text(`Responsável: ${rec.responsavel}`,20,42);
-            const body = rec.itens.map(it => [it.nome, Number(it.quantidadeSistema||0).toFixed(2), Number(it.contagemReal||0).toFixed(2), Number(it.diferenca||0).toFixed(2), it.justificativa||'']);
+            const body = rec.itens.map(it => [it.nome, formatQty(it.quantidadeSistema||0), formatQty(it.contagemReal||0), formatQty(it.diferenca||0), it.justificativa||'']);
             docPdf.autoTable({head:[['Item','Sistema','Contado','Diferença','Justificativa']], body, startY: 55, styles:{fontSize:11, lineHeight:1.1, cellPadding:4, noWrap:false, textColor:0}, headStyles:{fillColor:[217,217,217], textColor:0, fontStyle:'bold'}, alternateRowStyles:{fillColor:[242,242,242]}, margin:{left:20,right:20}});
             docPdf.setFontSize(10); docPdf.text('App Estoque',190,285,{align:'right'});
             docPdf.save(`balanco-${rec.tipo}-${dateFile}.pdf`);
@@ -2109,7 +2115,7 @@ function renderProductionList() {
                 totalCell.textContent = '0';
                 row.classList.add('zeramento-highlight');
             } else {
-                totalCell.textContent = (current + val).toFixed(2);
+                totalCell.textContent = formatQty(current + val);
                 row.classList.add('entrada-highlight');
             }
         };
@@ -2270,9 +2276,9 @@ function renderProductionList() {
 
             const tableBody = ficha.ingredientes.map(ing => [
                 ing.nome,
-                Number(ing.qtdLiquida || 0).toFixed(2),
-                ing.fc ? Number(ing.fc).toFixed(2) : '',
-                Number(ing.qtdBruta || 0).toFixed(2),
+                formatQty(ing.qtdLiquida || 0),
+                ing.fc ? formatQty(ing.fc) : '',
+                formatQty(ing.qtdBruta || 0),
                 ing.unidade,
                 `R$ ${Number(ing.custoTotal || 0).toFixed(2)}`
             ]);
