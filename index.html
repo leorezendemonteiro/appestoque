@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>App Estoque Cozinha</title>
+    <link rel="icon" type="image/png" sizes="192x192" href="https://i.imgur.com/sDGp7Gb.jpeg">
+    <link rel="apple-touch-icon" href="https://i.imgur.com/sDGp7Gb.jpeg">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="manifest" href="manifest.webmanifest">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -178,12 +182,11 @@
         }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class='min-h-screen bg-cover bg-center bg-no-repeat' style='background-image: url(https://i.imgur.com/8VJvCPI.jpeg);'>
 
     <div id="app-container" class="w-full max-w-2xl mx-auto py-8 px-4">
 
-        <div id="login-view" class="bg-white p-8 rounded-xl shadow-lg max-w-md mx-auto">
-            <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Controle de Estoque</h1>
+        <div id="login-view" class="bg-white bg-opacity-80 p-8 rounded-xl shadow-lg max-w-md mx-auto">
             <form id="login-form">
                 <div class="mb-4">
                     <label for="login-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
@@ -200,7 +203,7 @@
             </form>
         </div>
         
-        <div id="signup-view" class="bg-white p-8 rounded-xl shadow-lg hidden max-w-md mx-auto">
+        <div id="signup-view" class="bg-white bg-opacity-80 p-8 rounded-xl shadow-lg hidden max-w-md mx-auto">
             <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Criar Nova Conta</h1>
             <form id="signup-form">
                 <div class="mb-4">
@@ -225,6 +228,7 @@
                         <h1 class="text-xl font-bold text-gray-800">App de Gestão</h1>
                         <p id="user-email" class="text-xs text-gray-500"></p>
                     </div>
+                        <a id="admin-link" href="#admin" class="hidden text-sm text-blue-500 mr-2">Admin</a>
                     <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm">Sair</button>
                 </div>
             </header>
@@ -483,6 +487,17 @@
             </div>
         </div>
         
+        <div id="admin-view" class="hidden p-6 bg-white bg-opacity-80 rounded-xl shadow-lg">
+            <h2 class="text-lg font-semibold mb-4">Administração</h2>
+            <form id="add-company-form" class="space-y-2 mb-4">
+                <input type="text" id="empresa-razao" placeholder="Razão Social" class="border rounded w-full p-2 text-sm" required>
+                <input type="text" id="empresa-cnpj" placeholder="CNPJ" class="border rounded w-full p-2 text-sm" required>
+                <input type="text" id="empresa-endereco" placeholder="Endereço" class="border rounded w-full p-2 text-sm" required>
+                <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Salvar</button>
+            </form>
+            <div id="empresas-list" class="space-y-2"></div>
+            <button id="voltar-main" class="mt-4 bg-gray-500 text-white px-3 py-1 rounded text-sm">Voltar</button>
+        </div>
         <div id="history-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"></div>
         <div id="balance-summary-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div id="balance-summary" class="bg-white p-4 rounded shadow-lg max-h-full overflow-auto w-full max-w-2xl"></div>
@@ -507,6 +522,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        let companyPath = [];
         
         let appState = {
             stockItems: [],
@@ -588,6 +604,9 @@
         const custoPorPorcaoSpan = document.getElementById("custo-por-porcao");
         const precoSugeridoSpan = document.getElementById("preco-sugerido");
         const precoRealInput = document.getElementById("preco-real");
+        const adminView = document.getElementById("admin-view");
+        const adminLinkEl = document.getElementById("admin-link");
+        const voltarMainBtn = document.getElementById("voltar-main");
         const cmvRealDisplay = document.getElementById("cmv-real-display");
         const margemLucroDisplay = document.getElementById("margem-lucro-display");
         const currentCmvDisplay = document.getElementById("current-cmv-display");
@@ -613,6 +632,17 @@
         const historyModal = document.getElementById("history-modal");
 
         // Helper Functions
+        function colEmp(...segs){ return collection(db, ...companyPath, ...segs); }
+        function docEmp(...segs){ return doc(db, ...companyPath, ...segs); }
+        async function loadCompanyByEmail(email){
+            companyPath = [];
+            const q = query(collectionGroup(db, "usuarios"), where("email", "==", email));
+            const snap = await getDocs(q);
+            if(!snap.empty){
+                const ref = snap.docs[0].ref.parent.parent;
+                companyPath = ["empresas", ref.id];
+            }
+        }
         function showMessage(msg, isError = false) {
             const msgDiv = document.createElement("div");
             msgDiv.textContent = msg;
@@ -622,7 +652,7 @@
         }
 
         function toggleViews(activeViewId) {
-            const views = [loginView, signupView, mainAppView];
+            const views = [loginView, signupView, mainAppView, adminView];
             views.forEach(view => {
                 if (view.id === activeViewId) {
                     view.classList.remove("hidden");
@@ -1354,7 +1384,7 @@ function renderProductionList() {
 
         // Função para escutar mudanças nos dados do Firebase
         function listenToDataChanges() {
-            const stockCollectionRef = collection(db, "estoque");
+            const stockCollectionRef = colEmp("estoque");
             appState.unsubscribeStock = onSnapshot(stockCollectionRef, (snapshot) => {
                 appState.stockItems = snapshot.docs.map(doc => {
                     const d = doc.data();
@@ -1914,7 +1944,7 @@ function renderProductionList() {
                         const item = appState.stockItems.find(it => it.id === id) || {};
                         const historico = Array.isArray(item.historicoEntradas) ? [...item.historicoEntradas] : [];
                         historico.push({ tipo: 'balanco', quantidade: cont, dataHora: now });
-                        await updateDoc(doc(db, 'estoque', id), {
+                        await updateDoc(docEmp('estoque', id), {
                             quantidadeAtual: cont,
                             origem: 'balanco',
                             historicoEntradas: historico,
@@ -1922,13 +1952,13 @@ function renderProductionList() {
                             atualizado: true
                         });
                     } else {
-                        await updateDoc(doc(db, 'producao', id), {
+                        await updateDoc(docEmp('producao', id), {
                             quantidade: cont,
                             origem: 'balanco',
                             timestamp: now,
                             atualizado: true
                         });
-                        await addDoc(collection(db, 'producao', id, 'historicoInclusoes'), {
+                        await addDoc(colEmp('producao', id, 'historicoInclusoes'), {
                             quantidade: cont,
                             origem: 'balanco',
                             dataHora: now
@@ -2144,7 +2174,7 @@ function renderProductionList() {
             }
             historico.push({ tipo, quantidade: valor, dataHora: agora });
             try {
-                await updateDoc(doc(db, 'estoque', id), {
+                await updateDoc(docEmp('estoque', id), {
                     quantidadeAtual: novaQtd,
                     historicoEntradas: historico,
                     ultimaAtualizacao: agora
@@ -2160,7 +2190,7 @@ function renderProductionList() {
         window.deleteStockItem = async (id) => {
             if (confirm('Tem certeza que deseja excluir este item?')) {
                 try {
-                    await deleteDoc(doc(db, 'estoque', id));
+                    await deleteDoc(docEmp('estoque', id));
                     showMessage('Item excluído com sucesso!');
                 } catch (error) {
                     console.error('Erro ao excluir item:', error);
@@ -2180,7 +2210,7 @@ function renderProductionList() {
             }
 
             try {
-                const ref = doc(db, 'producao', id);
+                const ref = docEmp('producao', id);
                 await updateDoc(ref, {
                     quantidade: increment(delta),
                     timestamp: new Date().toISOString()
@@ -2199,7 +2229,7 @@ function renderProductionList() {
         window.deleteProductionItem = async (id) => {
             if (confirm('Tem certeza que deseja excluir este item?')) {
                 try {
-                    await deleteDoc(doc(db, 'producao', id));
+                    await deleteDoc(docEmp('producao', id));
                     showMessage('Item excluído com sucesso!');
                 } catch (error) {
                     console.error('Erro ao excluir item:', error);
@@ -2324,21 +2354,24 @@ function renderProductionList() {
         });
 
         showLoginBtn.addEventListener('click', () => {
+        adminLinkEl.addEventListener("click", () => { toggleViews("admin-view"); });
+        voltarMainBtn.addEventListener("click", () => { toggleViews("main-app-view"); });
             signupView.classList.add('hidden');
             loginView.classList.remove('hidden');
         });
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                document.getElementById('user-email').textContent = user.email;
-                toggleViews('main-app-view');
-                switchTab('stock');
+                await loadCompanyByEmail(user.email);
+                document.getElementById("user-email").textContent = user.email;
+                if(user.email === "admin@matturado.com") adminLinkEl.classList.remove("hidden"); else adminLinkEl.classList.add("hidden");
+                toggleViews("main-app-view");
+                switchTab("stock");
                 listenToDataChanges();
                 updateEtiquetaProdutoSelect();
                 cleanupOldTempBalances();
             } else {
-                toggleViews('login-view');
-                // Limpar listeners quando usuário faz logout
+                toggleViews("login-view");
                 if (appState.unsubscribeStock) appState.unsubscribeStock();
                 if (appState.unsubscribeProduction) appState.unsubscribeProduction();
                 if (appState.unsubscribeSuppliers) appState.unsubscribeSuppliers();
@@ -2347,6 +2380,9 @@ function renderProductionList() {
                 if (appState.unsubscribeFichasTecnicas) appState.unsubscribeFichasTecnicas();
                 if (appState.unsubscribeFC) appState.unsubscribeFC();
                 appState.fcValues = {};
+                appState.suppliersLoaded = false;
+            }
+        });
                 appState.suppliersLoaded = false;
             }
         });
@@ -2404,7 +2440,7 @@ function renderProductionList() {
             const price = parseFloat(document.getElementById('product-price').value) || 0;
             
             try {
-                await addDoc(collection(db, 'estoque'), {
+                await addDoc(colEmp('estoque'), {
                     item: name,
                     fornecedor: supplier,
                     quantidadeAtual: quantity,
@@ -2432,14 +2468,14 @@ function renderProductionList() {
             const unit = document.getElementById('production-unit').value;
 
             try {
-                const docRef = await addDoc(collection(db, 'producao'), {
+                const docRef = await addDoc(colEmp('producao'), {
                     item: name,
                     setor: sector,
                     quantidade: quantity,
                     unidade: unit,
                     timestamp: new Date().toISOString()
                 });
-                await addDoc(collection(db, 'producao', docRef.id, 'historicoInclusoes'), {
+                await addDoc(colEmp('producao', docRef.id, 'historicoInclusoes'), {
                     quantidade: quantity,
                     dataHora: new Date().toISOString()
                 });
