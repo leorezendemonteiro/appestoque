@@ -54,3 +54,19 @@ Use the credentials `admin@gestaomesa360.com` / `mesa360` to access the **supera
 - **Add items** – In the **Estoque** tab add stock items, or use **Produção** to log production entries.
 - **Generate reports** – Visit the **Relatórios** tab to download stock, shopping list and production reports in PDF format.
 - **CMV calculation** – Use the **Cálculo do CMV** tab to calcular monthly CMV and apply it to technical sheets. The most recent value is shown in **Ficha Técnica** and used to suggest sale prices.
+## Migration script
+
+Use `migrate.js` to copy the existing single-company data to the new multi-company structure.
+
+1. In the Firebase console go to **Project Settings > Service accounts** and click **Generate new private key**. Save the JSON file inside the repository (for example `serviceAccount.json`).
+2. Install the Firebase Admin SDK:
+   ```bash
+   npm install firebase-admin
+   ```
+3. Run the migration providing the path to the service account file:
+   ```bash
+   node migrate.js serviceAccount.json
+   ```
+
+The script copies every root collection to `empresas/matturado/<colecao>` and migrates users belonging to Matturado to `empresas/matturado/usuarios`. Nothing is deleted from the old structure. Logs in the terminal show each migrated document.
+
