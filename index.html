@@ -491,13 +491,31 @@
         
         <div id="admin-view" class="hidden p-6 bg-white bg-opacity-80 rounded-xl shadow-lg">
             <h2 class="text-lg font-semibold mb-4">Administração</h2>
-            <form id="add-company-form" class="space-y-2 mb-4">
-                <input type="text" id="empresa-razao" placeholder="Razão Social" class="border rounded w-full p-2 text-sm" required>
-                <input type="text" id="empresa-cnpj" placeholder="CNPJ" class="border rounded w-full p-2 text-sm" required>
-                <input type="text" id="empresa-endereco" placeholder="Endereço" class="border rounded w-full p-2 text-sm" required>
-                <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Salvar</button>
-            </form>
-            <div id="empresas-list" class="space-y-2"></div>
+
+            <div id="superadmin-section" class="hidden">
+                <form id="add-company-form" class="space-y-2 mb-4">
+                    <input type="text" id="empresa-razao" placeholder="Razão Social" class="border rounded w-full p-2 text-sm" required>
+                    <input type="text" id="empresa-cnpj" placeholder="CNPJ" class="border rounded w-full p-2 text-sm" required>
+                    <input type="text" id="empresa-endereco" placeholder="Endereço" class="border rounded w-full p-2 text-sm" required>
+                    <input type="email" id="empresa-admin-email" placeholder="Email do Admin" class="border rounded w-full p-2 text-sm" required>
+                    <input type="password" id="empresa-admin-senha" placeholder="Senha do Admin" class="border rounded w-full p-2 text-sm" required>
+                    <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Salvar</button>
+                </form>
+                <div id="empresas-list" class="space-y-2"></div>
+            </div>
+
+            <div id="admin-section" class="hidden">
+                <h3 class="font-semibold mb-2">Usuários</h3>
+                <form id="add-user-form" class="space-y-2 mb-4">
+                    <input type="email" id="novo-usuario-email" placeholder="Email" class="border rounded w-full p-2 text-sm" required>
+                    <input type="password" id="novo-usuario-senha" placeholder="Senha" class="border rounded w-full p-2 text-sm" required>
+                    <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Adicionar Usuário</button>
+                </form>
+                <div id="usuarios-list" class="space-y-1 mb-4"></div>
+                <h3 class="font-semibold mb-2">Importar Estoque</h3>
+                <input type="file" id="import-file" accept=".csv,.xlsx" class="mb-4">
+            </div>
+
             <button id="voltar-main" class="mt-4 bg-gray-500 text-white px-3 py-1 rounded text-sm">Voltar</button>
         </div>
         <div id="history-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"></div>
@@ -524,7 +542,11 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const SUPERADMIN_EMAIL = "admin@gestaomesa360.com";
+        const SUPERADMIN_PASSWORD = "mesa360";
         let companyPath = [];
+        let userRole = 'usuario';
+        let lastLoginPassword = '';
         
         let appState = {
             stockItems: [],
@@ -609,6 +631,13 @@
         const adminView = document.getElementById("admin-view");
         const adminLinkEl = document.getElementById("admin-link");
         const voltarMainBtn = document.getElementById("voltar-main");
+        const superadminSection = document.getElementById("superadmin-section");
+        const adminSection = document.getElementById("admin-section");
+        const addCompanyForm = document.getElementById("add-company-form");
+        const empresasListDiv = document.getElementById("empresas-list");
+        const addUserForm = document.getElementById("add-user-form");
+        const usuariosListDiv = document.getElementById("usuarios-list");
+        const importFileInput = document.getElementById("import-file");
         const cmvRealDisplay = document.getElementById("cmv-real-display");
         const margemLucroDisplay = document.getElementById("margem-lucro-display");
         const currentCmvDisplay = document.getElementById("current-cmv-display");
@@ -641,9 +670,12 @@
             const q = query(collectionGroup(db, "usuarios"), where("email", "==", email));
             const snap = await getDocs(q);
             if(!snap.empty){
-                const ref = snap.docs[0].ref.parent.parent;
+                const docSnap = snap.docs[0];
+                const ref = docSnap.ref.parent.parent;
                 companyPath = ["empresas", ref.id];
+                return docSnap.data().role || 'usuario';
             }
+            return null;
         }
         function showMessage(msg, isError = false) {
             const msgDiv = document.createElement("div");
@@ -758,7 +790,7 @@
                 };
             });
             const dateKey = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
-            await setDoc(doc(db, 'listaCompras', user.uid, 'dias', dateKey), {
+            await setDoc(docEmp('listaCompras', user.uid, 'dias', dateKey), {
                 fornecedor: fornecedorSel,
                 itens: items
             });
@@ -769,7 +801,7 @@
             const user = auth.currentUser;
             if(!user) return;
             const dateKey = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
-            const snap = await getDoc(doc(db,'listaCompras', user.uid, 'dias', dateKey));
+            const snap = await getDoc(docEmp('listaCompras', user.uid, 'dias', dateKey));
             if(!snap.exists()) return;
             if(!confirm('Você tem uma lista de compras salva hoje. Deseja continuar de onde parou?')) return;
             const data = snap.data();
@@ -801,7 +833,7 @@
        async function cleanupOldShoppingLists(){
             const user = auth.currentUser;
             if(!user) return;
-            const colRef = collection(db,'listaCompras', user.uid, 'dias');
+            const colRef = colEmp('listaCompras', user.uid, 'dias');
             const snap = await getDocs(colRef);
             const today = new Date();
             snap.forEach(d => {
@@ -809,7 +841,7 @@
                 const docDate = new Date(`${year}-${month}-${day}`);
                 const diffDays = (today - docDate) / 86400000;
                 if(diffDays > 2){
-                    deleteDoc(doc(db,'listaCompras', user.uid, 'dias', d.id));
+                    deleteDoc(docEmp('listaCompras', user.uid, 'dias', d.id));
                 }
             });
        }
@@ -835,7 +867,7 @@
                 justificativa: r.dataset.justificativa || ''
             }));
             const dateKey = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
-           await setDoc(doc(db,'balanco_temp', user.email, tipo, dateKey), {
+           await setDoc(docEmp('balanco_temp', user.email, tipo, dateKey), {
                 criadoEm: new Date().toISOString(),
                 itens
             });
@@ -849,11 +881,11 @@
             if(!user) return;
             if(appState.tempBalancePrompted) return;
             const dateKey = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
-            const snap = await getDoc(doc(db,'balanco_temp', user.email, tipo, dateKey));
+            const snap = await getDoc(docEmp('balanco_temp', user.email, tipo, dateKey));
             if(!snap.exists()) return;
             appState.tempBalancePrompted = true;
             if(!confirm('Você tem um balanço em andamento para hoje. Deseja continuar de onde parou?')){
-               await deleteDoc(doc(db,'balanco_temp', user.email, tipo, dateKey));
+               await deleteDoc(docEmp('balanco_temp', user.email, tipo, dateKey));
                appState.tempBalancePrompted = false;
                return;
             }
@@ -876,18 +908,70 @@
             const types = ['fornecedor','cozinha','parrilla'];
             const today = new Date();
             for(const t of types){
-                const colRef = collection(db,'balanco_temp', user.email, t);
+                const colRef = colEmp('balanco_temp', user.email, t);
                 const snap = await getDocs(colRef);
                 snap.forEach(d => {
                     const [day,month,year] = d.id.split('-');
                     const docDate = new Date(`${year}-${month}-${day}`);
                     const diffDays = (today - docDate) / 86400000;
                     if(diffDays > 2){
-                        deleteDoc(doc(db,'balanco_temp', user.email, t, d.id));
+                        deleteDoc(docEmp('balanco_temp', user.email, t, d.id));
                     }
                 });
             }
        }
+
+        async function loadCompanies(){
+            const snap = await getDocs(collection(db, 'empresas'));
+            empresasListDiv.innerHTML = '';
+            snap.forEach(d => {
+                const div = document.createElement('div');
+                const data = d.data();
+                div.textContent = `${d.id} - ${data.razao || ''}`;
+                empresasListDiv.appendChild(div);
+            });
+        }
+
+        async function loadUsers(){
+            if(!companyPath.length) return;
+            const colRef = colEmp('usuarios');
+            const snap = await getDocs(colRef);
+            usuariosListDiv.innerHTML = '';
+            snap.forEach(d => {
+                const div = document.createElement('div');
+                div.innerHTML = `${d.data().email} <button data-uid="${d.id}" class="delete-user text-red-500 text-xs">Excluir</button>`;
+                usuariosListDiv.appendChild(div);
+            });
+        }
+
+        async function importStockFile(file){
+            let rows = [];
+            const ext = file.name.split('.').pop().toLowerCase();
+            if(ext === 'csv'){
+                const text = await file.text();
+                rows = Papa.parse(text, {header:true}).data;
+            }else{
+                const data = await file.arrayBuffer();
+                const wb = XLSX.read(data, {type:'array'});
+                rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+            }
+            for(const r of rows){
+                if(!r.item && !r.Item) continue;
+                await addDoc(colEmp('estoque'), {
+                    item: r.item || r.Item || '',
+                    fornecedor: r.fornecedor || r.Fornecedor || '',
+                    quantidadeAtual: parseFloat(r.quantidadeAtual || r.Quantidade || 0),
+                    unidade: r.unidade || r.Unidade || '',
+                    preco: parseFloat(r.preco || r.Preco || 0),
+                    minimo: parseFloat(r.minimo || r.Minimo || 0),
+                    ideal: parseFloat(r.ideal || r.Ideal || 0),
+                    historicoEntradas: [],
+                    ultimaAtualizacao: new Date().toISOString(),
+                    timestamp: new Date().toISOString()
+                });
+            }
+            showMessage('Importação concluída');
+        }
 
         function addIngredienteRow(data = {}) {
             const row = document.createElement('div');
@@ -1404,7 +1488,7 @@ function renderProductionList() {
                 renderBalanceTable();
             }, (error) => console.error("Erro ao carregar estoque:", error));
 
-            const productionCollectionRef = collection(db, "producao");
+            const productionCollectionRef = colEmp('producao');
             appState.unsubscribeProduction = onSnapshot(productionCollectionRef, (snapshot) => {
                 appState.productionItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderProductionList();
@@ -1412,7 +1496,7 @@ function renderProductionList() {
                 renderBalanceTable();
             }, (error) => console.error("Erro ao carregar produção:", error));
 
-            const suppliersCollectionRef = collection(db, "fornecedores");
+            const suppliersCollectionRef = colEmp('fornecedores');
                 appState.unsubscribeSuppliers = onSnapshot(suppliersCollectionRef, (snapshot) => {
                     appState.suppliers = snapshot.docs.map(doc => {
                         const data = doc.data();
@@ -1426,25 +1510,25 @@ function renderProductionList() {
                     updateShoppingListSupplierFilter(); // Atualiza filtro na lista de compras, se visível
                 }, (error) => console.error("Erro ao carregar fornecedores:", error));
 
-            const parrillaObsRef = collection(db, 'observacoesProducao', 'parrilla', 'dias');
+            const parrillaObsRef = colEmp('observacoesProducao','parrilla','dias');
             appState.unsubscribeObsParrilla = onSnapshot(parrillaObsRef, (snapshot) => {
                 appState.obsParrilla = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                 renderObservationList('parrilla');
             }, (error) => console.error('Erro ao carregar observações parrilla:', error));
 
-            const cozinhaObsRef = collection(db, 'observacoesProducao', 'cozinha', 'dias');
+            const cozinhaObsRef = colEmp('observacoesProducao','cozinha','dias');
             appState.unsubscribeObsCozinha = onSnapshot(cozinhaObsRef, (snapshot) => {
                 appState.obsCozinha = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                 renderObservationList('cozinha');
             }, (error) => console.error('Erro ao carregar observações cozinha:', error));
 
-            const fichasRef = collection(db, 'fichasTecnicas');
+            const fichasRef = colEmp('fichasTecnicas');
             appState.unsubscribeFichasTecnicas = onSnapshot(fichasRef, (snapshot) => {
                 appState.fichasTecnicas = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                 renderFichasList();
             }, (error) => console.error('Erro ao carregar fichas:', error));
 
-            const fcRef = collection(db, 'fc');
+            const fcRef = colEmp('fc');
             appState.unsubscribeFC = onSnapshot(fcRef, (snapshot) => {
                 appState.fcValues = {};
                 snapshot.docs.forEach(d => {
@@ -1454,7 +1538,7 @@ function renderProductionList() {
                 updateIngredienteOptions();
             });
 
-            const cmvRef = doc(db, 'config', 'cmvAplicado');
+            const cmvRef = docEmp('config','cmvAplicado');
             appState.unsubscribeCMV = onSnapshot(cmvRef, (snap) => {
                 if (snap.exists()) {
                     appState.currentCMV = snap.data().valor || 0;
@@ -1971,13 +2055,13 @@ function renderProductionList() {
             const dateKey = formatDateISO(now);
             for(const t of Object.keys(groups)){
                 if(groups[t].length>0){
-                    await setDoc(doc(db,'balanco',dateKey,t), { tipo:t, itens: groups[t], responsavel: auth.currentUser ? auth.currentUser.email : '' });
+                    await setDoc(docEmp('balanco',dateKey,t), { tipo:t, itens: groups[t], responsavel: auth.currentUser ? auth.currentUser.email : '' });
                 }
             }
             const tempKey = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
             const user = auth.currentUser;
             if(user){
-                try{ await deleteDoc(doc(db,'balanco_temp', user.email, appState.currentBalanceGroup, tempKey)); }catch(e){ console.error('Erro ao limpar balanco_temp', e); }
+                try{ await deleteDoc(docEmp('balanco_temp', user.email, appState.currentBalanceGroup, tempKey)); }catch(e){ console.error('Erro ao limpar balanco_temp', e); }
             }
             appState.tempBalancePrompted = false;
             rows.forEach(r => { const inp = r.querySelector('.contagem-input'); if(inp) inp.value = ''; r.dataset.justificativa = ''; });
@@ -2243,7 +2327,7 @@ function renderProductionList() {
         window.deleteSupplier = async (id) => {
             if (confirm('Tem certeza que deseja excluir este fornecedor?')) {
                 try {
-                    await deleteDoc(doc(db, 'fornecedores', id));
+                    await deleteDoc(docEmp('fornecedores', id));
                     showMessage('Fornecedor excluído com sucesso!');
                 } catch (error) {
                     console.error('Erro ao excluir fornecedor:', error);
@@ -2270,7 +2354,7 @@ function renderProductionList() {
         window.deleteObservation = async (sector, date) => {
             if (!confirm('Excluir observação?')) return;
             try {
-                await deleteDoc(doc(db, 'observacoesProducao', sector, 'dias', date));
+                await deleteDoc(docEmp('observacoesProducao', sector, 'dias', date));
                 showMessage('Observação excluída!');
             } catch (e) {
                 console.error('Erro ao excluir observação:', e);
@@ -2281,7 +2365,7 @@ function renderProductionList() {
         window.deleteFicha = async (id) => {
             if (!confirm('Excluir ficha?')) return;
             try {
-                await deleteDoc(doc(db, 'fichasTecnicas', id));
+                await deleteDoc(docEmp('fichasTecnicas', id));
                 showMessage('Ficha excluída!');
             } catch (err) {
                 console.error('Erro ao excluir ficha:', err);
@@ -2364,14 +2448,22 @@ function renderProductionList() {
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                await loadCompanyByEmail(user.email);
+                const role = await loadCompanyByEmail(user.email);
+                userRole = role || (user.email === SUPERADMIN_EMAIL ? 'superadmin' : 'usuario');
                 document.getElementById("user-email").textContent = user.email;
-                if(user.email === "admin@matturado.com") adminLinkEl.classList.remove("hidden"); else adminLinkEl.classList.add("hidden");
-                toggleViews("main-app-view");
-                switchTab("stock");
-                listenToDataChanges();
-                updateEtiquetaProdutoSelect();
-                cleanupOldTempBalances();
+                if(userRole === 'superadmin'){
+                    toggleViews('admin-view');
+                    document.getElementById('superadmin-section').classList.remove('hidden');
+                    document.getElementById('admin-section').classList.add('hidden');
+                    loadCompanies();
+                } else {
+                    if(userRole === 'admin') adminLinkEl.classList.remove('hidden'); else adminLinkEl.classList.add('hidden');
+                    toggleViews('main-app-view');
+                    switchTab('stock');
+                    listenToDataChanges();
+                    updateEtiquetaProdutoSelect();
+                    cleanupOldTempBalances();
+                }
             } else {
                 toggleViews("login-view");
                 if (appState.unsubscribeStock) appState.unsubscribeStock();
@@ -2390,7 +2482,8 @@ function renderProductionList() {
             e.preventDefault();
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
-            
+            lastLoginPassword = password;
+
             try {
                 await signInWithEmailAndPassword(auth, email, password);
                 showMessage('Login realizado com sucesso!');
@@ -2423,6 +2516,64 @@ function renderProductionList() {
                 showMessage('Erro no logout', true);
             }
         });
+
+        if(addCompanyForm){
+            addCompanyForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const razao = document.getElementById('empresa-razao').value.trim();
+                const cnpj = document.getElementById('empresa-cnpj').value.trim();
+                const endereco = document.getElementById('empresa-endereco').value.trim();
+                const adminEmail = document.getElementById('empresa-admin-email').value.trim();
+                const adminSenha = document.getElementById('empresa-admin-senha').value;
+                try {
+                    await setDoc(doc(db,'empresas', cnpj), {razao, cnpj, endereco});
+                    const cred = await createUserWithEmailAndPassword(auth, adminEmail, adminSenha);
+                    await setDoc(doc(db,'empresas', cnpj, 'usuarios', cred.user.uid), {email: adminEmail, role:'admin'});
+                    await signOut(auth);
+                    await signInWithEmailAndPassword(auth, SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD);
+                    addCompanyForm.reset();
+                    loadCompanies();
+                    showMessage('Empresa cadastrada');
+                } catch(err){
+                    console.error('Erro ao cadastrar empresa', err);
+                    showMessage('Erro ao cadastrar empresa', true);
+                }
+            });
+        }
+
+        if(addUserForm){
+            addUserForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('novo-usuario-email').value.trim();
+                const senha = document.getElementById('novo-usuario-senha').value;
+                const currentEmail = auth.currentUser.email;
+                try {
+                    const cred = await createUserWithEmailAndPassword(auth, email, senha);
+                    await setDoc(docEmp('usuarios', cred.user.uid), {email, role:'usuario'});
+                    await signOut(auth);
+                    await signInWithEmailAndPassword(auth, currentEmail, lastLoginPassword);
+                    addUserForm.reset();
+                    loadUsers();
+                    showMessage('Usuário criado');
+                } catch(err){
+                    console.error('Erro ao criar usuário', err);
+                    showMessage('Erro ao criar usuário', true);
+                }
+            });
+            usuariosListDiv.addEventListener('click', async (e) => {
+                if(e.target.classList.contains('delete-user')){
+                    const uid = e.target.dataset.uid;
+                    await deleteDoc(docEmp('usuarios', uid));
+                    loadUsers();
+                }
+            });
+            if(importFileInput){
+                importFileInput.addEventListener('change', (e)=>{
+                    const f = e.target.files[0];
+                    if(f) importStockFile(f);
+                });
+            }
+        }
 
         addItemForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -2518,7 +2669,7 @@ function renderProductionList() {
                 return;
             }
             try {
-                const docRef = await addDoc(collection(db, 'fornecedores'), { nome: name });
+                const docRef = await addDoc(colEmp('fornecedores'), { nome: name });
                 showMessage('Fornecedor adicionado com sucesso!');
                 addSupplierForm.reset();
                 appState.suppliers.push({ id: docRef.id, nome: name });
@@ -2541,7 +2692,7 @@ function renderProductionList() {
                 const unidade = fcUnidade.value.trim();
                 if(!nome){ showMessage('Selecione um ingrediente', true); return; }
                 try {
-                    await setDoc(doc(db,'fc', nome), { nome, unidade, fator, preco });
+                    await setDoc(docEmp('fc', nome), { nome, unidade, fator, preco });
                     showMessage('FC salvo com sucesso!');
                     fcForm.reset();
                 } catch(err){
@@ -2559,7 +2710,7 @@ function renderProductionList() {
                 if(e.target.classList.contains('delete-fc')){
                     const name = e.target.getAttribute('data-name');
                     try{
-                        await deleteDoc(doc(db,'fc', name));
+                        await deleteDoc(docEmp('fc', name));
                         showMessage('FC removido');
                     }catch(err){
                         console.error('Erro ao remover FC:', err);
@@ -2574,7 +2725,7 @@ function renderProductionList() {
             const text = parrillaObsText.value.trim();
             if (!date || text === '') { showMessage('Preencha data e observação', true); return; }
             try {
-                await setDoc(doc(db, 'observacoesProducao', 'parrilla', 'dias', date), { texto: text });
+                await setDoc(docEmp('observacoesProducao', 'parrilla', 'dias', date), { texto: text });
                 showMessage('Observação salva!');
                 parrillaObsText.value = '';
                 appState.editingObs.parrilla = null;
@@ -2589,7 +2740,7 @@ function renderProductionList() {
             const text = cozinhaObsText.value.trim();
             if (!date || text === '') { showMessage('Preencha data e observação', true); return; }
             try {
-                await setDoc(doc(db, 'observacoesProducao', 'cozinha', 'dias', date), { texto: text });
+                await setDoc(docEmp('observacoesProducao', 'cozinha', 'dias', date), { texto: text });
                 showMessage('Observação salva!');
                 cozinhaObsText.value = '';
                 appState.editingObs.cozinha = null;
@@ -2697,7 +2848,7 @@ function renderProductionList() {
             if (!nome || !categoria || ingredientes.length === 0) { showMessage('Preencha todos os campos', true); return; }
 
             try {
-                await addDoc(collection(db, 'fichasTecnicas'), {
+                await addDoc(colEmp('fichasTecnicas'), {
                     nome,
                     categoria,
                     rendimento,
@@ -2737,7 +2888,7 @@ function renderProductionList() {
             const now = new Date();
             const docId = `${String(now.getMonth()+1).padStart(2,'0')}_${now.getFullYear()}`;
             try {
-                await setDoc(doc(db, 'cmv', docId), {
+                await setDoc(docEmp('cmv', docId), {
                     estoqueInicial: calc.ei,
                     compras: calc.compras,
                     estoqueFinal: calc.ef,
@@ -2748,7 +2899,7 @@ function renderProductionList() {
                     cmvPercentual: percent,
                     origem
                 });
-                await setDoc(doc(db, 'config', 'cmvAplicado'), { valor: percent, origem }, { merge: true });
+                await setDoc(docEmp('config','cmvAplicado'), { valor: percent, origem }, { merge: true });
                 showMessage('CMV salvo e aplicado às fichas técnicas!');
             } catch (err) {
                 console.error('Erro ao salvar CMV:', err);
