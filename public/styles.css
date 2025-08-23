@@ -1,0 +1,169 @@
+html, body {
+    overflow-x: hidden;
+}
+.tab-button.active {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    background-color: #eff6ff;
+}
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+}
+#report-display-area.interactive-list {
+    max-height: 60vh;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+}
+/* Estilos para select de fornecedores com barra de rolagem */
+.supplier-select {
+    /* Mantém a mesma altura que outros selects e mostra rolagem quando aberto */
+    max-height: 200px;
+    overflow-y: auto;
+}
+/* Estilos para a área de impressão com reset para evitar conflitos */
+.print-area {
+    all: initial;
+    font-family: Arial, sans-serif;
+    color: black;
+}
+.print-area h1 {
+    font-size: 18px;
+    font-weight: bold;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+.print-area h2 {
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+.print-area table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 10px;
+}
+.print-area th, .print-area td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+.print-area thead {
+    background-color: #f2f2f2;
+}
+.entrada-highlight {
+    background-color: #e0f2fe;
+}
+.zeramento-highlight {
+    background-color: #fee2e2;
+}
+.balanco-scroll {
+    max-height: 420px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    padding-right: 8px;
+    padding-left: 4px;
+}
+
+.scroll-container-fornecedor {
+    max-height: 500px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    padding-right: 8px;
+    padding-left: 4px;
+}
+
+.balanco-tabela-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.balanco-tabela-container table {
+    width: 100%;
+    min-width: unset;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 14px;
+    word-break: normal;
+}
+
+.balanco-tabela-container th,
+.balanco-tabela-container td {
+    padding: 4px 6px;
+    font-size: 14px;
+    text-align: left;
+}
+
+.menu-principal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: start;
+}
+
+.balanco-table th,
+.balanco-table td {
+    padding: 4px 6px !important;
+    font-size: 14px;
+    text-align: left;
+}
+
+.balanco-table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+    min-width: unset;
+}
+
+.table-col {
+    min-width: auto;
+    max-width: none;
+}
+
+.card-producao {
+    width: 100%;
+    max-width: none;
+    padding: 12px;
+    margin: 0 auto;
+    border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+    .card-producao {
+        padding: 8px;
+    }
+
+    .card-producao table {
+        font-size: 14px;
+    }
+
+    .card-producao td,
+    .card-producao th {
+        padding: 6px 4px;
+    }
+
+    .card-producao input {
+        font-size: 14px;
+    }
+
+    .btn-salvar,
+    .btn-excluir {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+}
+
+@media (max-width: 768px) {
+    .coluna-datas {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+}
+
