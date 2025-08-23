@@ -46,7 +46,23 @@ The command prints a local URL (for example `http://localhost:3000`). Open that 
 
 ## Multi-company mode
 
-Use the credentials `admin@gestaomesa360.com` / `mesa360` to access the **superadmin** area. From there it is possible to cadastrar novas empresas e criar o usuário administrador de cada uma.
+To access the **superadmin** area the signed-in user must have `role: "superadmin"`.
+There are two ways to assign this role:
+
+1. **Custom claims** – using the Firebase Admin SDK:
+
+   ```js
+   admin.auth().setCustomUserClaims(uid, { role: 'superadmin' });
+   ```
+
+   After setting the claim, the user needs to sign out and sign in again.
+
+2. **User document** – directly in Firestore under
+   `empresas/{empresaId}/usuarios/{uid}` set the field `role` to
+   `"superadmin"`.
+
+Once the role is assigned, log in with that user's credentials to cadastrar
+novas empresas e criar o usuário administrador de cada uma.
 
 ## Usage
 

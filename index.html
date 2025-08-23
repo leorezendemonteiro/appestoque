@@ -543,8 +543,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const SUPERADMIN_EMAIL = "admin@gestaomesa360.com";
-        const SUPERADMIN_PASSWORD = "mesa360";
         let companyPath = [];
         let userRole = 'usuario';
         let lastLoginPassword = '';
@@ -2452,7 +2450,7 @@ function renderProductionList() {
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const role = await loadCompanyByEmail(user.email);
-                userRole = role || (user.email === SUPERADMIN_EMAIL ? 'superadmin' : 'usuario');
+                userRole = role || 'usuario';
                 document.getElementById("user-email").textContent = user.email;
                 if(userRole === 'superadmin'){
                     toggleViews('admin-view');
@@ -2528,12 +2526,13 @@ function renderProductionList() {
                 const endereco = document.getElementById('empresa-endereco').value.trim();
                 const adminEmail = document.getElementById('empresa-admin-email').value.trim();
                 const adminSenha = document.getElementById('empresa-admin-senha').value;
+                const currentEmail = auth.currentUser.email;
                 try {
                     await setDoc(doc(db,'empresas', cnpj), {razao, cnpj, endereco});
                     const cred = await createUserWithEmailAndPassword(auth, adminEmail, adminSenha);
                     await setDoc(doc(db,'empresas', cnpj, 'usuarios', cred.user.uid), {email: adminEmail, role:'admin'});
                     await signOut(auth);
-                    await signInWithEmailAndPassword(auth, SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD);
+                    await signInWithEmailAndPassword(auth, currentEmail, lastLoginPassword);
                     addCompanyForm.reset();
                     loadCompanies();
                     showMessage('Empresa cadastrada');
