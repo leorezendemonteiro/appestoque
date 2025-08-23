@@ -69,7 +69,51 @@
                     <button id="logout-btn" class="btn btn-error btn-sm">Sair</button>
                 </div>
             </header>
-            
+            <div id="dashboard-view" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-transform hover:-translate-y-1">
+                    <div class="card-body flex items-center">
+                        <div class="flex items-center space-x-4">
+                            <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <path d="M3 9h18M9 3v6" />
+                            </svg>
+                            <div>
+                                <p class="text-sm">Estoque Total</p>
+                                <p id="dashboard-total-stock" class="text-2xl font-bold">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-transform hover:-translate-y-1">
+                    <div class="card-body flex items-center">
+                        <div class="flex items-center space-x-4">
+                            <svg class="w-8 h-8 text-error" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path d="M12 2L2 22h20L12 2z" />
+                                <path d="M12 8v6m0 4h.01" />
+                            </svg>
+                            <div>
+                                <p class="text-sm">Itens em Falta</p>
+                                <p id="dashboard-items-missing" class="text-2xl font-bold">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-transform hover:-translate-y-1">
+                    <div class="card-body flex items-center">
+                        <div class="flex items-center space-x-4">
+                            <svg class="w-8 h-8 text-success" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="9" />
+                                <path d="M9 12l2 2 4-4" />
+                            </svg>
+                            <div>
+                                <p class="text-sm">Produção do Dia</p>
+                                <p id="dashboard-daily-production" class="text-2xl font-bold">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="mb-8">
                 <div class="border-b border-gray-200">
                     <div class="bg-white/80 rounded-lg shadow-md px-4 py-2 text-black">
@@ -416,6 +460,10 @@
         const mainAppView = document.getElementById("main-app-view");
         const tabsContainer = document.getElementById("tabs-container");
         const tabContents = document.querySelectorAll(".tab-content");
+        const dashboardView = document.getElementById("dashboard-view");
+        const dashboardTotalStock = document.getElementById("dashboard-total-stock");
+        const dashboardItemsMissing = document.getElementById("dashboard-items-missing");
+        const dashboardDailyProduction = document.getElementById("dashboard-daily-production");
         const loginForm = document.getElementById("login-form");
         const signupForm = document.getElementById("signup-form");
         const addItemForm = document.getElementById("add-item-form");
@@ -589,8 +637,18 @@
             if (isNaN(num)) return '0';
             return parseFloat(num.toFixed(3)).toString();
         }
-
-
+        function updateDashboard() {
+            if (!dashboardView) return;
+            dashboardTotalStock.textContent = appState.stockItems.length.toString();
+            const missing = appState.stockItems.filter(it => (it.minimo || 0) > 0 && (it.quantidadeAtual || 0) < (it.minimo || 0)).length;
+            dashboardItemsMissing.textContent = missing.toString();
+            const todayISO = formatDateISO(new Date());
+            const prodToday = appState.productionItems.filter(it => {
+                const t = it.timestamp && it.timestamp.seconds ? new Date(it.timestamp.seconds * 1000) : new Date(it.timestamp);
+                return formatDateISO(t) === todayISO;
+            }).length;
+            dashboardDailyProduction.textContent = prodToday.toString();
+        }
 
         function getStockItemByName(name) {
             return appState.stockItems.find(it => (it.item || '') === name) || null;
@@ -1321,6 +1379,7 @@ function renderProductionList() {
                 renderStockList();
                 renderFcIngredienteSelect();
                 renderBalanceTable();
+                updateDashboard();
             }, (error) => console.error("Erro ao carregar estoque:", error));
 
             const productionCollectionRef = colEmp('producao');
@@ -1329,6 +1388,7 @@ function renderProductionList() {
                 renderProductionList();
                 updateEtiquetaProdutoSelect();
                 renderBalanceTable();
+                updateDashboard();
             }, (error) => console.error("Erro ao carregar produção:", error));
 
             const suppliersCollectionRef = colEmp('fornecedores');
@@ -2293,16 +2353,21 @@ function renderProductionList() {
                     document.getElementById('superadmin-section').classList.remove('hidden');
                     document.getElementById('admin-section').classList.add('hidden');
                     loadCompanies();
+                    if(dashboardView) dashboardView.classList.add('hidden');
                 } else {
                     if(userRole === 'admin') adminLinkEl.classList.remove('hidden'); else adminLinkEl.classList.add('hidden');
                     toggleViews('main-app-view');
-                    switchTab('stock');
+                    dashboardView.classList.remove('hidden');
+                    tabContents.forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
                     listenToDataChanges();
                     updateEtiquetaProdutoSelect();
+                    updateDashboard();
                     cleanupOldTempBalances();
                 }
             } else {
                 toggleViews("login-view");
+                if(dashboardView) dashboardView.classList.add('hidden');
                 if (appState.unsubscribeStock) appState.unsubscribeStock();
                 if (appState.unsubscribeProduction) appState.unsubscribeProduction();
                 if (appState.unsubscribeSuppliers) appState.unsubscribeSuppliers();
