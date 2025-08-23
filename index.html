@@ -13,6 +13,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="public/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/autosize@4.0.2/dist/autosize.min.js"></script>
 </head>
 <body class='min-h-screen bg-cover bg-center bg-no-repeat' style='background-image: url(https://i.imgur.com/8VJvCPI.jpeg);'>
 
@@ -20,18 +21,18 @@
 
         <div id="login-view" class="card bg-base-100 shadow-xl max-w-md mx-auto">
             <div class="card-body">
-            <form id="login-form" class="space-y-4">
-                <div>
+            <form id="login-form" class="form-layout">
+                <div class="form-group sm:col-span-2">
                     <label for="login-email" class="label"><span class="label-text">Email</span></label>
-                    <input type="email" id="login-email" name="email" class="input input-bordered w-full" required>
+                    <input type="email" id="login-email" name="email" class="form-input" required>
                 </div>
-                <div>
+                <div class="form-group sm:col-span-2">
                     <label for="login-password" class="label"><span class="label-text">Senha</span></label>
-                    <input type="password" id="login-password" name="password" class="input input-bordered w-full" required>
+                    <input type="password" id="login-password" name="password" class="form-input" required>
                 </div>
-                <div class="flex flex-col space-y-4">
-                    <button type="submit" class="btn btn-primary">Entrar</button>
-                    <button type="button" id="show-signup-btn" class="btn btn-link text-sm">Não tenho conta, quero me cadastrar</button>
+                <div class="btn-center">
+                    <button type="submit" class="btn btn-primary btn-base">Entrar</button>
+                    <button type="button" id="show-signup-btn" class="btn btn-link btn-base">Não tenho conta, quero me cadastrar</button>
                 </div>
             </form>
             </div>
@@ -40,18 +41,18 @@
         <div id="signup-view" class="card bg-base-100 shadow-xl hidden max-w-md mx-auto">
             <div class="card-body">
             <h1 class="text-2xl font-bold text-center mb-6">Criar Nova Conta</h1>
-            <form id="signup-form" class="space-y-4">
-                <div>
+            <form id="signup-form" class="form-layout">
+                <div class="form-group sm:col-span-2">
                     <label for="signup-email" class="label"><span class="label-text">Email</span></label>
-                    <input type="email" id="signup-email" name="email" class="input input-bordered w-full" required>
+                    <input type="email" id="signup-email" name="email" class="form-input" required>
                 </div>
-                <div>
+                <div class="form-group sm:col-span-2">
                     <label for="signup-password" class="label"><span class="label-text">Senha</span></label>
-                    <input type="password" id="signup-password" name="password" class="input input-bordered w-full" required>
+                    <input type="password" id="signup-password" name="password" class="form-input" required>
                 </div>
-                <div class="flex flex-col space-y-4">
-                    <button type="submit" class="btn btn-success">Cadastrar</button>
-                    <button type="button" id="show-login-btn" class="btn btn-link text-sm">Já tenho uma conta</button>
+                <div class="btn-center">
+                    <button type="submit" class="btn btn-success btn-base">Cadastrar</button>
+                    <button type="button" id="show-login-btn" class="btn btn-link btn-base">Já tenho uma conta</button>
                 </div>
             </form>
             </div>
@@ -138,17 +139,19 @@
                 <div id="tab-stock" class="tab-content space-y-8">
                     <div class="card bg-base-100 shadow-xl p-6">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Produto ao Estoque</h2>
-                        <form id="add-item-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <input type="text" id="product-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                            <select id="product-supplier" class="supplier-select shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white" size="1"></select>
-                            <input type="number" id="product-quantity" placeholder="Qtd. Atual" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
-                            <input type="number" id="product-min" placeholder="Qtd. Mínima" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any">
-                            <input type="number" id="product-ideal" placeholder="Qtd. Ideal" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any">
-                            <select id="product-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
+                        <form id="add-item-form" class="form-layout">
+                            <input type="text" id="product-name" placeholder="Nome do Produto" class="form-input sm:col-span-2" required>
+                            <select id="product-supplier" class="supplier-select form-input" size="1"></select>
+                            <input type="number" id="product-quantity" placeholder="Qtd. Atual" class="form-input" step="any" required>
+                            <input type="number" id="product-min" placeholder="Qtd. Mínima" class="form-input" step="any">
+                            <input type="number" id="product-ideal" placeholder="Qtd. Ideal" class="form-input" step="any">
+                            <select id="product-unit" class="form-input">
                                 <option>un</option> <option>kg</option> <option>g</option> <option>lt</option> <option>ml</option>
                             </select>
-                            <input type="number" id="product-price" placeholder="Preço Unitário (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                            <button type="submit" class="btn btn-primary sm:col-span-2">Adicionar</button>
+                            <input type="number" id="product-price" placeholder="Preço Unitário (R$)" step="0.01" class="form-input">
+                            <div class="btn-center">
+                                <button type="submit" class="btn btn-primary btn-base">Adicionar</button>
+                            </div>
                         </form>
                     </div>
                     <div class="card bg-base-100 shadow-xl p-6">
@@ -161,9 +164,11 @@
                     
                     <div class="card bg-base-100 shadow-xl p-6">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Gerenciar Fornecedores</h2>
-                        <form id="add-supplier-form" class="flex flex-col sm:flex-row gap-4 mb-4">
-                            <input type="text" id="supplier-name" placeholder="Nome do Fornecedor" class="flex-1 shadow appearance-none border rounded py-2 px-3 text-gray-700" required>
-                            <button type="submit" class="btn btn-primary">Adicionar</button>
+                        <form id="add-supplier-form" class="form-layout mb-4">
+                            <input type="text" id="supplier-name" placeholder="Nome do Fornecedor" class="form-input sm:col-span-2" required>
+                            <div class="btn-center">
+                                <button type="submit" class="btn btn-primary btn-base">Adicionar</button>
+                            </div>
                         </form>
                         <div class="border-t pt-4">
                             <h3 class="text-md font-medium mb-3 text-gray-600">Fornecedores Cadastrados</h3>
@@ -177,17 +182,19 @@
                 <div id="tab-production" class="tab-content space-y-8">
                     <div class="card bg-base-100 shadow-xl p-6">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Item à Produção</h2>
-                        <form id="add-production-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <input type="text" id="production-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                             <select id="production-sector" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
-                                 <option value="COZINHA">COZINHA</option> 
-                                 <option value="PARRILLA">PARRILLA</option> 
+                        <form id="add-production-form" class="form-layout">
+                            <input type="text" id="production-name" placeholder="Nome do Produto" class="form-input sm:col-span-2" required>
+                             <select id="production-sector" class="form-input">
+                                 <option value="COZINHA">COZINHA</option>
+                                 <option value="PARRILLA">PARRILLA</option>
                              </select>
-                            <input type="number" id="production-quantity" placeholder="Qtd" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" step="any" required>
-                            <select id="production-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
+                            <input type="number" id="production-quantity" placeholder="Qtd" class="form-input" step="any" required>
+                            <select id="production-unit" class="form-input">
                                 <option>porção</option> <option>kg</option> <option>lt</option> <option>un</option>
                             </select>
-                            <button type="submit" class="btn btn-success sm:col-span-2">Adicionar</button>
+                            <div class="btn-center">
+                                <button type="submit" class="btn btn-success btn-base">Adicionar</button>
+                            </div>
                         </form>
                     </div>
                     <div class="card card-producao bg-base-100 shadow-xl w-full p-6">
@@ -204,35 +211,41 @@
 
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Gerar Etiqueta de Produto</h2>
-                        <form id="etiqueta-form" class="flex flex-wrap gap-4">
-                            <select id="etiqueta-produto-select" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700"></select>
-                            <input type="text" id="etiqueta-produto-custom" placeholder="Digitar item personalizado" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 hidden">
-                            <input type="date" id="etiqueta-producao" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                            <input type="date" id="etiqueta-validade" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                            <div class="flex items-center space-x-4 w-full">
+                        <form id="etiqueta-form" class="form-layout">
+                            <select id="etiqueta-produto-select" class="form-input"></select>
+                            <input type="text" id="etiqueta-produto-custom" placeholder="Digitar item personalizado" class="form-input hidden">
+                            <input type="date" id="etiqueta-producao" class="form-input">
+                            <input type="date" id="etiqueta-validade" class="form-input">
+                            <div class="flex items-center space-x-4 w-full sm:col-span-2">
                                 <label class="flex items-center"><input type="radio" name="etiqueta-tipo" value="Resfriado" class="mr-1" checked>Resfriado</label>
                                 <label class="flex items-center"><input type="radio" name="etiqueta-tipo" value="Congelado" class="mr-1">Congelado</label>
                             </div>
-                              <button type="submit" class="btn btn-primary w-full">Gerar Etiqueta</button>
+                            <div class="btn-center">
+                                <button type="submit" class="btn btn-primary btn-base">Gerar Etiqueta</button>
+                            </div>
                         </form>
                     </div>
 
                       <div class="card bg-base-100 shadow-xl p-6">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Observações - Parrilla</h2>
-                        <div class="grid grid-cols-1 gap-4 mb-4">
-                            <input type="date" id="parrilla-obs-date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" />
-                            <textarea id="parrilla-obs-text" maxlength="500" rows="3" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" placeholder="Observações do dia"></textarea>
-                              <button id="save-parrilla-obs" class="btn btn-error">Salvar Observações</button>
+                        <div class="form-layout mb-4">
+                            <input type="date" id="parrilla-obs-date" class="form-input" />
+                            <textarea id="parrilla-obs-text" maxlength="500" rows="3" class="form-input resize-y" placeholder="Observações do dia"></textarea>
+                            <div class="btn-center">
+                              <button id="save-parrilla-obs" class="btn btn-error btn-base">Salvar Observações</button>
+                            </div>
                         </div>
                         <div id="parrilla-obs-list" class="space-y-3"></div>
                     </div>
 
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Observações - Cozinha</h2>
-                        <div class="grid grid-cols-1 gap-4 mb-4">
-                            <input type="date" id="cozinha-obs-date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" />
-                            <textarea id="cozinha-obs-text" maxlength="500" rows="3" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" placeholder="Observações do dia"></textarea>
-                            <button id="save-cozinha-obs" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded">Salvar Observações</button>
+                        <div class="form-layout mb-4">
+                            <input type="date" id="cozinha-obs-date" class="form-input" />
+                            <textarea id="cozinha-obs-text" maxlength="500" rows="3" class="form-input resize-y" placeholder="Observações do dia"></textarea>
+                            <div class="btn-center">
+                                <button id="save-cozinha-obs" class="btn btn-success btn-base">Salvar Observações</button>
+                            </div>
                         </div>
                         <div id="cozinha-obs-list" class="space-y-3"></div>
                     </div>
@@ -259,14 +272,12 @@
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Ficha Técnica</h2>
                         <p class="text-sm text-gray-600 mb-2">CMV aplicado: <span id="current-cmv-display">0%</span></p>
-                        <form id="ficha-form" class="space-y-4">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <input type="text" id="ficha-nome" placeholder="Nome do Prato" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                                <input type="text" id="ficha-categoria" placeholder="Categoria/Grupo" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                                <input type="number" id="ficha-rendimento" placeholder="Rendimento" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                                <input type="text" id="ficha-imagem" placeholder="URL da Imagem (opcional)" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                            </div>
-                            <div>
+                        <form id="ficha-form" class="form-layout">
+                            <input type="text" id="ficha-nome" placeholder="Nome do Prato" class="form-input" required>
+                            <input type="text" id="ficha-categoria" placeholder="Categoria/Grupo" class="form-input" required>
+                            <input type="number" id="ficha-rendimento" placeholder="Rendimento" class="form-input" required>
+                            <input type="text" id="ficha-imagem" placeholder="URL da Imagem (opcional)" class="form-input">
+                            <div class="sm:col-span-2">
                                 <h3 class="font-semibold text-gray-700 mb-2">Ingredientes</h3>
                                 <datalist id="ingredientes-options"></datalist>
                                 <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 font-semibold text-sm mb-1">
@@ -280,17 +291,19 @@
                                     <span></span>
                                 </div>
                                 <div id="ingredientes-container" class="space-y-1"></div>
-                                <button type="button" id="add-ingrediente-btn" class="mt-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-2 rounded">+ Adicionar ingrediente</button>
+                                <button type="button" id="add-ingrediente-btn" class="mt-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-2 rounded btn-base">+ Adicionar ingrediente</button>
                             </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="form-layout sm:col-span-2">
                                 <p>Custo total do prato: R$ <span id="custo-total-prato">0.00</span></p>
                                 <p>Custo por porção: R$ <span id="custo-por-porcao">0.00</span></p>
                                 <p>Preço sugerido: R$ <span id="preco-sugerido">0.00</span></p>
-                                <input type="number" id="preco-real" placeholder="Preço real praticado (opcional)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                                <p>CMV real: <span id="cmv-real-display">0%</span></p>
+                                <input type="number" id="preco-real" placeholder="Preço real praticado (opcional)" step="0.01" class="form-input">
+                <p>CMV real: <span id="cmv-real-display">0%</span></p>
                                 <p>Margem de lucro estimada: <span id="margem-lucro-display">0%</span></p>
                             </div>
-                              <button type="submit" class="btn btn-primary">Salvar Ficha Técnica</button>
+                            <div class="btn-center">
+                              <button type="submit" class="btn btn-primary btn-base">Salvar Ficha Técnica</button>
+                            </div>
                         </form>
                         <div id="fichas-list" class="space-y-3 mt-4"></div>
                     </div>
@@ -298,12 +311,14 @@
                 <div id="tab-fc" class="tab-content space-y-8">
                     <div class="card bg-base-100 shadow-xl p-6">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Cadastro de FC e Preços</h2>
-                        <form id="fc-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <select id="fc-ingrediente" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white"></select>
-                            <input type="number" id="fc-fator" step="any" placeholder="Fator de Correção" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                            <input type="number" id="fc-preco" step="any" placeholder="Preço de Referência (R$)" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                            <input type="text" id="fc-unidade" placeholder="Unidade" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                              <button type="submit" class="btn btn-primary sm:col-span-2">Salvar</button>
+                        <form id="fc-form" class="form-layout">
+                            <select id="fc-ingrediente" class="form-input"></select>
+                            <input type="number" id="fc-fator" step="any" placeholder="Fator de Correção" class="form-input" required>
+                            <input type="number" id="fc-preco" step="any" placeholder="Preço de Referência (R$)" class="form-input" required>
+                            <input type="text" id="fc-unidade" placeholder="Unidade" class="form-input" required>
+                            <div class="btn-center">
+                              <button type="submit" class="btn btn-primary btn-base">Salvar</button>
+                            </div>
                         </form>
                         <div id="fc-list" class="space-y-2 mt-4"></div>
                     </div>
@@ -311,16 +326,16 @@
                 <div id="tab-cmv" class="tab-content space-y-8">
                       <div class="card bg-base-100 shadow-xl p-6">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Cálculo do CMV</h2>
-                        <form id="cmv-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <input type="number" id="cmv-estoque-inicial" placeholder="Estoque Inicial (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                            <input type="number" id="cmv-compras" placeholder="Compras do Mês (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                            <input type="number" id="cmv-estoque-final" placeholder="Estoque Final (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                            <input type="number" id="cmv-despesas-fixas" placeholder="Despesas Fixas (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                            <input type="number" id="cmv-mao-obra" placeholder="Mão de Obra (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                            <input type="number" id="cmv-receita-bruta" placeholder="Receita Bruta do Mês (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                        <form id="cmv-form" class="form-layout">
+                            <input type="number" id="cmv-estoque-inicial" placeholder="Estoque Inicial (R$)" step="0.01" class="form-input" required>
+                            <input type="number" id="cmv-compras" placeholder="Compras do Mês (R$)" step="0.01" class="form-input" required>
+                            <input type="number" id="cmv-estoque-final" placeholder="Estoque Final (R$)" step="0.01" class="form-input" required>
+                            <input type="number" id="cmv-despesas-fixas" placeholder="Despesas Fixas (R$)" step="0.01" class="form-input" required>
+                            <input type="number" id="cmv-mao-obra" placeholder="Mão de Obra (R$)" step="0.01" class="form-input" required>
+                            <input type="number" id="cmv-receita-bruta" placeholder="Receita Bruta do Mês (R$)" step="0.01" class="form-input" required>
                         </form>
                         <div id="cmv-manual-container" class="mt-4 hidden">
-                            <input type="number" id="cmv-manual-input" placeholder="CMV (%) manual" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+                            <input type="number" id="cmv-manual-input" placeholder="CMV (%) manual" step="0.01" class="form-input">
                         </div>
                         <div class="flex flex-wrap gap-2 mt-4">
                               <button id="calcular-cmv-btn" class="btn btn-primary">Calcular CMV</button>
@@ -374,23 +389,27 @@
             <h2 class="text-lg font-semibold mb-4">Administração</h2>
 
             <div id="superadmin-section" class="hidden">
-                <form id="add-company-form" class="space-y-2 mb-4">
-                    <input type="text" id="empresa-razao" placeholder="Razão Social" class="border rounded w-full p-2 text-sm" required>
-                    <input type="text" id="empresa-cnpj" placeholder="CNPJ" class="border rounded w-full p-2 text-sm" required>
-                    <input type="text" id="empresa-endereco" placeholder="Endereço" class="border rounded w-full p-2 text-sm" required>
-                    <input type="email" id="empresa-admin-email" placeholder="Email do Admin" class="border rounded w-full p-2 text-sm" required>
-                    <input type="password" id="empresa-admin-senha" placeholder="Senha do Admin" class="border rounded w-full p-2 text-sm" required>
-                      <button type="submit" class="btn btn-primary btn-sm">Salvar</button>
+                <form id="add-company-form" class="form-layout mb-4">
+                    <input type="text" id="empresa-razao" placeholder="Razão Social" class="form-input" required>
+                    <input type="text" id="empresa-cnpj" placeholder="CNPJ" class="form-input" required>
+                    <input type="text" id="empresa-endereco" placeholder="Endereço" class="form-input" required>
+                    <input type="email" id="empresa-admin-email" placeholder="Email do Admin" class="form-input" required>
+                    <input type="password" id="empresa-admin-senha" placeholder="Senha do Admin" class="form-input" required>
+                    <div class="btn-center">
+                      <button type="submit" class="btn btn-primary btn-base">Salvar</button>
+                    </div>
                 </form>
                 <div id="empresas-list" class="space-y-2"></div>
             </div>
 
             <div id="admin-section" class="hidden">
                 <h3 class="font-semibold mb-2">Usuários</h3>
-                <form id="add-user-form" class="space-y-2 mb-4">
-                    <input type="email" id="novo-usuario-email" placeholder="Email" class="border rounded w-full p-2 text-sm" required>
-                    <input type="password" id="novo-usuario-senha" placeholder="Senha" class="border rounded w-full p-2 text-sm" required>
-                      <button type="submit" class="btn btn-primary btn-sm">Adicionar Usuário</button>
+                <form id="add-user-form" class="form-layout mb-4">
+                    <input type="email" id="novo-usuario-email" placeholder="Email" class="form-input" required>
+                    <input type="password" id="novo-usuario-senha" placeholder="Senha" class="form-input" required>
+                    <div class="btn-center">
+                      <button type="submit" class="btn btn-primary btn-base">Adicionar Usuário</button>
+                    </div>
                 </form>
                 <div id="usuarios-list" class="space-y-1 mb-4"></div>
                 <h3 class="font-semibold mb-2">Importar Estoque</h3>
@@ -496,6 +515,7 @@
         const cozinhaObsText = document.getElementById("cozinha-obs-text");
         const saveCozinhaObsBtn = document.getElementById("save-cozinha-obs");
         const cozinhaObsListDiv = document.getElementById("cozinha-obs-list");
+        autosize(document.querySelectorAll('textarea'));
         const fichaForm = document.getElementById("ficha-form");
         const fichasListDiv = document.getElementById("fichas-list");
         const ingredientesContainer = document.getElementById("ingredientes-container");
