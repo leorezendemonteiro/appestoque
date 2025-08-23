@@ -9,228 +9,64 @@
     <meta name="theme-color" content="#ffffff">
     <link rel="manifest" href="manifest.webmanifest">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.2/dist/full.css" rel="stylesheet" type="text/css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <style>
-        html, body {
-            overflow-x: hidden;
-        }
-        .tab-button.active {
-            border-color: #3b82f6;
-            color: #3b82f6;
-            background-color: #eff6ff;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        #report-display-area.interactive-list {
-            max-height: 60vh;
-            overflow-y: auto;
-            border: 1px solid #e5e7eb;
-        }
-        /* Estilos para select de fornecedores com barra de rolagem */
-        .supplier-select {
-            /* Mantém a mesma altura que outros selects e mostra rolagem quando aberto */
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        /* Estilos para a área de impressão com reset para evitar conflitos */
-        .print-area {
-            all: initial;
-            font-family: Arial, sans-serif;
-            color: black;
-        }
-        .print-area h1 {
-            font-size: 18px;
-            font-weight: bold;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        .print-area h2 {
-            font-size: 16px;
-            font-weight: bold;
-            margin-top: 15px;
-            margin-bottom: 5px;
-        }
-        .print-area table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-            margin-top: 10px;
-        }
-        .print-area th, .print-area td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        .print-area thead {
-            background-color: #f2f2f2;
-        }
-        .entrada-highlight {
-            background-color: #e0f2fe;
-        }
-       .zeramento-highlight {
-            background-color: #fee2e2;
-        }
-       .balanco-scroll {
-            max-height: 420px;
-            overflow-y: auto;
-            scroll-behavior: smooth;
-            padding-right: 8px;
-            padding-left: 4px;
-        }
-
-       .scroll-container-fornecedor {
-            max-height: 500px;
-            overflow-y: auto;
-            scroll-behavior: smooth;
-            padding-right: 8px;
-            padding-left: 4px;
-        }
-
-        .balanco-tabela-container {
-            width: 100%;
-            max-width: 100%;
-            overflow-x: hidden;
-        }
-
-        .balanco-tabela-container table {
-            width: 100%;
-            min-width: unset;
-            table-layout: fixed;
-            border-collapse: collapse;
-            font-size: 14px;
-            word-break: normal;
-        }
-
-        .balanco-tabela-container th,
-        .balanco-tabela-container td {
-            padding: 4px 6px;
-            font-size: 14px;
-            text-align: left;
-        }
-
-        .menu-principal {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: start;
-        }
-
-        .balanco-table th,
-        .balanco-table td {
-            padding: 4px 6px !important;
-            font-size: 14px;
-            text-align: left;
-        }
-
-        .balanco-table {
-            border-collapse: collapse;
-            table-layout: fixed;
-            width: 100%;
-            min-width: unset;
-        }
-
-        .table-col {
-            min-width: auto;
-            max-width: none;
-        }
-
-        .card-producao {
-            width: 100%;
-            max-width: none;
-            padding: 12px;
-            margin: 0 auto;
-            border-radius: 8px;
-        }
-
-        @media (max-width: 768px) {
-            .card-producao {
-                padding: 8px;
-            }
-
-            .card-producao table {
-                font-size: 14px;
-            }
-
-            .card-producao td,
-            .card-producao th {
-                padding: 6px 4px;
-            }
-
-            .card-producao input {
-                font-size: 14px;
-            }
-
-            .btn-salvar,
-            .btn-excluir {
-                font-size: 12px;
-                padding: 4px 8px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .coluna-datas {
-                display: flex;
-                flex-direction: column;
-                gap: 4px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="public/styles.css">
 </head>
 <body class='min-h-screen bg-cover bg-center bg-no-repeat' style='background-image: url(https://i.imgur.com/8VJvCPI.jpeg);'>
 
     <div id="app-container" class="w-full max-w-2xl mx-auto py-8 px-4">
 
-        <div id="login-view" class="bg-white bg-opacity-80 p-8 rounded-xl shadow-lg max-w-md mx-auto">
-            <form id="login-form">
-                <div class="mb-4">
-                    <label for="login-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                    <input type="email" id="login-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+        <div id="login-view" class="card bg-base-100 shadow-xl max-w-md mx-auto">
+            <div class="card-body">
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="login-email" class="label"><span class="label-text">Email</span></label>
+                    <input type="email" id="login-email" name="email" class="input input-bordered w-full" required>
                 </div>
-                <div class="mb-6">
-                    <label for="login-password" class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
-                    <input type="password" id="login-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                <div>
+                    <label for="login-password" class="label"><span class="label-text">Senha</span></label>
+                    <input type="password" id="login-password" name="password" class="input input-bordered w-full" required>
                 </div>
                 <div class="flex flex-col space-y-4">
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Entrar</button>
-                    <button type="button" id="show-signup-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">Não tenho conta, quero me cadastrar</button>
+                    <button type="submit" class="btn btn-primary">Entrar</button>
+                    <button type="button" id="show-signup-btn" class="btn btn-link text-sm">Não tenho conta, quero me cadastrar</button>
                 </div>
             </form>
+            </div>
         </div>
-        
-        <div id="signup-view" class="bg-white bg-opacity-80 p-8 rounded-xl shadow-lg hidden max-w-md mx-auto">
-            <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Criar Nova Conta</h1>
-            <form id="signup-form">
-                <div class="mb-4">
-                    <label for="signup-email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                    <input type="email" id="signup-email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+
+        <div id="signup-view" class="card bg-base-100 shadow-xl hidden max-w-md mx-auto">
+            <div class="card-body">
+            <h1 class="text-2xl font-bold text-center mb-6">Criar Nova Conta</h1>
+            <form id="signup-form" class="space-y-4">
+                <div>
+                    <label for="signup-email" class="label"><span class="label-text">Email</span></label>
+                    <input type="email" id="signup-email" name="email" class="input input-bordered w-full" required>
                 </div>
-                <div class="mb-6">
-                    <label for="signup-password" class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
-                    <input type="password" id="signup-password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+                <div>
+                    <label for="signup-password" class="label"><span class="label-text">Senha</span></label>
+                    <input type="password" id="signup-password" name="password" class="input input-bordered w-full" required>
                 </div>
                 <div class="flex flex-col space-y-4">
-                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Cadastrar</button>
-                    <button type="button" id="show-login-btn" class="text-center text-sm text-blue-500 hover:text-blue-700">Já tenho uma conta</button>
+                    <button type="submit" class="btn btn-success">Cadastrar</button>
+                    <button type="button" id="show-login-btn" class="btn btn-link text-sm">Já tenho uma conta</button>
                 </div>
             </form>
+            </div>
         </div>
 
         <div id="main-app-view" class="hidden">
-            <header class="bg-white p-4 rounded-xl shadow-lg mb-8">
+            <header class="navbar bg-base-100 shadow-lg mb-8 rounded-box">
                 <div class="flex justify-between items-center">
                     <div>
                         <h1 class="text-xl font-bold text-gray-800">App de Gestão</h1>
                         <p id="user-email" class="text-xs text-gray-500"></p>
                     </div>
                         <!-- ALTERACAO: Menu de Administracao -->
-                        <a id="admin-link" href="#admin" class="hidden text-sm text-blue-500 mr-2">Administração</a>
-                    <button id="logout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm">Sair</button>
+                        <a id="admin-link" href="#admin" class="hidden text-sm text-primary mr-2">Administração</a>
+                    <button id="logout-btn" class="btn btn-error btn-sm">Sair</button>
                 </div>
             </header>
             
@@ -256,7 +92,7 @@
 
             <div id="app-content">
                 <div id="tab-stock" class="tab-content space-y-8">
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <div class="card bg-base-100 shadow-xl p-6">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Produto ao Estoque</h2>
                         <form id="add-item-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input type="text" id="product-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
@@ -268,10 +104,10 @@
                                 <option>un</option> <option>kg</option> <option>g</option> <option>lt</option> <option>ml</option>
                             </select>
                             <input type="number" id="product-price" placeholder="Preço Unitário (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                            <button type="submit" class="sm:col-span-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Adicionar</button>
+                            <button type="submit" class="btn btn-primary sm:col-span-2">Adicionar</button>
                         </form>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <div class="card bg-base-100 shadow-xl p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-lg font-semibold text-gray-700">Itens no Estoque</h2>
                             <select id="supplier-filter" class="supplier-select shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm" size="1"></select>
@@ -279,11 +115,11 @@
                         <div id="stock-list" class="space-y-3"></div>
                     </div>
                     
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <div class="card bg-base-100 shadow-xl p-6">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Gerenciar Fornecedores</h2>
                         <form id="add-supplier-form" class="flex flex-col sm:flex-row gap-4 mb-4">
                             <input type="text" id="supplier-name" placeholder="Nome do Fornecedor" class="flex-1 shadow appearance-none border rounded py-2 px-3 text-gray-700" required>
-                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Adicionar</button>
+                            <button type="submit" class="btn btn-primary">Adicionar</button>
                         </form>
                         <div class="border-t pt-4">
                             <h3 class="text-md font-medium mb-3 text-gray-600">Fornecedores Cadastrados</h3>
@@ -295,7 +131,7 @@
                 </div>
 
                 <div id="tab-production" class="tab-content space-y-8">
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <div class="card bg-base-100 shadow-xl p-6">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Item à Produção</h2>
                         <form id="add-production-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input type="text" id="production-name" placeholder="Nome do Produto" class="sm:col-span-2 shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
@@ -307,10 +143,10 @@
                             <select id="production-unit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white">
                                 <option>porção</option> <option>kg</option> <option>lt</option> <option>un</option>
                             </select>
-                            <button type="submit" class="sm:col-span-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Adicionar</button>
+                            <button type="submit" class="btn btn-success sm:col-span-2">Adicionar</button>
                         </form>
                     </div>
-                    <div class="card-producao bg-white p-6 rounded-xl shadow-lg w-full">
+                    <div class="card card-producao bg-base-100 shadow-xl w-full p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-lg font-semibold text-gray-700">Itens em Produção</h2>
                             <select id="sector-filter" class="shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm">
@@ -333,16 +169,16 @@
                                 <label class="flex items-center"><input type="radio" name="etiqueta-tipo" value="Resfriado" class="mr-1" checked>Resfriado</label>
                                 <label class="flex items-center"><input type="radio" name="etiqueta-tipo" value="Congelado" class="mr-1">Congelado</label>
                             </div>
-                            <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Gerar Etiqueta</button>
+                              <button type="submit" class="btn btn-primary w-full">Gerar Etiqueta</button>
                         </form>
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                      <div class="card bg-base-100 shadow-xl p-6">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Observações - Parrilla</h2>
                         <div class="grid grid-cols-1 gap-4 mb-4">
                             <input type="date" id="parrilla-obs-date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" />
                             <textarea id="parrilla-obs-text" maxlength="500" rows="3" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" placeholder="Observações do dia"></textarea>
-                            <button id="save-parrilla-obs" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded">Salvar Observações</button>
+                              <button id="save-parrilla-obs" class="btn btn-error">Salvar Observações</button>
                         </div>
                         <div id="parrilla-obs-list" class="space-y-3"></div>
                     </div>
@@ -410,26 +246,26 @@
                                 <p>CMV real: <span id="cmv-real-display">0%</span></p>
                                 <p>Margem de lucro estimada: <span id="margem-lucro-display">0%</span></p>
                             </div>
-                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Salvar Ficha Técnica</button>
+                              <button type="submit" class="btn btn-primary">Salvar Ficha Técnica</button>
                         </form>
                         <div id="fichas-list" class="space-y-3 mt-4"></div>
                     </div>
                 </div>
                 <div id="tab-fc" class="tab-content space-y-8">
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <div class="card bg-base-100 shadow-xl p-6">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Cadastro de FC e Preços</h2>
                         <form id="fc-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <select id="fc-ingrediente" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white"></select>
                             <input type="number" id="fc-fator" step="any" placeholder="Fator de Correção" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                             <input type="number" id="fc-preco" step="any" placeholder="Preço de Referência (R$)" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
                             <input type="text" id="fc-unidade" placeholder="Unidade" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
-                            <button type="submit" class="sm:col-span-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Salvar</button>
+                              <button type="submit" class="btn btn-primary sm:col-span-2">Salvar</button>
                         </form>
                         <div id="fc-list" class="space-y-2 mt-4"></div>
                     </div>
                 </div>
                 <div id="tab-cmv" class="tab-content space-y-8">
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                      <div class="card bg-base-100 shadow-xl p-6">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Cálculo do CMV</h2>
                         <form id="cmv-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input type="number" id="cmv-estoque-inicial" placeholder="Estoque Inicial (R$)" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
@@ -443,23 +279,23 @@
                             <input type="number" id="cmv-manual-input" placeholder="CMV (%) manual" step="0.01" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
                         </div>
                         <div class="flex flex-wrap gap-2 mt-4">
-                            <button id="calcular-cmv-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Calcular CMV</button>
-                            <button id="importar-cmv-btn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Importar este CMV para Fichas Técnicas</button>
-                            <button id="mostrar-manual-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Inserir CMV manual</button>
+                              <button id="calcular-cmv-btn" class="btn btn-primary">Calcular CMV</button>
+                              <button id="importar-cmv-btn" class="btn btn-success">Importar este CMV para Fichas Técnicas</button>
+                              <button id="mostrar-manual-btn" class="btn btn-neutral">Inserir CMV manual</button>
                         </div>
                     <div id="cmv-results" class="mt-4 space-y-1 text-gray-700"></div>
                     </div>
                 </div>
                 <div id="tab-balance" class="tab-content space-y-8">
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                      <div class="card bg-base-100 shadow-xl p-6">
                         <div class="flex space-x-2 mb-4">
-                            <button data-view="novo" class="balance-view-button bg-blue-500 text-white px-2 py-1 rounded text-sm">Realizar Balanço</button>
+                              <button data-view="novo" class="balance-view-button btn btn-primary btn-sm">Realizar Balanço</button>
                             <button data-view="historico" class="balance-view-button bg-gray-200 px-2 py-1 rounded text-sm">Histórico de Balanços</button>
                         </div>
                         <div id="balance-new-view">
                             <div class="flex justify-between mb-2">
                                 <div class="space-x-2 items-center flex">
-                                    <button class="balance-group-button bg-blue-500 text-white px-2 py-1 rounded text-sm" data-bgroup="fornecedor">Por Fornecedor</button>
+                                    <button class="balance-group-button btn btn-primary btn-sm" data-bgroup="fornecedor">Por Fornecedor</button>
                                     <button class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm" data-bgroup="cozinha">Produção Cozinha</button>
                                     <button class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm" data-bgroup="parrilla">Produção Parrilla</button>
                                     <select id="balance-supplier-filter" class="supplier-select shadow-sm appearance-none border rounded py-1 px-2 text-gray-700 bg-white text-sm hidden"></select>
@@ -500,7 +336,7 @@
                     <input type="text" id="empresa-endereco" placeholder="Endereço" class="border rounded w-full p-2 text-sm" required>
                     <input type="email" id="empresa-admin-email" placeholder="Email do Admin" class="border rounded w-full p-2 text-sm" required>
                     <input type="password" id="empresa-admin-senha" placeholder="Senha do Admin" class="border rounded w-full p-2 text-sm" required>
-                    <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Salvar</button>
+                      <button type="submit" class="btn btn-primary btn-sm">Salvar</button>
                 </form>
                 <div id="empresas-list" class="space-y-2"></div>
             </div>
@@ -510,7 +346,7 @@
                 <form id="add-user-form" class="space-y-2 mb-4">
                     <input type="email" id="novo-usuario-email" placeholder="Email" class="border rounded w-full p-2 text-sm" required>
                     <input type="password" id="novo-usuario-senha" placeholder="Senha" class="border rounded w-full p-2 text-sm" required>
-                    <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Adicionar Usuário</button>
+                      <button type="submit" class="btn btn-primary btn-sm">Adicionar Usuário</button>
                 </form>
                 <div id="usuarios-list" class="space-y-1 mb-4"></div>
                 <h3 class="font-semibold mb-2">Importar Estoque</h3>
@@ -1134,8 +970,8 @@
                         <td class="p-2 text-center total-atualizado"></td>
                         <td class="p-2 text-center">${formatDateTimeBR(item.ultimaAtualizacao)}</td>
                         <td class="p-2 text-center">
-                            <button onclick="saveEntrada('${item.id}')" class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded">Salvar</button>
-                            <button onclick="deleteStockItem('${item.id}')" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded ml-1">Excluir</button>
+                              <button onclick="saveEntrada('${item.id}')" class="btn btn-primary btn-xs">Salvar</button>
+                              <button onclick="deleteStockItem('${item.id}')" class="btn btn-error btn-xs ml-1">Excluir</button>
                         </td>`;
                     tbody.appendChild(row);
 
@@ -1179,8 +1015,8 @@ function renderProductionList() {
                     <td class="p-2 text-center" id="total-${item.id}">${formatQty(item.quantidade || 0)}</td>
                     <td class="p-2 text-center">${last}</td>
                     <td class="p-2 text-center">
-                        <button onclick="updateProductionItem('${item.id}')" class="btn-salvar bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded">Salvar</button>
-                        <button onclick="deleteProductionItem('${item.id}')" class="btn-excluir bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded ml-1">Excluir</button>
+                          <button onclick="updateProductionItem('${item.id}')" class="btn-salvar btn btn-primary btn-xs">Salvar</button>
+                          <button onclick="deleteProductionItem('${item.id}')" class="btn-excluir btn btn-error btn-xs ml-1">Excluir</button>
                     </td>`;
                 const input = tr.querySelector('input');
                 input.addEventListener('input', () => {
@@ -1208,9 +1044,9 @@ function renderProductionList() {
                         <p class="font-semibold text-gray-800">${formatDateBR(obs.id)}</p>
                         <p class="text-sm text-gray-600 break-normal whitespace-pre-line">${escapeHtml(obs.texto || '')}</p>
                     </div>
-                    <div class="flex flex-col space-y-1">\
-                        <button onclick="editObservation('${sector}','${obs.id}')" class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded">Editar</button>\
-                        <button onclick="deleteObservation('${sector}','${obs.id}')" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>\
+                      <div class="flex flex-col space-y-1">\
+                          <button onclick="editObservation('${sector}','${obs.id}')" class="btn btn-primary btn-xs">Editar</button>\
+                          <button onclick="deleteObservation('${sector}','${obs.id}')" class="btn btn-error btn-xs">Excluir</button>\
                     </div>`;
                 listDiv.appendChild(div);
             });
@@ -1756,7 +1592,7 @@ function renderProductionList() {
                             }).join('')}
                         </select>
                     </div>
-                    <button id="generate-shopping-list-pdf-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4">Gerar Lista de Compras PDF</button>
+                      <button id="generate-shopping-list-pdf-btn" class="btn btn-primary mb-4">Gerar Lista de Compras PDF</button>
                     <div id="shopping-list-items-container" class="space-y-3"></div>
                 </div>
            `;
@@ -2137,9 +1973,9 @@ function renderProductionList() {
         }
 
         function switchBalanceView(view){
-            document.querySelectorAll('.balance-view-button').forEach(b => b.classList.remove('bg-blue-500','text-white'));
+            document.querySelectorAll('.balance-view-button').forEach(b => b.classList.remove('btn-primary'));
             const btn = document.querySelector(`.balance-view-button[data-view="${view}"]`);
-            if(btn) btn.classList.add('bg-blue-500','text-white');
+            if(btn) btn.classList.add('btn-primary');
             if(balanceNewView) balanceNewView.classList.toggle('hidden', view !== 'novo');
             if(balanceHistoryView) balanceHistoryView.classList.toggle('hidden', view !== 'historico');
             if(view === 'historico') loadBalanceHistory();
@@ -2793,8 +2629,8 @@ function renderProductionList() {
 
         document.querySelectorAll('.balance-group-button').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.balance-group-button').forEach(b => b.classList.remove('bg-blue-500','text-white'));
-                btn.classList.add('bg-blue-500','text-white');
+                document.querySelectorAll('.balance-group-button').forEach(b => b.classList.remove('btn-primary'));
+                btn.classList.add('btn-primary');
                 renderBalanceTable(btn.dataset.bgroup);
             });
         });
