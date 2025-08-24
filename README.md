@@ -46,22 +46,20 @@ The command prints a local URL (for example `http://localhost:3000`). Open that 
 
 ## Multi-company mode
 
-To access the **superadmin** area the signed-in user must have `role: "superadmin"`.
-There are two ways to assign this role:
+Para acessar a área de **superadmin**, o usuário autenticado precisa ter `role: "superadmin"`.
+Essa role pode ser atribuída de duas maneiras:
 
-1. **Custom claims** – using the Firebase Admin SDK:
+1. **Custom claims no Firebase Auth** – utilize o Firebase Admin SDK para definir as claims do usuário:
 
    ```js
    admin.auth().setCustomUserClaims(uid, { role: 'superadmin' });
    ```
 
-   After setting the claim, the user needs to sign out and sign in again.
+   Depois de definir a claim, o usuário deve sair e entrar novamente.
 
-2. **User document** – directly in Firestore under
-   `empresas/{empresaId}/usuarios/{uid}` set the field `role` to
-   `"superadmin"`.
+2. **Documento `usuarios`** – no Firestore, em `empresas/{empresaId}/usuarios/{uid}`, defina o campo `role` como `"superadmin"`.
 
-Once the role is assigned, log in with that user's credentials to cadastrar
+Com a role configurada, faça login com as credenciais desse usuário para cadastrar
 novas empresas e criar o usuário administrador de cada uma.
 
 ## Usage
