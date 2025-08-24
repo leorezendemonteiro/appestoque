@@ -2,7 +2,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function isSignedIn() { return request.auth != null; }
-      function isSuperAdmin() { return isSignedIn() && request.auth.token.role == 'superadmin'; }
+    function isSuperAdmin() {
+      return isSignedIn() && request.auth.token.role == 'superadmin';
+    }
     function inCompany(empresaId) {
       return exists(/databases/$(database)/documents/empresas/$(empresaId)/usuarios/$(request.auth.uid));
     }
