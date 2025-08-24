@@ -59,18 +59,28 @@
         </div>
 
         <div id="main-app-view" class="hidden">
-            <header class="navbar bg-base-100 shadow-lg mb-8 rounded-box">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-xl font-bold text-gray-800">App de Gestão</h1>
-                        <p id="user-email" class="text-xs text-gray-500"></p>
+        <div class="drawer">
+            <input id="drawer-toggle" type="checkbox" class="drawer-toggle" />
+            <div class="drawer-content flex flex-col">
+                <header class="navbar bg-base-100 shadow-lg mb-8 rounded-box">
+                    <div class="flex justify-between items-center w-full">
+                        <div class="flex items-center gap-2">
+                            <label for="drawer-toggle" class="btn btn-square btn-ghost">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                            </label>
+                            <div>
+                                <h1 class="text-xl font-bold text-gray-800">App de Gestão</h1>
+                                <p id="user-email" class="text-xs text-gray-500"></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <!-- ALTERACAO: Menu de Administracao -->
+                            <a id="admin-link" href="#admin" class="hidden text-sm text-primary mr-2">Administração</a>
+                            <button id="logout-btn" class="btn btn-error btn-sm">Sair</button>
+                        </div>
                     </div>
-                        <!-- ALTERACAO: Menu de Administracao -->
-                        <a id="admin-link" href="#admin" class="hidden text-sm text-primary mr-2">Administração</a>
-                    <button id="logout-btn" class="btn btn-error btn-sm">Sair</button>
-                </div>
-            </header>
-            <div id="dashboard-view" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                </header>
+                <div id="dashboard-view" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                 <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-transform hover:-translate-y-1">
                     <div class="card-body flex items-center">
                         <div class="flex items-center space-x-4">
@@ -115,27 +125,7 @@
                 </div>
             </div>
 
-            <div class="mb-8">
-                <div class="border-b border-gray-200">
-                    <div class="bg-white/80 rounded-lg shadow-md px-4 py-2 text-black">
-                        <nav id="tabs-container" class="menu-principal" aria-label="Tabs">
-                            <div class="flex flex-wrap gap-2 w-full">
-                                <button data-tab="stock" class="tab-button whitespace-nowrap px-4 py-2 border-b-2 font-medium text-sm text-black hover:bg-white/90">Estoque</button>
-                                <button data-tab="production" class="tab-button whitespace-nowrap px-4 py-2 border-b-2 font-medium text-sm text-black hover:bg-white/90">Produção</button>
-                                <button data-tab="reports" class="tab-button whitespace-nowrap px-4 py-2 border-b-2 font-medium text-sm text-black hover:bg-white/90">Relatórios</button>
-                                <button data-tab="fichas" class="tab-button whitespace-nowrap px-4 py-2 border-b-2 font-medium text-sm text-black hover:bg-white/90">Ficha Técnica</button>
-                                <button data-tab="fc" class="tab-button whitespace-nowrap px-4 py-2 border-b-2 font-medium text-sm text-black hover:bg-white/90">Cadastro FC/Preços</button>
-                            </div>
-                            <div class="flex flex-wrap gap-2 w-full mt-1">
-                                <button data-tab="cmv" class="tab-button whitespace-nowrap px-4 py-2 border-b-2 font-medium text-sm text-black hover:bg-white/90">Cálculo do CMV</button>
-                                <button data-tab="balance" class="tab-button whitespace-nowrap px-4 py-2 border-b-2 font-medium text-sm text-black hover:bg-white/90">Balanço de Estoque</button>
-                            </div>
-                        </nav>
-                    </div>
-                </div>
-            </div>
-
-            <div id="app-content">
+                <div id="app-content">
                 <div id="tab-stock" class="tab-content space-y-8">
                     <div class="card bg-base-100 shadow-xl p-6">
                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Produto ao Estoque</h2>
@@ -382,10 +372,26 @@
 
                     </div>
                 </div>
+                </div>
+            </div>
+            <div class="drawer-side">
+                <label for="drawer-toggle" aria-label="close sidebar" class="drawer-overlay"></label>
+                <nav id="tabs-container" aria-label="Tabs">
+                    <ul class="menu menu-vertical w-80 p-4 bg-base-200 min-h-full">
+                        <li><a data-tab="stock" class="tab-button">Estoque</a></li>
+                        <li><a data-tab="production" class="tab-button">Produção</a></li>
+                        <li><a data-tab="reports" class="tab-button">Relatórios</a></li>
+                        <li><a data-tab="fichas" class="tab-button">Ficha Técnica</a></li>
+                        <li><a data-tab="fc" class="tab-button">Cadastro FC/Preços</a></li>
+                        <li><a data-tab="cmv" class="tab-button">Cálculo do CMV</a></li>
+                        <li><a data-tab="balance" class="tab-button">Balanço de Estoque</a></li>
+                    </ul>
+                </nav>
             </div>
         </div>
-        
-        <div id="admin-view" class="hidden p-6 bg-white bg-opacity-80 rounded-xl shadow-lg">
+    </div>
+
+    <div id="admin-view" class="hidden p-6 bg-white bg-opacity-80 rounded-xl shadow-lg">
             <h2 class="text-lg font-semibold mb-4">Administração</h2>
 
             <div id="superadmin-section" class="hidden">
@@ -478,6 +484,7 @@
         const signupView = document.getElementById("signup-view");
         const mainAppView = document.getElementById("main-app-view");
         const tabsContainer = document.getElementById("tabs-container");
+        const drawerToggle = document.getElementById("drawer-toggle");
         const tabContents = document.querySelectorAll(".tab-content");
         const dashboardView = document.getElementById("dashboard-view");
         const dashboardTotalStock = document.getElementById("dashboard-total-stock");
@@ -2740,8 +2747,13 @@ function renderProductionList() {
 
         tabsContainer.addEventListener('click', (e) => {
             if (e.target.classList.contains('tab-button')) {
+                e.preventDefault();
                 const tabName = e.target.getAttribute('data-tab');
                 switchTab(tabName);
+
+                if (drawerToggle) {
+                    drawerToggle.checked = false;
+                }
 
                 // Esconder área de relatórios quando mudar de aba
                 if (tabName !== 'reports') {
