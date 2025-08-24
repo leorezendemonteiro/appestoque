@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="corporate">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -69,8 +69,8 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                             </label>
                             <div>
-                                <h1 class="text-xl font-bold text-gray-800">App de Gestão</h1>
-                                <p id="user-email" class="text-xs text-gray-500"></p>
+                                <h1 class="text-xl font-bold text-base-content">App de Gestão</h1>
+                                <p id="user-email" class="text-xs text-base-content/60"></p>
                             </div>
                         </div>
                         <div class="flex items-center">
@@ -128,7 +128,7 @@
                 <div id="app-content">
                 <div id="tab-stock" class="tab-content space-y-8">
                     <div class="card bg-base-100 shadow-xl p-6">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Produto ao Estoque</h2>
+                        <h2 class="text-lg font-semibold mb-4 text-base-content">Adicionar Produto ao Estoque</h2>
                         <form id="add-item-form" class="form-layout">
                             <input type="text" id="product-name" placeholder="Nome do Produto" class="form-input sm:col-span-2" required>
                             <select id="product-supplier" class="supplier-select form-input" size="1"></select>
@@ -146,14 +146,14 @@
                     </div>
                     <div class="card bg-base-100 shadow-xl p-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-semibold text-gray-700">Itens no Estoque</h2>
-                            <select id="supplier-filter" class="supplier-select shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm" size="1"></select>
+                            <h2 class="text-lg font-semibold text-base-content">Itens no Estoque</h2>
+                            <select id="supplier-filter" class="supplier-select shadow-sm appearance-none border rounded py-2 px-3 text-base-content bg-base-100 text-sm" size="1"></select>
                         </div>
                         <div id="stock-list" class="space-y-3"></div>
                     </div>
                     
                     <div class="card bg-base-100 shadow-xl p-6">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Gerenciar Fornecedores</h2>
+                        <h2 class="text-lg font-semibold mb-4 text-base-content">Gerenciar Fornecedores</h2>
                         <form id="add-supplier-form" class="form-layout mb-4">
                             <input type="text" id="supplier-name" placeholder="Nome do Fornecedor" class="form-input sm:col-span-2" required>
                             <div class="btn-center">
@@ -161,7 +161,7 @@
                             </div>
                         </form>
                         <div class="border-t pt-4">
-                            <h3 class="text-md font-medium mb-3 text-gray-600">Fornecedores Cadastrados</h3>
+                            <h3 class="text-md font-medium mb-3 text-base-content/70">Fornecedores Cadastrados</h3>
                             <div class="scroll-container-fornecedor">
                                 <div id="suppliers-list" class="space-y-2"></div>
                             </div>
@@ -171,7 +171,7 @@
 
                 <div id="tab-production" class="tab-content space-y-8">
                     <div class="card bg-base-100 shadow-xl p-6">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Adicionar Item à Produção</h2>
+                        <h2 class="text-lg font-semibold mb-4 text-base-content">Adicionar Item à Produção</h2>
                         <form id="add-production-form" class="form-layout">
                             <input type="text" id="production-name" placeholder="Nome do Produto" class="form-input sm:col-span-2" required>
                              <select id="production-sector" class="form-input">
@@ -189,8 +189,8 @@
                     </div>
                     <div class="card card-producao bg-base-100 shadow-xl w-full p-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-semibold text-gray-700">Itens em Produção</h2>
-                            <select id="sector-filter" class="shadow-sm appearance-none border rounded py-2 px-3 text-gray-700 bg-white text-sm">
+                            <h2 class="text-lg font-semibold text-base-content">Itens em Produção</h2>
+                            <select id="sector-filter" class="shadow-sm appearance-none border rounded py-2 px-3 text-base-content bg-base-100 text-sm">
                                 <option value="TODOS">TODOS</option>
                                 <option value="COZINHA">COZINHA</option>
                                 <option value="PARRILLA">PARRILLA</option>
@@ -199,8 +199,8 @@
                         <div id="production-list" class="space-y-3"></div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Gerar Etiqueta de Produto</h2>
+                    <div class="bg-base-100 p-6 rounded-xl shadow-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-base-content">Gerar Etiqueta de Produto</h2>
                         <form id="etiqueta-form" class="form-layout">
                             <select id="etiqueta-produto-select" class="form-input"></select>
                             <input type="text" id="etiqueta-produto-custom" placeholder="Digitar item personalizado" class="form-input hidden">
@@ -217,7 +217,7 @@
                     </div>
 
                       <div class="card bg-base-100 shadow-xl p-6">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Observações - Parrilla</h2>
+                        <h2 class="text-lg font-semibold mb-4 text-base-content">Observações - Parrilla</h2>
                         <div class="form-layout mb-4">
                             <input type="date" id="parrilla-obs-date" class="form-input" />
                             <textarea id="parrilla-obs-text" maxlength="500" rows="3" class="form-input resize-y" placeholder="Observações do dia"></textarea>
@@ -228,8 +228,8 @@
                         <div id="parrilla-obs-list" class="space-y-3"></div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Observações - Cozinha</h2>
+                    <div class="bg-base-100 p-6 rounded-xl shadow-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-base-content">Observações - Cozinha</h2>
                         <div class="form-layout mb-4">
                             <input type="date" id="cozinha-obs-date" class="form-input" />
                             <textarea id="cozinha-obs-text" maxlength="500" rows="3" class="form-input resize-y" placeholder="Observações do dia"></textarea>
@@ -242,33 +242,33 @@
                 </div>
 
                 <div id="tab-reports" class="tab-content space-y-8">
-                     <div class="bg-white p-6 rounded-xl shadow-lg">
-                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios de Estoque</h2>
+                     <div class="bg-base-100 p-6 rounded-xl shadow-lg">
+                         <h2 class="text-lg font-semibold mb-4 text-base-content">Relatórios de Estoque</h2>
                          <div class="flex flex-col sm:flex-row gap-4">
-                              <button id="generate-stock-report-btn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Relatório Geral de Estoque (PDF)</button>
-                              <button id="generate-shopping-list-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded">Gerar Lista de Compras</button>
+                             <button id="generate-stock-report-btn" class="flex-1 btn btn-secondary">Relatório Geral de Estoque (PDF)</button>
+                             <button id="generate-shopping-list-btn" class="flex-1 btn btn-warning">Gerar Lista de Compras</button>
                          </div>
                      </div>
-                     <div class="bg-white p-6 rounded-xl shadow-lg">
-                         <h2 class="text-lg font-semibold mb-4 text-gray-700">Relatórios de Produção</h2>
+                     <div class="bg-base-100 p-6 rounded-xl shadow-lg">
+                         <h2 class="text-lg font-semibold mb-4 text-base-content">Relatórios de Produção</h2>
                          <div class="flex flex-col sm:flex-row gap-4">
-                             <button id="generate-kitchen-report-btn" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded">Produção Cozinha (PDF)</button>
-                             <button id="generate-parrilla-report-btn" class="flex-1 bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded">Produção Parrilla (PDF)</button>
+                            <button id="generate-kitchen-report-btn" class="flex-1 btn btn-info">Produção Cozinha (PDF)</button>
+                            <button id="generate-parrilla-report-btn" class="flex-1 btn btn-error">Produção Parrilla (PDF)</button>
                          </div>
                      </div>
-                     <div id="report-display-area" class="bg-white rounded-xl shadow-lg hidden"></div>
+                     <div id="report-display-area" class="bg-base-100 rounded-xl shadow-lg hidden"></div>
                 </div>
                 <div id="tab-fichas" class="tab-content space-y-8">
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Ficha Técnica</h2>
-                        <p class="text-sm text-gray-600 mb-2">CMV aplicado: <span id="current-cmv-display">0%</span></p>
+                    <div class="bg-base-100 p-6 rounded-xl shadow-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-base-content">Ficha Técnica</h2>
+                        <p class="text-sm text-base-content/70 mb-2">CMV aplicado: <span id="current-cmv-display">0%</span></p>
                         <form id="ficha-form" class="form-layout">
                             <input type="text" id="ficha-nome" placeholder="Nome do Prato" class="form-input" required>
                             <input type="text" id="ficha-categoria" placeholder="Categoria/Grupo" class="form-input" required>
                             <input type="number" id="ficha-rendimento" placeholder="Rendimento" class="form-input" required>
                             <input type="text" id="ficha-imagem" placeholder="URL da Imagem (opcional)" class="form-input">
                             <div class="sm:col-span-2">
-                                <h3 class="font-semibold text-gray-700 mb-2">Ingredientes</h3>
+                                <h3 class="font-semibold text-base-content mb-2">Ingredientes</h3>
                                 <datalist id="ingredientes-options"></datalist>
                                 <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 font-semibold text-sm mb-1">
                                     <span>Ingrediente</span>
@@ -281,7 +281,7 @@
                                     <span></span>
                                 </div>
                                 <div id="ingredientes-container" class="space-y-1"></div>
-                                <button type="button" id="add-ingrediente-btn" class="mt-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-2 rounded btn-base">+ Adicionar ingrediente</button>
+                                <button type="button" id="add-ingrediente-btn" class="mt-2 btn btn-secondary btn-base">+ Adicionar ingrediente</button>
                             </div>
                             <div class="form-layout sm:col-span-2">
                                 <p>Custo total do prato: R$ <span id="custo-total-prato">0.00</span></p>
@@ -300,7 +300,7 @@
                 </div>
                 <div id="tab-fc" class="tab-content space-y-8">
                     <div class="card bg-base-100 shadow-xl p-6">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Cadastro de FC e Preços</h2>
+                        <h2 class="text-lg font-semibold mb-4 text-base-content">Cadastro de FC e Preços</h2>
                         <form id="fc-form" class="form-layout">
                             <select id="fc-ingrediente" class="form-input"></select>
                             <input type="number" id="fc-fator" step="any" placeholder="Fator de Correção" class="form-input" required>
@@ -315,7 +315,7 @@
                 </div>
                 <div id="tab-cmv" class="tab-content space-y-8">
                       <div class="card bg-base-100 shadow-xl p-6">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700">Cálculo do CMV</h2>
+                        <h2 class="text-lg font-semibold mb-4 text-base-content">Cálculo do CMV</h2>
                         <form id="cmv-form" class="form-layout">
                             <input type="number" id="cmv-estoque-inicial" placeholder="Estoque Inicial (R$)" step="0.01" class="form-input" required>
                             <input type="number" id="cmv-compras" placeholder="Compras do Mês (R$)" step="0.01" class="form-input" required>
@@ -332,27 +332,27 @@
                               <button id="importar-cmv-btn" class="btn btn-success">Importar este CMV para Fichas Técnicas</button>
                               <button id="mostrar-manual-btn" class="btn btn-neutral">Inserir CMV manual</button>
                         </div>
-                    <div id="cmv-results" class="mt-4 space-y-1 text-gray-700"></div>
+                    <div id="cmv-results" class="mt-4 space-y-1 text-base-content"></div>
                     </div>
                 </div>
                 <div id="tab-balance" class="tab-content space-y-8">
                       <div class="card bg-base-100 shadow-xl p-6">
                         <div class="flex space-x-2 mb-4">
                               <button data-view="novo" class="balance-view-button btn btn-primary btn-sm">Realizar Balanço</button>
-                            <button data-view="historico" class="balance-view-button bg-gray-200 px-2 py-1 rounded text-sm">Histórico de Balanços</button>
+                            <button data-view="historico" class="balance-view-button btn btn-sm bg-base-200 text-base-content">Histórico de Balanços</button>
                         </div>
                         <div id="balance-new-view">
                             <div class="flex justify-between mb-2">
                                 <div class="space-x-2 items-center flex">
                                     <button class="balance-group-button btn btn-primary btn-sm" data-bgroup="fornecedor">Por Fornecedor</button>
-                                    <button class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm" data-bgroup="cozinha">Produção Cozinha</button>
-                                    <button class="balance-group-button bg-gray-200 px-2 py-1 rounded text-sm" data-bgroup="parrilla">Produção Parrilla</button>
-                                    <select id="balance-supplier-filter" class="supplier-select shadow-sm appearance-none border rounded py-1 px-2 text-gray-700 bg-white text-sm hidden"></select>
+                                    <button class="balance-group-button btn btn-sm bg-base-200 text-base-content" data-bgroup="cozinha">Produção Cozinha</button>
+                                    <button class="balance-group-button btn btn-sm bg-base-200 text-base-content" data-bgroup="parrilla">Produção Parrilla</button>
+                                    <select id="balance-supplier-filter" class="supplier-select shadow-sm appearance-none border rounded py-1 px-2 text-base-content bg-base-100 text-sm hidden"></select>
                                 </div>
                                 <div class="space-x-2">
-                                    <button id="balance-summary-btn" class="bg-gray-500 text-white px-2 py-1 rounded text-sm">Resumo</button>
-                                    <button id="apply-balance-btn" class="bg-green-600 text-white px-2 py-1 rounded text-sm" disabled>Aplicar Balanço</button>
-                                    <button id="balance-pdf-btn" class="bg-gray-600 text-white px-2 py-1 rounded text-sm">Exportar PDF</button>
+                                    <button id="balance-summary-btn" class="btn btn-secondary btn-sm">Resumo</button>
+                                    <button id="apply-balance-btn" class="btn btn-success btn-sm" disabled>Aplicar Balanço</button>
+                                    <button id="balance-pdf-btn" class="btn btn-secondary btn-sm">Exportar PDF</button>
                                 </div>
                             </div>
                             <div id="balance-table-container"></div>
@@ -391,7 +391,7 @@
         </div>
     </div>
 
-    <div id="admin-view" class="hidden p-6 bg-white bg-opacity-80 rounded-xl shadow-lg">
+    <div id="admin-view" class="hidden p-6 bg-base-100 bg-opacity-80 rounded-xl shadow-lg">
             <h2 class="text-lg font-semibold mb-4">Administração</h2>
 
             <div id="superadmin-section" class="hidden">
@@ -422,11 +422,11 @@
                 <input type="file" id="import-file" accept=".csv,.xlsx" class="mb-4">
             </div>
 
-            <button id="voltar-main" class="mt-4 bg-gray-500 text-white px-3 py-1 rounded text-sm">Voltar</button>
+            <button id="voltar-main" class="mt-4 btn btn-secondary btn-sm">Voltar</button>
         </div>
-        <div id="history-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"></div>
-        <div id="balance-summary-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div id="balance-summary" class="bg-white p-4 rounded shadow-lg max-h-full overflow-auto w-full max-w-2xl"></div>
+        <div id="history-modal" class="hidden fixed inset-0 bg-neutral bg-opacity-50 flex items-center justify-center z-50"></div>
+        <div id="balance-summary-modal" class="hidden fixed inset-0 bg-neutral bg-opacity-50 flex items-center justify-center z-50">
+            <div id="balance-summary" class="bg-base-100 p-4 rounded shadow-lg max-h-full overflow-auto w-full max-w-2xl"></div>
         </div>
         <div id="message-container" class="fixed top-5 right-5 text-sm font-bold z-50"></div>
 
@@ -595,7 +595,7 @@
         function showMessage(msg, isError = false) {
             const msgDiv = document.createElement("div");
             msgDiv.textContent = msg;
-            msgDiv.className = `p-3 rounded-lg shadow-md mb-2 ${isError ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`;
+            msgDiv.className = `p-3 rounded-lg shadow-md mb-2 ${isError ? 'bg-error text-error-content' : 'bg-success text-success-content'}`;
             messageContainer.prepend(msgDiv);
             setTimeout(() => msgDiv.remove(), 5000);
         }
@@ -739,16 +739,16 @@
                         div.querySelector('.shopping-quantity-input').value = it.quantidade;
                     } else {
                         const extra = document.createElement('div');
-                        extra.className = 'flex items-center justify-between bg-gray-50 p-2 rounded-lg shadow-sm shopping-list-item';
+                        extra.className = 'flex items-center justify-between bg-base-200 p-2 rounded-lg shadow-sm shopping-list-item';
                         extra.dataset.supplier = it.fornecedor || '';
                         extra.dataset.itemName = it.nome;
                         extra.dataset.currentQty = '';
                         extra.dataset.itemUnit = it.unidade || '';
                         extra.innerHTML = `
-                            <p class="font-semibold text-gray-800 w-1/3">${escapeHtml(it.nome || '')}</p>
-                            <p class="text-sm text-gray-600 w-1/4"></p>
+                            <p class="font-semibold text-base-content w-1/3">${escapeHtml(it.nome || '')}</p>
+                            <p class="text-sm text-base-content/70 w-1/4"></p>
                             <input type="number" class="w-1/4 p-1 border rounded text-center text-sm shopping-quantity-input" step="any" value="${it.quantidade}">
-                            <button class="delete-shopping-item bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>`;
+                            <button class="delete-shopping-item btn btn-error btn-xs">Excluir</button>`;
                         itemsContainer.appendChild(extra);
                     }
                 });
@@ -880,7 +880,7 @@
             usuariosListDiv.innerHTML = '';
             snap.forEach(d => {
                 const div = document.createElement('div');
-                div.innerHTML = `${d.data().email} <button data-uid="${d.id}" class="delete-user text-red-500 text-xs">Excluir</button>`;
+                div.innerHTML = `${d.data().email} <button data-uid="${d.id}" class="delete-user text-error text-xs">Excluir</button>`;
                 usuariosListDiv.appendChild(div);
             });
         }
@@ -958,7 +958,7 @@
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
             removeBtn.textContent = 'Excluir';
-            removeBtn.className = 'bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded';
+            removeBtn.className = 'btn btn-error btn-xs';
 
             removeBtn.addEventListener('click', () => {
                 row.remove();
@@ -1032,7 +1032,7 @@
                 .sort((a, b) => (a.item || '').localeCompare(b.item || ''));
 
             if (filteredItems.length === 0) {
-                stockListDiv.innerHTML = "<p class=\"text-gray-500\">Nenhum item no estoque para este fornecedor.</p>";
+                stockListDiv.innerHTML = "<p class=\"text-base-content/60\">Nenhum item no estoque para este fornecedor.</p>";
                 return;
             }
 
@@ -1046,14 +1046,14 @@
 
             Object.keys(groupedBySupplier).sort().forEach(supplier => {
                 const supplierHeader = document.createElement('h3');
-                supplierHeader.className = 'text-md font-medium text-gray-700 mt-4 mb-2';
+                supplierHeader.className = 'text-md font-medium text-base-content mt-4 mb-2';
                 supplierHeader.textContent = `Fornecedor: ${supplier}`;
                 stockListDiv.appendChild(supplierHeader);
 
                 const table = document.createElement('table');
                 table.className = 'w-full text-sm mb-4';
                 table.innerHTML = `
-                    <thead class="bg-gray-200">
+                    <thead class="bg-base-200">
                         <tr>
                             <th class="p-2 text-left">Item</th>
                             <th class="p-2 text-center">Quantidade Atual</th>
@@ -1095,12 +1095,12 @@ function renderProductionList() {
                 appState.currentSectorFilter === 'TODOS' || item.setor === appState.currentSectorFilter
             );
             if (filteredItems.length === 0) {
-                productionListDiv.innerHTML = "<p class=\"text-gray-500\">Nenhum item na produção para este setor.</p>";
+                productionListDiv.innerHTML = "<p class=\"text-base-content/60\">Nenhum item na produção para este setor.</p>";
                 return;
             }
             const table = document.createElement('table');
-            table.className = 'min-w-full divide-y divide-gray-200 text-sm';
-            table.innerHTML = `<thead class="bg-gray-50">
+            table.className = 'min-w-full divide-y divide-base-200 text-sm';
+            table.innerHTML = `<thead class="bg-base-200">
                 <tr>
                     <th class="p-2 text-left">Item</th>
                     <th class="p-2 text-center">Qtd. Atual</th>
@@ -1138,17 +1138,17 @@ function renderProductionList() {
             const obsArray = sector === 'parrilla' ? appState.obsParrilla : appState.obsCozinha;
             listDiv.innerHTML = '';
             if (obsArray.length === 0) {
-                listDiv.innerHTML = '<p class="text-gray-500">Nenhuma observação cadastrada.</p>';
+                listDiv.innerHTML = '<p class="text-base-content/60">Nenhuma observação cadastrada.</p>';
                 return;
             }
             const sorted = [...obsArray].sort((a, b) => a.id.localeCompare(b.id));
             sorted.forEach(obs => {
                 const div = document.createElement('div');
-                div.className = 'bg-gray-50 p-3 rounded-lg shadow-sm flex justify-between';
+                div.className = 'bg-base-200 p-3 rounded-lg shadow-sm flex justify-between';
                 div.innerHTML = `
                     <div class="mr-2">
-                        <p class="font-semibold text-gray-800">${formatDateBR(obs.id)}</p>
-                        <p class="text-sm text-gray-600 break-normal whitespace-pre-line">${escapeHtml(obs.texto || '')}</p>
+                        <p class="font-semibold text-base-content">${formatDateBR(obs.id)}</p>
+                        <p class="text-sm text-base-content/70 break-normal whitespace-pre-line">${escapeHtml(obs.texto || '')}</p>
                     </div>
                       <div class="flex flex-col space-y-1">\
                           <button onclick="editObservation('${sector}','${obs.id}')" class="btn btn-primary btn-xs">Editar</button>\
@@ -1161,16 +1161,16 @@ function renderProductionList() {
         function renderSuppliersList() {
             suppliersListDiv.innerHTML = "";
             if (appState.suppliers.length === 0) {
-                suppliersListDiv.innerHTML = "<p class=\"text-gray-500\">Nenhum fornecedor cadastrado.</p>";
+                suppliersListDiv.innerHTML = "<p class=\"text-base-content/60\">Nenhum fornecedor cadastrado.</p>";
                 return;
             }
             appState.suppliers.forEach(supplier => {
                 const nome = supplier.nome || supplier.name || "";
                 const supplierDiv = document.createElement("div");
-                supplierDiv.className = "bg-gray-50 p-2 rounded-lg shadow-sm flex items-center justify-between";
+                supplierDiv.className = "bg-base-200 p-2 rounded-lg shadow-sm flex items-center justify-between";
                 supplierDiv.innerHTML = `
-                    <p class="font-semibold text-gray-800">${escapeHtml(nome)}</p>
-                    <button onclick="deleteSupplier('${supplier.id}')" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>
+                    <p class="font-semibold text-base-content">${escapeHtml(nome)}</p>
+                    <button onclick="deleteSupplier('${supplier.id}')" class="btn btn-error btn-xs">Excluir</button>
                 `;
                 suppliersListDiv.appendChild(supplierDiv);
             });
@@ -1259,23 +1259,23 @@ function renderProductionList() {
            if (!fichasListDiv) return;
            fichasListDiv.innerHTML = '';
            if (appState.fichasTecnicas.length === 0) {
-               fichasListDiv.innerHTML = '<p class="text-gray-500">Nenhuma ficha cadastrada.</p>';
+               fichasListDiv.innerHTML = '<p class="text-base-content/60">Nenhuma ficha cadastrada.</p>';
                return;
            }
            const sorted = [...appState.fichasTecnicas].sort((a,b)=> (a.nome||'').localeCompare(b.nome||''));
            sorted.forEach(f => {
                const preco = f.precoSugerido || 0;
                const div = document.createElement('div');
-               div.className = 'bg-gray-50 p-3 rounded-lg shadow-sm flex items-center justify-between';
+               div.className = 'bg-base-200 p-3 rounded-lg shadow-sm flex items-center justify-between';
                div.innerHTML = `
                    <div>
-                       <p class="font-semibold text-gray-800">${escapeHtml(f.nome || '')}</p>
-                       <p class="text-sm text-gray-600">Categoria: ${escapeHtml(f.categoria || '')}</p>
-                       <p class="text-sm text-gray-600">Preço sugerido: R$ ${preco.toFixed(2)}</p>
+                       <p class="font-semibold text-base-content">${escapeHtml(f.nome || '')}</p>
+                       <p class="text-sm text-base-content/70">Categoria: ${escapeHtml(f.categoria || '')}</p>
+                       <p class="text-sm text-base-content/70">Preço sugerido: R$ ${preco.toFixed(2)}</p>
                    </div>
                    <div class="flex items-center space-x-2">
-                       <button onclick="generateFichaPdf('${f.id}')" class="bg-gray-500 hover:bg-gray-700 text-white text-xs font-bold py-1 px-2 rounded">PDF</button>
-                       <button onclick="deleteFicha('${f.id}')" class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>
+                       <button onclick="generateFichaPdf('${f.id}')" class="btn btn-secondary btn-xs">PDF</button>
+                       <button onclick="deleteFicha('${f.id}')" class="btn btn-error btn-xs">Excluir</button>
                    </div>
                `;
                fichasListDiv.appendChild(div);
@@ -1295,15 +1295,15 @@ function renderProductionList() {
            fcListDiv.innerHTML = '';
            const names = Object.keys(appState.fcValues).sort();
            if (names.length === 0) {
-               fcListDiv.innerHTML = '<p class="text-gray-500">Nenhum ingrediente cadastrado.</p>';
+               fcListDiv.innerHTML = '<p class="text-base-content/60">Nenhum ingrediente cadastrado.</p>';
                return;
            }
            names.forEach(name => {
                const d = appState.fcValues[name];
                const div = document.createElement('div');
-               div.className = 'bg-gray-50 p-2 rounded flex justify-between items-center';
+               div.className = 'bg-base-200 p-2 rounded flex justify-between items-center';
                div.innerHTML = `<span>${escapeHtml(name)} - FC: ${d.fator} - Preço: R$ ${Number(d.preco||0).toFixed(2)}</span>` +
-                   `<button data-name="${escapeHtml(name)}" class="delete-fc text-xs bg-red-500 hover:bg-red-700 text-white px-2 py-1 rounded">Excluir</button>`;
+                   `<button data-name="${escapeHtml(name)}" class="delete-fc btn btn-error btn-xs">Excluir</button>`;
                fcListDiv.appendChild(div);
            });
        }
@@ -1350,12 +1350,12 @@ function renderProductionList() {
                    }));
            }
            if(items.length === 0){
-               balanceTableContainer.innerHTML = '<p class="text-gray-500">Nenhum item encontrado.</p>';
+               balanceTableContainer.innerHTML = '<p class="text-base-content/60">Nenhum item encontrado.</p>';
                return;
            }
            const table = document.createElement('table');
-           table.className = 'balanco-table w-full table-auto text-sm divide-y divide-gray-200';
-           table.innerHTML = `<thead class="bg-gray-50"><tr>
+           table.className = 'balanco-table w-full table-auto text-sm divide-y divide-base-200';
+           table.innerHTML = `<thead class="bg-base-200"><tr>
                    <th class="table-col text-left">Item</th>
                    <th class="table-col text-left">Unidade</th>
                    <th class="table-col text-right">Estoque Atual</th>
@@ -1696,11 +1696,11 @@ function renderProductionList() {
             const slSelectSize = 1;
            reportDisplayArea.innerHTML = `
                 <div class="p-6">
-                    <h2 class="text-lg font-semibold mb-4 text-gray-700">Lista de Compras</h2>
-                    <p class="text-sm text-gray-500 mb-4">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+                    <h2 class="text-lg font-semibold mb-4 text-base-content">Lista de Compras</h2>
+                    <p class="text-sm text-base-content/60 mb-4">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
                     <div class="mb-4">
-                        <label for="shopping-list-supplier-filter" class="block text-gray-700 text-sm font-bold mb-2">Filtrar por fornecedor:</label>
-                        <select id="shopping-list-supplier-filter" class="supplier-select shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-white" size="${slSelectSize}">
+                        <label for="shopping-list-supplier-filter" class="block text-base-content text-sm font-bold mb-2">Filtrar por fornecedor:</label>
+                        <select id="shopping-list-supplier-filter" class="supplier-select shadow appearance-none border rounded w-full py-2 px-3 text-base-content bg-base-100" size="${slSelectSize}">
                             <option value="TODOS">Todos os fornecedores</option>
                             ${appState.suppliers.map(supplier => {
                                 const nome = supplier.nome || supplier.name || "";
@@ -1729,7 +1729,7 @@ function renderProductionList() {
                 ).sort((a, b) => a.item.localeCompare(b.item));
 
                 if (filteredItems.length === 0) {
-                    shoppingListItemsContainer.innerHTML = "<p class=\"text-gray-500\">Nenhum item no estoque para este fornecedor.</p>";
+                    shoppingListItemsContainer.innerHTML = "<p class=\"text-base-content/60\">Nenhum item no estoque para este fornecedor.</p>";
                     return;
                 }
 
@@ -1744,22 +1744,22 @@ function renderProductionList() {
 
                 Object.keys(groupedBySupplier).sort().forEach(supplier => {
                     const supplierHeader = document.createElement('h3');
-                    supplierHeader.className = 'text-md font-medium text-gray-700 mt-4 mb-2';
+                    supplierHeader.className = 'text-md font-medium text-base-content mt-4 mb-2';
                     supplierHeader.textContent = `Fornecedor: ${supplier}`;
                     shoppingListItemsContainer.appendChild(supplierHeader);
 
                     groupedBySupplier[supplier].forEach(item => {
                         const itemDiv = document.createElement('div');
-                        itemDiv.className = 'flex items-center justify-between bg-gray-50 p-2 rounded-lg shadow-sm shopping-list-item';
+                        itemDiv.className = 'flex items-center justify-between bg-base-200 p-2 rounded-lg shadow-sm shopping-list-item';
                         itemDiv.dataset.supplier = item.fornecedor;
                         itemDiv.dataset.itemName = item.item;
                         itemDiv.dataset.currentQty = item.quantidadeAtual;
                         itemDiv.dataset.itemUnit = item.unidade;
                         itemDiv.innerHTML = `
-                            <p class="font-semibold text-gray-800 w-1/3">${escapeHtml(item.item || '')}</p>
-                            <p class="text-sm text-gray-600 w-1/4">${formatQty(item.quantidadeAtual)} ${escapeHtml(item.unidade || '')}</p>
+                            <p class="font-semibold text-base-content w-1/3">${escapeHtml(item.item || '')}</p>
+                            <p class="text-sm text-base-content/70 w-1/4">${formatQty(item.quantidadeAtual)} ${escapeHtml(item.unidade || '')}</p>
                             <input type="number" class="w-1/4 p-1 border rounded text-center text-sm shopping-quantity-input" step="any">
-                            <button class="delete-shopping-item bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">Excluir</button>
+                            <button class="delete-shopping-item btn btn-error btn-xs">Excluir</button>
                         `;
                         shoppingListItemsContainer.appendChild(itemDiv);
                     });
@@ -1914,10 +1914,10 @@ function renderProductionList() {
         function showBalanceSummary() {
             if(!balanceSummaryDiv || !balanceSummaryModal) return;
             const rows = Array.from(document.querySelectorAll('.balance-row'));
-            if (rows.length === 0) { balanceSummaryDiv.innerHTML = '<p class="text-gray-500">Nenhum item.</p>'; balanceSummaryModal.classList.remove('hidden'); return; }
+            if (rows.length === 0) { balanceSummaryDiv.innerHTML = '<p class="text-base-content/60">Nenhum item.</p>'; balanceSummaryModal.classList.remove('hidden'); return; }
             const table = document.createElement('table');
-            table.className = 'min-w-full divide-y divide-gray-200 text-sm';
-            table.innerHTML = `<thead class="bg-gray-50"><tr>
+            table.className = 'min-w-full divide-y divide-base-200 text-sm';
+            table.innerHTML = `<thead class="bg-base-200"><tr>
                 <th class="p-2 text-left">Item</th>
                 <th class="p-2 text-center">Unidade</th>
                 <th class="p-2 text-center">Estoque Atual</th>
@@ -1936,7 +1936,7 @@ function renderProductionList() {
                 diffTotal += diff;
                 const just = r.dataset.justificativa || '';
                 const tr = document.createElement('tr');
-                const diffClass = diff > 0 ? 'text-red-600' : diff === 0 ? 'text-green-600' : 'text-yellow-600';
+                const diffClass = diff > 0 ? 'text-error' : diff === 0 ? 'text-success' : 'text-warning';
                 tr.innerHTML = `
                     <td class="p-2">${escapeHtml(nome)}</td>
                     <td class="p-2 text-center">${escapeHtml(unidade)}</td>
@@ -1947,11 +1947,11 @@ function renderProductionList() {
                 tbody.appendChild(tr);
             });
             const tfoot = document.createElement('tfoot');
-            tfoot.innerHTML = `<tr class="bg-gray-50 font-semibold"><td class="p-2" colspan="5">Total Diferença</td><td class="p-2 text-center">${formatQty(diffTotal)}</td></tr>`;
+            tfoot.innerHTML = `<tr class="bg-base-200 font-semibold"><td class="p-2" colspan="5">Total Diferença</td><td class="p-2 text-center">${formatQty(diffTotal)}</td></tr>`;
             table.appendChild(tfoot);
             const closeBtn = document.createElement('button');
             closeBtn.textContent = 'Fechar';
-            closeBtn.className = 'mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm';
+            closeBtn.className = 'mt-4 btn btn-error btn-sm';
             closeBtn.addEventListener('click', ()=> balanceSummaryModal.classList.add('hidden'));
             balanceSummaryDiv.innerHTML = '';
             balanceSummaryDiv.appendChild(table);
@@ -2099,7 +2099,7 @@ function renderProductionList() {
 
         async function loadBalanceHistory(){
             if(!historyListDiv) return;
-            historyListDiv.innerHTML = '<p class="text-gray-500">Carregando...</p>';
+            historyListDiv.innerHTML = '<p class="text-base-content/60">Carregando...</p>';
             let records = [];
             const types = historyTypeFilter && historyTypeFilter.value ? [historyTypeFilter.value] : ['fornecedor','cozinha','parrilla'];
             for(const tp of types){
@@ -2118,12 +2118,12 @@ function renderProductionList() {
             records.sort((a,b) => b.date.localeCompare(a.date));
             appState.balanceHistoryRecords = records;
             if(records.length === 0){
-                historyListDiv.innerHTML = '<p class="text-gray-500">Nenhum balanço encontrado.</p>';
+                historyListDiv.innerHTML = '<p class="text-base-content/60">Nenhum balanço encontrado.</p>';
                 return;
             }
             const table = document.createElement('table');
-            table.className = 'min-w-full divide-y divide-gray-200 text-sm';
-            table.innerHTML = `<thead class="bg-gray-50"><tr><th class="p-2 text-left">Data</th><th class="p-2 text-left">Tipo</th><th class="p-2 text-center">Quantidade de Itens</th><th class="p-2 text-center">Total da Diferença</th><th class="p-2 text-center">Ação</th></tr></thead><tbody></tbody>`;
+            table.className = 'min-w-full divide-y divide-base-200 text-sm';
+            table.innerHTML = `<thead class="bg-base-200"><tr><th class="p-2 text-left">Data</th><th class="p-2 text-left">Tipo</th><th class="p-2 text-center">Quantidade de Itens</th><th class="p-2 text-center">Total da Diferença</th><th class="p-2 text-center">Ação</th></tr></thead><tbody></tbody>`;
             const tbody = table.querySelector('tbody');
             records.forEach((rec,i) => {
                 const diffTot = rec.itens.reduce((s,it)=> s + (Number(it.diferenca)||0),0);
@@ -2140,9 +2140,9 @@ function renderProductionList() {
             if(!historyModal) return;
             const diffTot = rec.itens.reduce((s,it)=> s + (Number(it.diferenca)||0),0);
             const modalBox = document.createElement('div');
-            modalBox.className = 'bg-white p-4 rounded shadow-lg max-h-full overflow-auto w-full max-w-2xl';
+            modalBox.className = 'bg-base-100 p-4 rounded shadow-lg max-h-full overflow-auto w-full max-w-2xl';
             const label = rec.tipo === 'fornecedor' ? 'Por Fornecedor' : (rec.tipo==='cozinha' ? 'Produção Cozinha' : 'Produção Parrilla');
-            modalBox.innerHTML = `<h3 class="text-lg font-semibold mb-2">${formatDateBR(rec.date)} - ${label}</h3><p class="text-sm text-gray-600 mb-2">${rec.responsavel ? 'Responsável: '+escapeHtml(rec.responsavel) : ''}</p><div class="max-h-80 overflow-auto"><table class="min-w-full divide-y divide-gray-200 text-sm"><thead class="bg-gray-50"><tr><th class="p-2 text-left">Item</th><th class="p-2 text-center">Unidade</th><th class="p-2 text-center">Sistema</th><th class="p-2 text-center">Contagem Real</th><th class="p-2 text-center">Diferença</th><th class="p-2 text-left">Justificativa</th></tr></thead><tbody>${rec.itens.map(it=>`<tr><td class="p-2">${escapeHtml(it.nome||'')}</td><td class="p-2 text-center">${escapeHtml(it.unidade||'')}</td><td class="p-2 text-center">${formatQty(it.quantidadeSistema||0)}</td><td class="p-2 text-center">${formatQty(it.contagemReal||0)}</td><td class="p-2 text-center">${formatQty(it.diferenca||0)}</td><td class="p-2">${escapeHtml(it.justificativa||'')}</td></tr>`).join('')}</tbody></table></div><div class="flex justify-between items-center mt-4"><span class="font-semibold">Total Diferença: ${formatQty(diffTot)}</span><div class="flex gap-2"><button id="export-history-pdf-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-2 rounded text-sm">Exportar PDF do Balanço</button><button id="close-history-modal" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm">Fechar</button></div></div>`;
+            modalBox.innerHTML = `<h3 class="text-lg font-semibold mb-2">${formatDateBR(rec.date)} - ${label}</h3><p class="text-sm text-base-content/70 mb-2">${rec.responsavel ? 'Responsável: '+escapeHtml(rec.responsavel) : ''}</p><div class="max-h-80 overflow-auto"><table class="min-w-full divide-y divide-base-200 text-sm"><thead class="bg-base-200"><tr><th class="p-2 text-left">Item</th><th class="p-2 text-center">Unidade</th><th class="p-2 text-center">Sistema</th><th class="p-2 text-center">Contagem Real</th><th class="p-2 text-center">Diferença</th><th class="p-2 text-left">Justificativa</th></tr></thead><tbody>${rec.itens.map(it=>`<tr><td class="p-2">${escapeHtml(it.nome||'')}</td><td class="p-2 text-center">${escapeHtml(it.unidade||'')}</td><td class="p-2 text-center">${formatQty(it.quantidadeSistema||0)}</td><td class="p-2 text-center">${formatQty(it.contagemReal||0)}</td><td class="p-2 text-center">${formatQty(it.diferenca||0)}</td><td class="p-2">${escapeHtml(it.justificativa||'')}</td></tr>`).join('')}</tbody></table></div><div class="flex justify-between items-center mt-4"><span class="font-semibold">Total Diferença: ${formatQty(diffTot)}</span><div class="flex gap-2"><button id="export-history-pdf-btn" class="btn btn-secondary btn-sm">Exportar PDF do Balanço</button><button id="close-history-modal" class="btn btn-error btn-sm">Fechar</button></div></div>`;
             historyModal.innerHTML = '';
             historyModal.appendChild(modalBox);
             historyModal.classList.remove('hidden');
