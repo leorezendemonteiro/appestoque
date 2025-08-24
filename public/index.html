@@ -378,7 +378,7 @@
             <div class="drawer-side">
                 <label for="drawer-toggle" aria-label="close sidebar" class="drawer-overlay"></label>
                 <nav id="tabs-container" aria-label="Tabs">
-                    <ul class="menu menu-vertical w-80 p-4 bg-base-200 min-h-full">
+                    <ul class="menu menu-vertical w-64 bg-base-200">
                         <li><a data-tab="stock" class="tab-button"><i class="fa-solid fa-boxes-stacked w-5 h-5 mr-2"></i>Estoque</a></li>
                         <li><a data-tab="production" class="tab-button"><i class="fa-solid fa-industry w-5 h-5 mr-2"></i>Produção</a></li>
                         <li><a data-tab="reports" class="tab-button"><i class="fa-solid fa-chart-column w-5 h-5 mr-2"></i>Relatórios</a></li>
@@ -2747,9 +2747,10 @@ function renderProductionList() {
         document.getElementById('ficha-rendimento').addEventListener('input', calculateFichaTotals);
 
         tabsContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('tab-button')) {
+            const tabButton = e.target.closest('.tab-button');
+            if (tabButton) {
                 e.preventDefault();
-                const tabName = e.target.getAttribute('data-tab');
+                const tabName = tabButton.getAttribute('data-tab');
                 switchTab(tabName);
 
                 if (drawerToggle) {
