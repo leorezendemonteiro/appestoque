@@ -1,6 +1,10 @@
 html, body {
     overflow-x: hidden;
 }
+input, select, textarea {
+    font-size: 16px;
+}
+
 .tab-button.active {
     border-color: hsl(var(--p));
     color: hsl(var(--p));
