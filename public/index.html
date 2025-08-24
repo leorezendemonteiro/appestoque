@@ -148,7 +148,7 @@
                     <div class="card bg-base-100 shadow-xl p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-lg font-semibold text-base-content">Itens no Estoque</h2>
-                            <select id="supplier-filter" class="supplier-select shadow-sm appearance-none border rounded py-2 px-3 text-base-content bg-base-100 text-sm" size="1"></select>
+                            <select id="supplier-filter" class="supplier-select shadow-sm appearance-none border rounded py-2 px-3 text-base-content bg-base-100 text-base" size="1"></select>
                         </div>
                         <div id="stock-list" class="space-y-3"></div>
                     </div>
@@ -191,7 +191,7 @@
                     <div class="card card-producao bg-base-100 shadow-xl w-full p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-lg font-semibold text-base-content">Itens em Produção</h2>
-                            <select id="sector-filter" class="shadow-sm appearance-none border rounded py-2 px-3 text-base-content bg-base-100 text-sm">
+                            <select id="sector-filter" class="shadow-sm appearance-none border rounded py-2 px-3 text-base-content bg-base-100 text-base">
                                 <option value="TODOS">TODOS</option>
                                 <option value="COZINHA">COZINHA</option>
                                 <option value="PARRILLA">PARRILLA</option>
@@ -348,7 +348,7 @@
                                     <button class="balance-group-button btn btn-primary btn-sm" data-bgroup="fornecedor">Por Fornecedor</button>
                                     <button class="balance-group-button btn btn-sm bg-base-200 text-base-content" data-bgroup="cozinha">Produção Cozinha</button>
                                     <button class="balance-group-button btn btn-sm bg-base-200 text-base-content" data-bgroup="parrilla">Produção Parrilla</button>
-                                    <select id="balance-supplier-filter" class="supplier-select shadow-sm appearance-none border rounded py-1 px-2 text-base-content bg-base-100 text-sm hidden w-full sm:w-auto mt-2 sm:mt-0"></select>
+                                    <select id="balance-supplier-filter" class="supplier-select shadow-sm appearance-none border rounded py-1 px-2 text-base-content bg-base-100 text-base hidden w-full sm:w-auto mt-2 sm:mt-0"></select>
                                 </div>
                                 <div class="space-x-2">
                                     <button id="balance-summary-btn" class="btn btn-secondary btn-sm">Resumo</button>
@@ -360,8 +360,8 @@
                         </div>
                         <div id="balance-history-view" class="hidden">
                             <div class="flex gap-2 mb-2">
-                                <input type="month" id="history-date-filter" class="border rounded p-1 text-sm">
-                                <select id="history-type-filter" class="border rounded p-1 text-sm">
+                                <input type="month" id="history-date-filter" class="border rounded p-1 text-base">
+                                <select id="history-type-filter" class="border rounded p-1 text-base">
                                     <option value="">Todos</option>
                                     <option value="fornecedor">Por Fornecedor</option>
                                     <option value="cozinha">Produção Cozinha</option>
@@ -748,7 +748,7 @@
                         extra.innerHTML = `
                             <p class="font-semibold text-base-content w-1/3">${escapeHtml(it.nome || '')}</p>
                             <p class="text-sm text-base-content/70 w-1/4"></p>
-                            <input type="number" class="w-1/4 p-1 border rounded text-center text-sm shopping-quantity-input" step="any" value="${it.quantidade}">
+                            <input type="number" class="w-1/4 p-1 border rounded text-center text-base shopping-quantity-input" step="any" value="${it.quantidade}">
                             <button class="delete-shopping-item btn btn-error btn-xs">Excluir</button>`;
                         itemsContainer.appendChild(extra);
                     }
@@ -1073,7 +1073,7 @@
                     row.innerHTML = `
                         <td class="p-2 font-semibold">${escapeHtml(item.item || '')}</td>
                         <td class="p-2 text-center">${formatQty(item.quantidadeAtual || 0)} ${escapeHtml(item.unidade || '')}</td>
-                        <td class="p-2 text-center"><input type="number" data-item-id="${item.id}" data-update-type="entrada" data-current="${item.quantidadeAtual}" step="any" class="w-24 p-1 border rounded text-center text-sm entrada-input"></td>
+                        <td class="p-2 text-center"><input type="number" data-item-id="${item.id}" data-update-type="entrada" data-current="${item.quantidadeAtual}" step="any" class="w-24 p-1 border rounded text-center text-base entrada-input"></td>
                         <td class="p-2 text-center total-atualizado"></td>
                         <td class="p-2 text-center">${formatDateTimeBR(item.ultimaAtualizacao)}</td>
                         <td class="p-2 text-center">
@@ -1118,7 +1118,7 @@ function renderProductionList() {
                 tr.innerHTML = `
                     <td class="p-2 font-semibold">${escapeHtml(item.item || '')}</td>
                     <td class="p-2 text-center">${formatQty(item.quantidade || 0)}</td>
-                    <td class="p-2 text-center"><input type="number" data-item-id="${item.id}" step="any" class="nova-producao-input w-24 p-1 border rounded text-center text-sm"></td>
+                    <td class="p-2 text-center"><input type="number" data-item-id="${item.id}" step="any" class="nova-producao-input w-24 p-1 border rounded text-center text-base"></td>
                     <td class="p-2 text-center" id="total-${item.id}">${formatQty(item.quantidade || 0)}</td>
                     <td class="p-2 text-center">${last}</td>
                     <td class="p-2 text-center">
@@ -1759,7 +1759,7 @@ function renderProductionList() {
                         itemDiv.innerHTML = `
                             <p class="font-semibold text-base-content w-1/3">${escapeHtml(item.item || '')}</p>
                             <p class="text-sm text-base-content/70 w-1/4">${formatQty(item.quantidadeAtual)} ${escapeHtml(item.unidade || '')}</p>
-                            <input type="number" class="w-1/4 p-1 border rounded text-center text-sm shopping-quantity-input" step="any">
+                            <input type="number" class="w-1/4 p-1 border rounded text-center text-base shopping-quantity-input" step="any">
                             <button class="delete-shopping-item btn btn-error btn-xs">Excluir</button>
                         `;
                         shoppingListItemsContainer.appendChild(itemDiv);
