@@ -19,7 +19,7 @@ cd appestoque
 2. Enable **Authentication** using the **Email/Password** method.
 3. Enable **Cloud Firestore**.
 4. **Configure the Firestore security rules** as described in [`firestore.rules`](firestore.rules). The rules already consider a multi-company structure where all data lives under `empresas/{empresaId}`.
-5. Open `index.html` in a text editor and scroll near the end of the file to the `<script type="module">` block. Inside it you will find a section that begins with:
+5. Open `public/index.html` in a text editor and scroll near the end of the file to the `<script type="module">` block. Inside it you will find a section that begins with:
 
 ```javascript
 const firebaseConfig = {
@@ -34,12 +34,12 @@ const firebaseConfig = {
 
 6. Replace each value with the credentials provided by Firebase.
 
-### 3. Serve `index.html` locally
+### 3. Serve the app locally
 
-Run any static web server from the project directory. One simple option is:
+Run any static web server from the `public` directory. One simple option is:
 
 ```bash
-npx serve
+npx serve public
 ```
 
 The command prints a local URL (for example `http://localhost:3000`). Open that address in your browser to use the app. No build step is required because all scripts are loaded from CDNs.
