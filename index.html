@@ -427,7 +427,7 @@
     </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, updateDoc, setDoc, getDocs, getDoc, query, where, collectionGroup, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -2363,18 +2363,23 @@ function renderProductionList() {
         adminLinkEl.addEventListener('click', () => { toggleViews('admin-view'); });
         voltarMainBtn.addEventListener('click', () => { toggleViews('main-app-view'); });
 
+
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const role = await loadCompanyByEmail(user.email);
-                userRole = role || 'usuario';
+                const token = await getIdTokenResult(user);
+                const roleClaim = token.claims.role;
                 document.getElementById("user-email").textContent = user.email;
-                if(userRole === 'superadmin'){
+                if (roleClaim === 'superadmin') {
+                    userRole = 'superadmin';
                     toggleViews('admin-view');
                     document.getElementById('superadmin-section').classList.remove('hidden');
                     document.getElementById('admin-section').classList.add('hidden');
                     loadCompanies();
                     if(dashboardView) dashboardView.classList.add('hidden');
                 } else {
+                    const role = await loadCompanyByEmail(user.email);
+                    userRole = role || 'usuario';
                     if(userRole === 'admin') adminLinkEl.classList.remove('hidden'); else adminLinkEl.classList.add('hidden');
                     toggleViews('main-app-view');
                     dashboardView.classList.remove('hidden');
