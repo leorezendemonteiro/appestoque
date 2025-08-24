@@ -571,12 +571,17 @@
         async function loadCompanyByEmail(email){
             companyPath = [];
             const q = query(collectionGroup(db, "usuarios"), where("email", "==", email));
-            const snap = await getDocs(q);
-            if(!snap.empty){
-                const docSnap = snap.docs[0];
-                const ref = docSnap.ref.parent.parent;
-                companyPath = ["empresas", ref.id];
-                return docSnap.data().role || 'usuario';
+            try {
+                const snap = await getDocs(q);
+                if(!snap.empty){
+                    const docSnap = snap.docs[0];
+                    const ref = docSnap.ref.parent.parent;
+                    companyPath = ["empresas", ref.id];
+                    return docSnap.data().role || 'usuario';
+                }
+            } catch (error) {
+                console.error('Erro ao buscar empresa:', error.code, error.message);
+                showMessage('Não foi possível carregar os dados da empresa.', true);
             }
             return null;
         }
@@ -843,14 +848,19 @@
        }
 
         async function loadCompanies(){
-            const snap = await getDocs(collection(db, 'empresas'));
-            empresasListDiv.innerHTML = '';
-            snap.forEach(d => {
-                const div = document.createElement('div');
-                const data = d.data();
-                div.textContent = `${d.id} - ${data.razao || ''}`;
-                empresasListDiv.appendChild(div);
-            });
+            try {
+                const snap = await getDocs(collection(db, 'empresas'));
+                empresasListDiv.innerHTML = '';
+                snap.forEach(d => {
+                    const div = document.createElement('div');
+                    const data = d.data();
+                    div.textContent = `${d.id} - ${data.razao || ''}`;
+                    empresasListDiv.appendChild(div);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar empresas:', error.code, error.message);
+                showMessage('Não foi possível carregar as empresas.', true);
+            }
         }
 
        async function loadUsers(){
