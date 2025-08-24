@@ -746,6 +746,10 @@
        async function cleanupOldShoppingLists(){
             const user = auth.currentUser;
             if(!user) return;
+            if (!companyPath.length) {
+                console.warn("Nenhuma empresa associada; limpeza de listas de compras não executada.");
+                return;
+            }
             const colRef = colEmp('listaCompras', user.uid, 'dias');
             const snap = await getDocs(colRef);
             const today = new Date();
@@ -818,6 +822,10 @@
        async function cleanupOldTempBalances(){
             const user = auth.currentUser;
             if(!user) return;
+            if (!companyPath.length) {
+                console.warn("Nenhuma empresa associada; limpeza de balanços temporários não executada.");
+                return;
+            }
             const types = ['fornecedor','cozinha','parrilla'];
             const today = new Date();
             for(const t of types){
@@ -845,8 +853,11 @@
             });
         }
 
-        async function loadUsers(){
-            if(!companyPath.length) return;
+       async function loadUsers(){
+            if (!companyPath.length) {
+                console.warn("Nenhuma empresa associada; usuários não carregados.");
+                return;
+            }
             const colRef = colEmp('usuarios');
             const snap = await getDocs(colRef);
             usuariosListDiv.innerHTML = '';
@@ -1208,6 +1219,10 @@ function renderProductionList() {
        function updateEtiquetaProdutoSelect() {
            const select = document.getElementById('etiqueta-produto-select');
            if (!select) return;
+           if (!companyPath.length) {
+               console.warn("Nenhuma empresa associada; etiqueta de produto não atualizada.");
+               return;
+           }
            const today = formatDateISO(new Date()).split(',')[0];
            const todays = appState.productionItems.filter(it => {
                const d = it.timestamp && it.timestamp.seconds ? formatDateISO(new Date(it.timestamp.seconds * 1000)).split(',')[0] : formatDateISO(new Date(it.timestamp)).split(',')[0];
@@ -1381,8 +1396,12 @@ function renderProductionList() {
            return { ei, compras, ef, despesas, mao, receita, cmvCalc, cmvPerc };
        }
 
-        // Função para escutar mudanças nos dados do Firebase
-        function listenToDataChanges() {
+       // Função para escutar mudanças nos dados do Firebase
+       function listenToDataChanges() {
+            if (!companyPath.length) {
+                console.warn("Nenhuma empresa associada; listener não iniciado.");
+                return;
+            }
             const stockCollectionRef = colEmp("estoque");
             appState.unsubscribeStock = onSnapshot(stockCollectionRef, (snapshot) => {
                 appState.stockItems = snapshot.docs.map(doc => {
