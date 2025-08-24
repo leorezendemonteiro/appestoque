@@ -2379,6 +2379,11 @@ function renderProductionList() {
                     if(dashboardView) dashboardView.classList.add('hidden');
                 } else {
                     const role = await loadCompanyByEmail(user.email);
+                    if (role === null) {
+                        showMessage('Nenhuma empresa encontrada. Peça ao superadmin para definir uma empresa ou verifique suas credenciais.', true);
+                        await signOut(auth);
+                        return;
+                    }
                     userRole = role || 'usuario';
                     if(userRole === 'admin') adminLinkEl.classList.remove('hidden'); else adminLinkEl.classList.add('hidden');
                     toggleViews('main-app-view');
