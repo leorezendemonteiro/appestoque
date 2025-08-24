@@ -2130,7 +2130,7 @@ function renderProductionList() {
                 const diffTot = rec.itens.reduce((s,it)=> s + (Number(it.diferenca)||0),0);
                 const tr = document.createElement('tr');
                 const label = rec.tipo === 'fornecedor' ? 'Por Fornecedor' : (rec.tipo==='cozinha' ? 'Produção Cozinha' : 'Produção Parrilla');
-                tr.innerHTML = `<td class="p-2">${formatDateBR(rec.date)}</td><td class="p-2">${label}</td><td class="p-2 text-center">${rec.itens.length}</td><td class="p-2 text-center">${formatQty(diffTot)}</td><td class="p-2 text-center"><button class="history-details-btn text-blue-600 underline text-sm" data-idx="${i}">Ver Detalhes</button></td>`;
+                tr.innerHTML = `<td class="p-2">${formatDateBR(rec.date)}</td><td class="p-2">${label}</td><td class="p-2 text-center">${rec.itens.length}</td><td class="p-2 text-center">${formatQty(diffTot)}</td><td class="p-2 text-center"><button class="history-details-btn text-primary underline text-sm" data-idx="${i}">Ver Detalhes</button></td>`;
                 tbody.appendChild(tr);
             });
             historyListDiv.innerHTML = '';
