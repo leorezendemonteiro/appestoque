@@ -60,14 +60,15 @@
         </div>
 
         <div id="main-app-view" class="hidden">
-        <div class="drawer relative">
+        <div class="drawer">
+            <input id="drawer-toggle" type="checkbox" class="drawer-toggle" />
             <div class="drawer-content flex flex-col">
                 <header class="navbar bg-base-100 shadow-lg mb-8 rounded-box">
                     <div class="flex justify-between items-center w-full">
                         <div class="flex items-center gap-2">
-                            <button id="menu-button" class="btn btn-square btn-ghost">
+                            <label for="drawer-toggle" class="btn btn-square btn-ghost">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
-                            </button>
+                            </label>
                             <div>
                                 <h1 class="text-xl font-bold text-base-content">App de Gestão</h1>
                                 <p id="user-email" class="text-xs text-base-content/60"></p>
@@ -125,7 +126,7 @@
                 </div>
             </div>
 
-                <div id="main-content" class="w-full max-w-full overflow-y-auto">
+                <div id="app-content">
                 <div id="tab-stock" class="tab-content space-y-8">
                     <div class="card bg-base-100 shadow-xl p-6">
                         <h2 class="text-lg font-semibold mb-4 text-base-content">Adicionar Produto ao Estoque</h2>
@@ -374,19 +375,20 @@
                 </div>
                 </div>
             </div>
-            <aside id="sidebar" class="drawer-closed fixed top-0 left-0 h-full w-64 bg-base-200 transform transition-transform duration-300 z-50">
+            <div class="drawer-side">
+                <label for="drawer-toggle" aria-label="close sidebar" class="drawer-overlay"></label>
                 <nav id="tabs-container" aria-label="Tabs">
                     <ul class="menu menu-vertical w-64 bg-base-200">
-                        <li><a data-tab="stock" class="tab-button side-link" onclick="handleNav('stock')"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Estoque</a></li>
-                        <li><a data-tab="production" class="tab-button side-link" onclick="handleNav('production')"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>Produção</a></li>
-                        <li><a data-tab="reports" class="tab-button side-link" onclick="handleNav('reports')"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 20h16M6 16v-4M10 20V8M14 20v-6M18 20v-2"/></svg>Relatórios</a></li>
-                        <li><a data-tab="fichas" class="tab-button side-link" onclick="handleNav('fichas')"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 2h9l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M9 8h6"/></svg>Ficha Técnica</a></li>
-                        <li><a data-tab="fc" class="tab-button side-link" onclick="handleNav('fc')"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M3 3v6a1 1 0 00.293.707l9.586 9.586a1 1 0 001.414 0l6-6a1 1 0 000-1.414L10.707 2.293A1 1 0 009.999 2H3a1 1 0 00-1 1z"/></svg>Cadastro FC/Preços</a></li>
-                        <li><a data-tab="cmv" class="tab-button side-link" onclick="handleNav('cmv')"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8M8 11h8M8 15h4m2 0h2"/></svg>Cálculo do CMV</a></li>
-                        <li><a data-tab="balance" class="tab-button side-link" onclick="handleNav('balance')"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2M3 7h18M6 7l-3 6a4 4 0 008 0l-3-6m10 0l-3 6a4 4 0 008 0l-3-6m-8 10h8"/></svg>Balanço de Estoque</a></li>
+                        <li><a data-tab="stock" class="tab-button"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Estoque</a></li>
+                        <li><a data-tab="production" class="tab-button"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>Produção</a></li>
+                        <li><a data-tab="reports" class="tab-button"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 20h16M6 16v-4M10 20V8M14 20v-6M18 20v-2"/></svg>Relatórios</a></li>
+                        <li><a data-tab="fichas" class="tab-button"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 2h9l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M9 8h6"/></svg>Ficha Técnica</a></li>
+                        <li><a data-tab="fc" class="tab-button"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M3 3v6a1 1 0 00.293.707l9.586 9.586a1 1 0 001.414 0l6-6a1 1 0 000-1.414L10.707 2.293A1 1 0 009.999 2H3a1 1 0 00-1 1z"/></svg>Cadastro FC/Preços</a></li>
+                        <li><a data-tab="cmv" class="tab-button"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8M8 11h8M8 15h4m2 0h2"/></svg>Cálculo do CMV</a></li>
+                        <li><a data-tab="balance" class="tab-button"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2M3 7h18M6 7l-3 6a4 4 0 008 0l-3-6m10 0l-3 6a4 4 0 008 0l-3-6m-8 10h8"/></svg>Balanço de Estoque</a></li>
                     </ul>
                 </nav>
-            </aside>
+            </div>
         </div>
     </div>
 
@@ -483,8 +485,7 @@
         const signupView = document.getElementById("signup-view");
         const mainAppView = document.getElementById("main-app-view");
         const tabsContainer = document.getElementById("tabs-container");
-        const sidebar = document.getElementById("sidebar");
-        const menuButton = document.getElementById("menu-button");
+        const drawerToggle = document.getElementById("drawer-toggle");
         const tabContents = document.querySelectorAll(".tab-content");
         const dashboardView = document.getElementById("dashboard-view");
         const dashboardTotalStock = document.getElementById("dashboard-total-stock");
@@ -558,7 +559,6 @@
         const importarCmvBtn = document.getElementById("importar-cmv-btn");
         const mostrarManualBtn = document.getElementById("mostrar-manual-btn");
         const cmvResultsDiv = document.getElementById("cmv-results");
-        let isSidebarOpen = false;
         const balanceTableContainer = document.getElementById("balance-table-container");
         const balanceSummaryBtn = document.getElementById("balance-summary-btn");
         const applyBalanceBtn = document.getElementById("apply-balance-btn");
@@ -626,43 +626,6 @@
                 } else {
                     button.classList.remove("active");
                 }
-            });
-        }
-
-        function setActiveSection(section) {
-            switchTab(section);
-        }
-
-        function openSidebar() {
-            if (isSidebarOpen) return;
-            document.body.classList.add('overflow-hidden');
-            sidebar.classList.remove('drawer-closed');
-            sidebar.classList.add('drawer-open', 'translate-x-0', 'open');
-            const backdrop = document.createElement('div');
-            backdrop.id = 'backdrop';
-            backdrop.className = 'fixed inset-0 bg-black bg-opacity-50 z-40';
-            backdrop.addEventListener('click', closeSidebar);
-            document.body.appendChild(backdrop);
-            isSidebarOpen = true;
-        }
-
-        function closeSidebar() {
-            document.body.classList.remove('overflow-hidden');
-            sidebar.classList.remove('drawer-open', 'translate-x-0', 'open');
-            sidebar.classList.add('drawer-closed');
-            document.getElementById('backdrop')?.remove();
-            isSidebarOpen = false;
-        }
-
-        function handleNav(section) {
-            setActiveSection(section);
-            closeSidebar();
-            if (section !== 'reports') {
-                reportDisplayArea.classList.add('hidden');
-                reportDisplayArea.classList.remove('interactive-list');
-            }
-            requestAnimationFrame(() => {
-                document.getElementById('main-content')?.scrollTo({ top: 0, behavior: 'auto' });
             });
         }
 
@@ -2783,7 +2746,24 @@ function renderProductionList() {
         precoRealInput.addEventListener('input', calculateFichaTotals);
         document.getElementById('ficha-rendimento').addEventListener('input', calculateFichaTotals);
 
-        menuButton.addEventListener('click', openSidebar);
+        tabsContainer.addEventListener('click', (e) => {
+            const tabButton = e.target.closest('.tab-button');
+            if (tabButton) {
+                e.preventDefault();
+                const tabName = tabButton.getAttribute('data-tab');
+                switchTab(tabName);
+
+                if (drawerToggle) {
+                    drawerToggle.checked = false;
+                }
+
+                // Esconder área de relatórios quando mudar de aba
+                if (tabName !== 'reports') {
+                    reportDisplayArea.classList.add('hidden');
+                    reportDisplayArea.classList.remove('interactive-list');
+                }
+            }
+        });
 
         document.querySelectorAll('.balance-group-button').forEach(btn => {
             btn.addEventListener('click', () => {
